@@ -44,9 +44,20 @@ def show_images(folder,image_name):
 
 
 if __name__ == "__main__":
-    print("main") 
+    parser = argparse.ArgumentParser(description='Command line tool for easily running this dataset')
+    parser.add_argument("-d","--dir",default=None,help="directory in which the imagse are located", type=str)
+    parser.add_argument("-csv","--csv_location",default=None,help="location of the csv data file",type=str)
+    args = parser.parse_args()
+    image_dir = args.dir
+    csv_dir = args.csv_location
+    if image_dir is None:
+        raise SyntaxError('directory for images must be provided')
+
+    if csv_dir is None:
+        raise SyntaxError('Location for data labels csv file must be provided')
+     
     #gets the path of the data
-    data_path = os.path.abspath("../data/resized_train_cropped")
-    health_level,image_name = load_data("../data/trainLabels_cropped.csv")
+    data_path = os.path.abspath(image_dir)
+    health_level,image_name = load_data(csv_dir)
     show_images(data_path,image_name)
 
