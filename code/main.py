@@ -42,6 +42,11 @@ def show_images(folder,image_name):
         plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
         plt.show()
 
+def get_info_on_data(list_of_data):
+    counter = [0,0,0,0,0]
+    for item in list_of_data:
+        counter[item] = counter[item] +1
+    print(counter)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Command line tool for easily running this dataset')
@@ -59,5 +64,8 @@ if __name__ == "__main__":
     #gets the path of the data
     data_path = os.path.abspath(image_dir)
     health_level,image_name = load_data(csv_dir)
-    show_images(data_path,image_name)
+    #show_images(data_path,image_name)
+
+    #this shows that the data has way to many zeros
+    get_info_on_data(health_level)
 
