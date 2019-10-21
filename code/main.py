@@ -10,7 +10,12 @@ import cv2
 import os
 #for adding command line arguments
 import argparse
+#easy resizing images
 from PIL import Image
+#model stuff
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPooling2D
+from keras.layers import Activation, Dropout, Flatten, Dense
 
 
 
@@ -114,7 +119,7 @@ def resize_image(image_path,width,height,output_dir):
         img = Image.open(image)
         new_img = img.resize((width,height))
         save_location = image_dir + "/" + name
-        print(save_location)
+        print("resized image to: ",save_location)
         new_img.save(save_location, "JPEG", optimize=True)
 
 # def save_csv(csv_list,image_name,output_dir)
@@ -134,6 +139,7 @@ if __name__ == "__main__":
     parser.add_argument("-o","--output_dir",default=None,help="If running a mode the produces an output, saves the items here")
     parser.add_argument("-d","--dir",default=None,help="directory in which the imagse are located", type=str)
     parser.add_argument("-csv","--csv_location",default=None,help="location of the csv data file",type=str)
+    parser.add_argument("-b","--batch_size",default=128,help="batch size for training",type=int)
     args = parser.parse_args()
     image_dir = args.dir
     csv_dir = args.csv_location
@@ -141,6 +147,7 @@ if __name__ == "__main__":
     output_dir = args.output_dir
     new_image_width = args.image_width
     new_image_height = args.image_height
+    batch_size = args.batch_size
     if image_dir is None:
         raise SyntaxError('directory for images must be provided')
 
@@ -154,21 +161,56 @@ if __name__ == "__main__":
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
+    #loads the data
+    health_level,image_name = load_data(csv_dir)
+
     #gets the path of the data
     data_path = os.path.abspath(image_dir)
-    
-    health_level,image_name = load_data(csv_dir)
     image_name = get_full_image_name(data_path,image_name)
-    #health_level,image_name = remove_nonexistent_data(health_level,image_name)
-
-    #show_images(image_name)
 
     #this shows that the data has way to many zeros
     #get_info_on_data(health_level)
-    #health_level,image_name = trim_data(health_level,image_name)
     #get_info_on_data(health_level)
     # print(len(health_level))
     # print(len(image_name))
     #get_image_width_height(image_name)
-    resize_image(image_name,new_image_width,new_image_height,output_dir)
+    if run_mode == 1:
+        resize_image(image_name,new_image_width,new_image_height,output_dir)
+    if run_mode == 2:
+        show_images(image_name)
+    
+    if run_mode == 3:
+        #there are 30ish missing files, should make a new csv later
+        health_level,image_name = remove_nonexistent_data(health_level,image_name)
+        #way to many zeros in the data
+        health_level,image_name = trim_data(health_level,image_name)
+        print(len(health_level))
+        print(len(image_name))
 
+        model = Sequential()
+        model.add(Conv2D(32, (3, 3), input_shape=(300, 300, 3)))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Conv2D(32, (3, 3)))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Conv2D(64, (3, 3)))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        # the model so far outputs 3D feature maps (height, width, features)
+
+        model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
+        model.add(Dense(64))
+        model.add(Activation('relu'))
+        model.add(Dropout(0.5))
+        model.add(Dense(1))
+        model.add(Activation('sigmoid'))
+        # COMPILE
+        model.compile(loss='binary_crossentropy',
+                    optimizer='rmsprop',
+                    metrics=['accuracy'])
+
+        
