@@ -40,4 +40,5 @@ RUN conda init \
 && conda install -n diabetic scikit-learn \
 && conda install -n diabetic keras \
 && conda install -n diabetic tensorflow-gpu \
-&& conda install -n diabetic pytorch 
+&& conda install -n diabetic pytorch  \
+&& conda install -n diabetic Pillow 
