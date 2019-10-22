@@ -202,7 +202,7 @@ if __name__ == "__main__":
     # print(len(health_level))
     # print(len(image_name))
     #get_image_width_height(image_name)
-    
+
     if run_mode == 1:
         resize_image(image_name,new_image_width,new_image_height,output_dir)
     if run_mode == 2:
@@ -247,14 +247,16 @@ if __name__ == "__main__":
                 if counter == batch_size:
                     images_trained_on = images_trained_on + batch_size
                     break
+            #normalizes image pixels to 0 and 1
             image_batch = normalize_images(image_batch)
+            #loads data as a np array and then reshapes it
             np_image_batch = np.asarray(image_batch)
             np_image_batch.reshape(batch_size,new_image_width,new_image_height,3)
-            #image_batch = image_batch.reshape(len(image_batch),new_image_width,new_image_height)
-            #print(len(image_batch))
-            #print(image_batch[0])
-            #time.sleep(3)
-            model.fit(np_image_batch, label_batch)
+            model.train_on_batch(np_image_batch, label_batch)
+            #outputs stats after 5 batchs
+            if images_trained_on % (5*batch_size)==0:
+                model.evaluate(np_image_batch, label_batch)
+            #model.compile('sgd', loss='mse', metrics=[tf.keras.metrics.Accuracy()])
             image_batch.clear()
             label_batch.clear()
             current_epoch = images_trained_on/total_images 
