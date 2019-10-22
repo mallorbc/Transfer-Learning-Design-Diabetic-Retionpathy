@@ -13,9 +13,18 @@ import argparse
 #easy resizing images
 from PIL import Image
 #model stuff
-from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D
-from keras.layers import Activation, Dropout, Flatten, Dense
+# from keras.models import Sequential
+# from keras.layers import Conv2D, MaxPooling2D
+# from keras.layers import Activation, Dropout, Flatten, Dense
+
+# from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
+
+
+import time
+import numpy as np
+import tensorflow as tf
+
+from tensorflow.keras import datasets, layers, models
 
 
 
@@ -34,9 +43,10 @@ def load_data(data_csv):
     image_name = list(image_name)
     return health_level,image_name
 
-def shuffle_data():
+def shuffle_data(list_of_labels,list_of_image_name):
     #shuffles the data together
-    health_level,image_name = shuffle(health_level,image_name)
+    health_level,image_name = shuffle(list_of_labels,list_of_image_name)
+    return health_level,image_name
 
 
 def show_images(image_name):
@@ -122,6 +132,21 @@ def resize_image(image_path,width,height,output_dir):
         print("resized image to: ",save_location)
         new_img.save(save_location, "JPEG", optimize=True)
 
+def normalize_images(list_of_image_name):
+    list_of_normalized_images = []
+    counter = 0
+    for image in list_of_image_name:
+        #print(image)
+        normalized_image = cv2.imread(image)
+        normalized_image = normalized_image/255.0
+        list_of_normalized_images.append(normalized_image)
+        # print(counter)
+        # counter = counter +1
+        # print(normalized_image)
+        #time.sleep(5)
+    # print("normalized all")
+    return list_of_normalized_images
+
 # def save_csv(csv_list,image_name,output_dir)
 #     label_dir = output_dir + "/labels"
 #     if not os.path.exists(label_dir):
@@ -140,6 +165,7 @@ if __name__ == "__main__":
     parser.add_argument("-d","--dir",default=None,help="directory in which the imagse are located", type=str)
     parser.add_argument("-csv","--csv_location",default=None,help="location of the csv data file",type=str)
     parser.add_argument("-b","--batch_size",default=128,help="batch size for training",type=int)
+    parser.add_argument("-e","--epochs",default=100,help="Number of epochs to train the network on",type=int)
     args = parser.parse_args()
     image_dir = args.dir
     csv_dir = args.csv_location
@@ -148,6 +174,8 @@ if __name__ == "__main__":
     new_image_width = args.image_width
     new_image_height = args.image_height
     batch_size = args.batch_size
+    total_epochs = args.epochs
+
     if image_dir is None:
         raise SyntaxError('directory for images must be provided')
 
@@ -174,6 +202,7 @@ if __name__ == "__main__":
     # print(len(health_level))
     # print(len(image_name))
     #get_image_width_height(image_name)
+    
     if run_mode == 1:
         resize_image(image_name,new_image_width,new_image_height,output_dir)
     if run_mode == 2:
@@ -184,33 +213,84 @@ if __name__ == "__main__":
         health_level,image_name = remove_nonexistent_data(health_level,image_name)
         #way to many zeros in the data
         health_level,image_name = trim_data(health_level,image_name)
-        print(len(health_level))
-        print(len(image_name))
+        train_images = image_name
+        train_labels = health_level
 
-        model = Sequential()
-        model.add(Conv2D(32, (3, 3), input_shape=(300, 300, 3)))
-        model.add(Activation('relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
 
-        model.add(Conv2D(32, (3, 3)))
-        model.add(Activation('relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model = models.Sequential()
+        model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(new_image_width, new_image_height, 3)))
+        model.add(layers.MaxPooling2D((2, 2)))
+        model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+        model.add(layers.MaxPooling2D((2, 2)))
+        model.add(layers.Conv2D(64, (3, 3), activation='relu'))
 
-        model.add(Conv2D(64, (3, 3)))
-        model.add(Activation('relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-
-        # the model so far outputs 3D feature maps (height, width, features)
-
-        model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
-        model.add(Dense(64))
-        model.add(Activation('relu'))
-        model.add(Dropout(0.5))
-        model.add(Dense(1))
-        model.add(Activation('sigmoid'))
-        # COMPILE
-        model.compile(loss='binary_crossentropy',
-                    optimizer='rmsprop',
+        model.add(layers.Flatten())
+        model.add(layers.Dense(64, activation='relu'))
+        model.add(layers.Dense(5, activation='softmax'))        
+        model.compile(optimizer='adam',
+                    loss='sparse_categorical_crossentropy',
                     metrics=['accuracy'])
+        #model.summary()
+        
+        current_epoch = 0
+        image_batch = []
+        label_batch = []
+        total_images = len(train_images)
+        images_trained_on = 0
+        while current_epoch<total_epochs:
+            train_labels,train_images = shuffle_data(train_labels,train_images)
+            counter = 0
+            for i in range(len(train_images)):
+                image_batch.append(train_images[i])
+                label_batch.append(train_labels[i])
+                counter = counter +1
+                if counter == batch_size:
+                    images_trained_on = images_trained_on + batch_size
+                    break
+            image_batch = normalize_images(image_batch)
+            np_image_batch = np.asarray(image_batch)
+            np_image_batch.reshape(batch_size,new_image_width,new_image_height,3)
+            #image_batch = image_batch.reshape(len(image_batch),new_image_width,new_image_height)
+            #print(len(image_batch))
+            #print(image_batch[0])
+            #time.sleep(3)
+            model.fit(np_image_batch, label_batch)
+            image_batch.clear()
+            label_batch.clear()
+            current_epoch = images_trained_on/total_images 
+            print("epoch: ",current_epoch)
 
+
+
+        # print(len(health_level))
+        # print(len(image_name))
+
+        # model = Sequential()
+        # model.add(Conv2D(32, (3, 3), input_shape=(512, 512, 3)))
+        # model.add(Activation('relu'))
+        # model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        # model.add(Conv2D(32, (3, 3)))
+        # model.add(Activation('relu'))
+        # model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        # model.add(Conv2D(64, (3, 3)))
+        # model.add(Activation('relu'))
+        # model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        # # the model so far outputs 3D feature maps (height, width, features)
+
+        # model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
+        # model.add(Dense(64))
+        # model.add(Activation('relu'))
+        # model.add(Dropout(0.5))
+        # model.add(Dense(1))
+        # model.add(Activation('sigmoid'))
+        # # COMPILE
+        # model.compile(loss='binary_crossentropy',
+        #             optimizer='rmsprop',
+        #             metrics=['accuracy'])
+
+
+        #history = model.fit(train_images, train_labels, epochs=10)
         
