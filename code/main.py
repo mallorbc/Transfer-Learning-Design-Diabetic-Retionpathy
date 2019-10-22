@@ -13,17 +13,8 @@ import argparse
 #easy resizing images
 from PIL import Image
 #model stuff
-# from keras.models import Sequential
-# from keras.layers import Conv2D, MaxPooling2D
-# from keras.layers import Activation, Dropout, Flatten, Dense
-
-# from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
-
-
-import time
 import numpy as np
 import tensorflow as tf
-
 from tensorflow.keras import datasets, layers, models
 
 
@@ -140,11 +131,6 @@ def normalize_images(list_of_image_name):
         normalized_image = cv2.imread(image)
         normalized_image = normalized_image/255.0
         list_of_normalized_images.append(normalized_image)
-        # print(counter)
-        # counter = counter +1
-        # print(normalized_image)
-        #time.sleep(5)
-    # print("normalized all")
     return list_of_normalized_images
 
 # def save_csv(csv_list,image_name,output_dir)
