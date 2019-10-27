@@ -26,6 +26,8 @@ from datetime import datetime
 #for copying files
 import shutil 
 
+from myModels import *
+
 
 
 
@@ -384,20 +386,7 @@ if __name__ == "__main__":
 
 
 
-        model = models.Sequential()
-        model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(new_image_width, new_image_height, 3)))
-        model.add(layers.MaxPooling2D((2, 2)))
-        model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-        model.add(layers.MaxPooling2D((2, 2)))
-        model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-
-        model.add(layers.Flatten())
-        model.add(layers.Dense(64, activation='relu'))
-        model.add(Dropout(0.5))
-        model.add(layers.Dense(5, activation='softmax'))        
-        model.compile(optimizer='adam',
-                    loss='sparse_categorical_crossentropy',
-                    metrics=['accuracy'])
+        model = create_CNN(new_image_width, new_image_height)
         #model.summary()
 
         #loads a model if a flag is provided
