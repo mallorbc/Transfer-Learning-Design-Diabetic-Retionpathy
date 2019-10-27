@@ -184,7 +184,7 @@ def save_model(model_to_save):
 
 def load_model(path_to_model):
     print("Loading Model...")
-    model_to_load = model.load_model(path_to_model)
+    model_to_load = models.load_model(path_to_model)
     return model_to_load
 
 
@@ -210,6 +210,8 @@ if __name__ == "__main__":
     parser.add_argument("-e","--epochs",default=100,help="Number of epochs to train the network on",type=int)
     parser.add_argument("-ti","--test_interval",default=25,help="How oftern to use test the model on the test data",type=int)
     parser.add_argument("-si","--save_interval",default=1,help="After how many epochs to save the model to a checkpoint",type=int)
+    parser.add_argument("-l","--load_model",default=None,help="Option to load a saved model",type=str)
+    parser.add_argument("-td","--test_data_percentage",default=0.1,help="Percentage of data to use for test data",type=float)
     args = parser.parse_args()
     image_dir = args.dir
     csv_dir = args.csv_location
@@ -221,6 +223,8 @@ if __name__ == "__main__":
     total_epochs = args.epochs
     test_interval = args.test_interval
     save_interval = args.save_interval
+    model_to_load = args.load_model
+    test_data_percentage = args.test_data_percentage
 
     if image_dir is None:
         raise SyntaxError('directory for images must be provided')
@@ -262,7 +266,7 @@ if __name__ == "__main__":
         #shuffles the data to randomize starting train and test data
         health_level,image_name = shuffle_data(health_level,image_name)
         #splits the data into train and test
-        train_images,train_labels,test_images,test_lables = split_data_train_test(health_level,image_name,0.2)
+        train_images,train_labels,test_images,test_lables = split_data_train_test(health_level,image_name,test_data_percentage)
         #normalizes the test data
         test_image_batch = normalize_images(test_images)
         np_image_batch_test = np.asarray(test_image_batch)
@@ -286,6 +290,10 @@ if __name__ == "__main__":
                     loss='sparse_categorical_crossentropy',
                     metrics=['accuracy'])
         #model.summary()
+
+        #loads a model if a flag is provided
+        if model_to_load is not None:
+            model = load_model(model_to_load)
         
         
         current_epoch = 0
