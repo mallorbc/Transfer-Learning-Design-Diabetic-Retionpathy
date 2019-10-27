@@ -16,6 +16,7 @@ from PIL import Image
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import datasets, layers, models
+from tensorflow.keras.layers import Dropout
 #math functions
 import math
 
@@ -251,6 +252,7 @@ if __name__ == "__main__":
 
         model.add(layers.Flatten())
         model.add(layers.Dense(64, activation='relu'))
+        model.add(Dropout(0.5))
         model.add(layers.Dense(5, activation='softmax'))        
         model.compile(optimizer='adam',
                     loss='sparse_categorical_crossentropy',
