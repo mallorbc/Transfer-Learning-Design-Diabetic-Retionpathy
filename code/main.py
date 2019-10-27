@@ -19,8 +19,14 @@ from tensorflow.keras import datasets, layers, models
 from tensorflow.keras.layers import Dropout
 #math functions
 import math
-
+#for sleep 
 import time
+#for getting the datetime
+from datetime import datetime
+#for copying files
+import shutil 
+
+
 
 
 
@@ -172,9 +178,9 @@ def split_data_train_test(list_of_health_data,list_of_image_name,percent_for_tes
     get_info_on_data(list_of_health_data_test)
     return list_of_image_name_train, list_of_health_data_train, list_of_image_name_test, list_of_health_data_test
 
-def save_model(model_to_save):
+def save_model(model_to_save,date_time):
     current_dir = os.getcwd()
-    output_dir = current_dir + "/checkpoints"
+    output_dir = current_dir + "/" + date_time +  "/checkpoints"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     number_of_checkpoints = os.listdir(output_dir)
@@ -190,10 +196,10 @@ def load_model(path_to_model):
     return model_to_load
 
 
-def add_plot_data(accuracy,epoch):
+def add_plot_data(accuracy,epoch,date_time):
     #creates the directory if it does not exist
     current_dir = os.getcwd()
-    output_dir = current_dir + "/" + "plots"
+    output_dir = current_dir + "/" + date_time + "/" + "plots"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     epochs_file_path = output_dir + "/" + "epochs.npy"
@@ -248,6 +254,10 @@ def plot_accuracy():
     plt.legend()
     plt.show()
 
+def get_previous_directory(current_dir):
+    previous_dir = os.path.abspath(os.path.join(os.path.dirname(full_check_point_path ), '..'))
+    return previous_dir
+
 
 
 
@@ -262,6 +272,12 @@ def plot_accuracy():
 
 
 if __name__ == "__main__":
+    now = datetime.now()
+    dt_string = now.strftime("%m-%d-%H-%M-%S")
+    os.makedirs(dt_string)
+    run_dir = os.path.abspath(dt_string)
+
+
     parser = argparse.ArgumentParser(description='Command line tool for easily running this dataset')
     parser.add_argument("-m","--mode",default=0,help="What mode to run will run different code",type=int)
     parser.add_argument("-width","--image_width", default=512,help="if resizing images what width to resize them to",type=int)
@@ -295,12 +311,39 @@ if __name__ == "__main__":
     if csv_dir is None and run_mode!=4:
         raise SyntaxError('Location for data labels csv file must be provided')
 
+    #if we load a model, we need to copy some files over to the new run directory
+    if model_to_load is not None:
+        #gets the full path of the checkpoint file that is being loaded
+        full_check_point_path = os.path.abspath(model_to_load)
+        #creates a directory for the plots
+        plots_run_dir = run_dir + "/plots"
+        os.makedirs(plots_run_dir)
+        #creates a directory for checkpoints
+        checkpoints_run_dir = run_dir + "/checkpoints"
+        os.makedirs(checkpoints_run_dir)
+        #finds the directory one level up
+        one_level_up_dir = get_previous_directory(checkpoints_run_dir)
+        print(one_level_up_dir)
+        old_plot_dir = one_level_up_dir + "/plots/"
+        #copies all old files here and moves it to new directory
+        files_in_old_plots = os.listdir(old_plot_dir)
+        for files in files_in_old_plots:
+            source_file = old_plot_dir + files
+            dest_file = plots_run_dir + "/" + files
+            shutil.copyfile(source_file,dest_file)
+        #copies the checkpoint file to new run folder
+        shutil.copyfile(full_check_point_path,checkpoints_run_dir+"/checkpoint0")
+
+
+
+
     if run_mode == 1:
         if output_dir is None:
             raise SyntaxError('Must provide a directory for the output')
         output_dir = os.path.abspath(output_dir)
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
+    
 
     if run_mode !=4:
         #loads the data
@@ -390,12 +433,12 @@ if __name__ == "__main__":
                 metrics = model.evaluate(np_image_batch_test, test_lables)
                 accuracy = metrics[-1]
                 #adds data to numpy files
-                add_plot_data(accuracy,current_epoch)
+                add_plot_data(accuracy,current_epoch,dt_string)
             image_batch.clear()
             label_batch.clear()
             current_epoch = images_trained_on/total_images
             if current_epoch - save_interval>previous_save:
-                save_model(model)
+                save_model(model,dt_string)
                 previous_save = previous_save + save_interval
             print("epoch: ",current_epoch)
     
