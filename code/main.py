@@ -68,6 +68,9 @@ def trim_data(list_of_health_data,list_of_image_name):
     cat0,cat1,cat2,cat3,cat4 = get_info_on_data(list_of_health_data)
     new_list_of_health_data = []
     new_list_of_images = []
+    discarded_image_names = []
+    discarded_health_data = []
+
     cat0_counter = 0
     for i in range(len(list_of_health_data)):
         if list_of_health_data[i] !=0:
@@ -78,7 +81,14 @@ def trim_data(list_of_health_data,list_of_image_name):
         elif list_of_health_data[i] == 0 and cat0_counter %5 == 0:
             new_list_of_health_data.append(list_of_health_data[i])
             new_list_of_images.append(list_of_image_name[i])
+        
+        elif list_of_health_data[i] == 0 and cat0_counter % 5 != 0:
+            discarded_image_names.append(list_of_image_name[i])
+            discarded_health_data.append(list_of_health_data[i])
+
     return new_list_of_health_data,new_list_of_images
+
+    # return new_list_of_health_data,new_list_of_images,discarded_image_names,discarded_health_data
     
 
 def get_image_width_height(list_of_image_name):
@@ -160,6 +170,18 @@ def split_data_train_test(list_of_health_data,list_of_image_name,percent_for_tes
     get_info_on_data(list_of_health_data_test)
     return list_of_image_name_train, list_of_health_data_train, list_of_image_name_test, list_of_health_data_test
 
+def save_model(model_to_save):
+    current_dir = os.getcwd()
+    output_dir = current_dir + "/checkpoints"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    number_of_checkpoints = os.listdir(output_dir)
+    number_of_checkpoints = len(number_of_checkpoints)
+    new_checkpoint_number = number_of_checkpoints + 1
+    model_name = "checkpoint" + str(number_of_checkpoints)
+    model_name = output_dir + "/" + model_name
+    model_to_save.save(model_name)
+
 
 
 # def save_csv(csv_list,image_name,output_dir)
@@ -193,6 +215,7 @@ if __name__ == "__main__":
     batch_size = args.batch_size
     total_epochs = args.epochs
     test_interval = args.test_interval
+    save_interval = args.save_interval
 
     if image_dir is None:
         raise SyntaxError('directory for images must be provided')
@@ -261,6 +284,7 @@ if __name__ == "__main__":
         
         
         current_epoch = 0
+        previous_save = 0
         image_batch = []
         label_batch = []
         total_images = len(train_images)
@@ -287,7 +311,10 @@ if __name__ == "__main__":
             #model.compile('sgd', loss='mse', metrics=[tf.keras.metrics.Accuracy()])
             image_batch.clear()
             label_batch.clear()
-            current_epoch = images_trained_on/total_images 
+            current_epoch = images_trained_on/total_images
+            if current_epoch - save_interval>previous_save:
+                save_model(model)
+                previous_save = previous_save + save_interval
             print("epoch: ",current_epoch)
 
 
