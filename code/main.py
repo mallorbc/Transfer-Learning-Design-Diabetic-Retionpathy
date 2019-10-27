@@ -20,6 +20,8 @@ from tensorflow.keras.layers import Dropout
 #math functions
 import math
 
+import time
+
 
 
 
@@ -188,6 +190,43 @@ def load_model(path_to_model):
     return model_to_load
 
 
+def add_plot_data(accuracy,epoch):
+    #creates the directory if it does not exist
+    current_dir = os.getcwd()
+    output_dir = current_dir + "/" + "plots"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    epochs_file_path = output_dir + "/" + "epochs.npy"
+    accuracy_file_path = output_dir + "/" + "accuracy.npy"
+    #if the files exists we load it first
+    if os.path.isfile(epochs_file_path) and os.path.isfile(accuracy_file_path):
+        #loads the existing files
+        epochs_numpy_file = np.load(epochs_file_path)
+        accuracy_numpy_file = np.load(accuracy_file_path)
+        #appends the new data to the array
+        accuracy_numpy_file = np.append(accuracy_numpy_file,accuracy)
+        epochs_numpy_file = np.append(epochs_numpy_file,epoch)
+        #saves the arrays
+        np.save(epochs_file_path,epochs_numpy_file)
+        np.save(accuracy_file_path,accuracy_numpy_file)
+        print("Added data to numpy file")
+    #if the file does not exist we create it
+    else:
+        epochs_numpy_file = []
+        accuracy_numpy_file = []
+        #adds the data to the lists
+        accuracy_numpy_file = np.append(accuracy_numpy_file,accuracy)
+        epochs_numpy_file = np.append(epochs_numpy_file,epoch)
+        #converts these lists to numpy arrays
+        epochs_numpy_file = np.asarray(epochs_numpy_file)
+        accuracy_numpy_file = np.asarray(accuracy_numpy_file)
+        #saves the arrays
+        np.save(epochs_file_path,epochs_numpy_file)
+        np.save(accuracy_file_path,accuracy_numpy_file)
+
+
+
+
 
 # def save_csv(csv_list,image_name,output_dir)
 #     label_dir = output_dir + "/labels"
@@ -320,8 +359,11 @@ if __name__ == "__main__":
             model.train_on_batch(np_image_batch, label_batch)
             #outputs stats after 5 batchs
             if images_trained_on % (test_interval*batch_size)==0:
-                model.evaluate(np_image_batch_test, test_lables)
-            #model.compile('sgd', loss='mse', metrics=[tf.keras.metrics.Accuracy()])
+                #gets the metrics
+                metrics = model.evaluate(np_image_batch_test, test_lables)
+                accuracy = metrics[-1]
+                #adds data to numpy files
+                add_plot_data(accuracy,current_epoch)
             image_batch.clear()
             label_batch.clear()
             current_epoch = images_trained_on/total_images
