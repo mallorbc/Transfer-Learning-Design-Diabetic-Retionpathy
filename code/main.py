@@ -16,6 +16,8 @@ from PIL import Image
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import datasets, layers, models
+#math functions
+import math
 
 
 
@@ -133,6 +135,32 @@ def normalize_images(list_of_image_name):
         list_of_normalized_images.append(normalized_image)
     return list_of_normalized_images
 
+def split_data_train_test(list_of_health_data,list_of_image_name,percent_for_test):
+    list_of_image_name_train = []
+    list_of_image_name_test = []
+    list_of_health_data_train = []
+    list_of_health_data_test = []
+
+    number_of_tot_data = len(list_of_image_name)
+    number_of_test_data = number_of_tot_data*percent_for_test
+    number_of_test_data = math.floor(number_of_test_data)
+
+    list_of_image_name_train = list_of_image_name[number_of_test_data:]
+    list_of_image_name_test = list_of_image_name[:number_of_test_data]
+    list_of_health_data_train = list_of_health_data[number_of_test_data:]
+    list_of_health_data_test = list_of_health_data[:number_of_test_data]
+
+    # print(len(list_of_health_data_train))
+    # print(len(list_of_image_name_train))
+    # print(len(list_of_health_data_test))
+    # print(len(list_of_image_name_test))
+
+    get_info_on_data(list_of_health_data_train)
+    get_info_on_data(list_of_health_data_test)
+    return list_of_image_name_train, list_of_health_data_train, list_of_image_name_test, list_of_health_data_test
+
+
+
 # def save_csv(csv_list,image_name,output_dir)
 #     label_dir = output_dir + "/labels"
 #     if not os.path.exists(label_dir):
@@ -152,6 +180,8 @@ if __name__ == "__main__":
     parser.add_argument("-csv","--csv_location",default=None,help="location of the csv data file",type=str)
     parser.add_argument("-b","--batch_size",default=128,help="batch size for training",type=int)
     parser.add_argument("-e","--epochs",default=100,help="Number of epochs to train the network on",type=int)
+    parser.add_argument("-ti","--test_interval",default=25,help="How oftern to use test the model on the test data",type=int)
+    parser.add_argument("-si","--save_interval",default=1,help="After how many epochs to save the model to a checkpoint",type=int)
     args = parser.parse_args()
     image_dir = args.dir
     csv_dir = args.csv_location
@@ -161,6 +191,7 @@ if __name__ == "__main__":
     new_image_height = args.image_height
     batch_size = args.batch_size
     total_epochs = args.epochs
+    test_interval = args.test_interval
 
     if image_dir is None:
         raise SyntaxError('directory for images must be provided')
@@ -199,8 +230,16 @@ if __name__ == "__main__":
         health_level,image_name = remove_nonexistent_data(health_level,image_name)
         #way to many zeros in the data
         health_level,image_name = trim_data(health_level,image_name)
-        train_images = image_name
-        train_labels = health_level
+        #shuffles the data to randomize starting train and test data
+        health_level,image_name = shuffle_data(health_level,image_name)
+        #splits the data into train and test
+        train_images,train_labels,test_images,test_lables = split_data_train_test(health_level,image_name,0.2)
+        #normalizes the test data
+        test_image_batch = normalize_images(test_images)
+        np_image_batch_test = np.asarray(test_image_batch)
+        #resizes the test data to fit into model
+        np_image_batch_test.reshape(len(test_images),new_image_width,new_image_height,3)
+
 
 
         model = models.Sequential()
@@ -217,6 +256,7 @@ if __name__ == "__main__":
                     loss='sparse_categorical_crossentropy',
                     metrics=['accuracy'])
         #model.summary()
+        
         
         current_epoch = 0
         image_batch = []
@@ -240,8 +280,8 @@ if __name__ == "__main__":
             np_image_batch.reshape(batch_size,new_image_width,new_image_height,3)
             model.train_on_batch(np_image_batch, label_batch)
             #outputs stats after 5 batchs
-            if images_trained_on % (5*batch_size)==0:
-                model.evaluate(np_image_batch, label_batch)
+            if images_trained_on % (test_interval*batch_size)==0:
+                model.evaluate(np_image_batch_test, test_lables)
             #model.compile('sgd', loss='mse', metrics=[tf.keras.metrics.Accuracy()])
             image_batch.clear()
             label_batch.clear()
