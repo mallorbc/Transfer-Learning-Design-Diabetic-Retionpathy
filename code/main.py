@@ -224,6 +224,30 @@ def add_plot_data(accuracy,epoch):
         np.save(epochs_file_path,epochs_numpy_file)
         np.save(accuracy_file_path,accuracy_numpy_file)
 
+def plot_accuracy():
+    #used to build error plot
+    error_array = []
+    #builds file paths to load files
+    current_dir = os.getcwd()
+    plot_dir = current_dir + "/" + "plots"
+    epochs_file = plot_dir + "/" + "epochs.npy"
+    accuracy_file = plot_dir + "/" + "accuracy.npy"
+    #loads the arrays
+    epochs_array = np.load(epochs_file)
+    accuracy_array = np.load(accuracy_file)
+    #calculates and saves the error
+    for accuracy in accuracy_array:
+        error = 1 - accuracy
+        error_array.append(error)
+    #plots and formats accuracy and error
+    plt.plot(epochs_array,accuracy_array,label="Accuracy")
+    plt.plot(epochs_array,error_array,label="Error")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy/Error")
+    plt.title("Accuracy/Error vs Epoch")
+    plt.legend()
+    plt.show()
+
 
 
 
@@ -265,10 +289,10 @@ if __name__ == "__main__":
     model_to_load = args.load_model
     test_data_percentage = args.test_data_percentage
 
-    if image_dir is None:
+    if image_dir is None and run_mode!=4:
         raise SyntaxError('directory for images must be provided')
 
-    if csv_dir is None:
+    if csv_dir is None and run_mode!=4:
         raise SyntaxError('Location for data labels csv file must be provided')
 
     if run_mode == 1:
@@ -278,19 +302,20 @@ if __name__ == "__main__":
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-    #loads the data
-    health_level,image_name = load_data(csv_dir)
+    if run_mode !=4:
+        #loads the data
+        health_level,image_name = load_data(csv_dir)
 
-    #gets the path of the data
-    data_path = os.path.abspath(image_dir)
-    image_name = get_full_image_name(data_path,image_name)
+        #gets the path of the data
+        data_path = os.path.abspath(image_dir)
+        image_name = get_full_image_name(data_path,image_name)
 
-    #this shows that the data has way to many zeros
-    #get_info_on_data(health_level)
-    #get_info_on_data(health_level)
-    # print(len(health_level))
-    # print(len(image_name))
-    #get_image_width_height(image_name)
+        #this shows that the data has way to many zeros
+        #get_info_on_data(health_level)
+        #get_info_on_data(health_level)
+        # print(len(health_level))
+        # print(len(image_name))
+        #get_image_width_height(image_name)
 
     if run_mode == 1:
         resize_image(image_name,new_image_width,new_image_height,output_dir)
@@ -300,6 +325,8 @@ if __name__ == "__main__":
     if run_mode == 3:
         #there are 30ish missing files, should make a new csv later
         health_level,image_name = remove_nonexistent_data(health_level,image_name)
+        #shuffles the data to randomize starting train and test data
+        health_level,image_name = shuffle_data(health_level,image_name)
         #way to many zeros in the data
         health_level,image_name = trim_data(health_level,image_name)
         #shuffles the data to randomize starting train and test data
@@ -371,4 +398,8 @@ if __name__ == "__main__":
                 save_model(model)
                 previous_save = previous_save + save_interval
             print("epoch: ",current_epoch)
-   
+    
+
+    if run_mode == 4:
+        plot_accuracy()
+        
