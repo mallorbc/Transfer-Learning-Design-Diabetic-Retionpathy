@@ -125,11 +125,11 @@ if __name__ == "__main__":
         #shuffles the data to randomize starting train and test data
         health_level,image_name = shuffle_data(health_level,image_name)
         #way to many zeros in the data
-        health_level,image_name = trim_data(health_level,image_name)
+        health_level,image_name = trim_data(run_dir,health_level,image_name)
         #shuffles the data to randomize starting train and test data
         health_level,image_name = shuffle_data(health_level,image_name)
         #splits the data into train and test
-        train_images,train_labels,test_images,test_lables = split_data_train_test(health_level,image_name,test_data_percentage)
+        train_images,train_labels,test_images,test_lables = split_data_train_test(run_dir,health_level,image_name,test_data_percentage)
         #normalizes the test data
         test_image_batch = normalize_images(test_images)
         np_image_batch_test = np.asarray(test_image_batch)

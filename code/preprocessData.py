@@ -33,7 +33,7 @@ def shuffle_data(list_of_labels,list_of_image_name):
 
 
 #this cuts down on the number of zeros
-def trim_data(list_of_health_data,list_of_image_name):
+def trim_data(run_dir,list_of_health_data,list_of_image_name):
     cat0,cat1,cat2,cat3,cat4 = get_info_on_data(list_of_health_data)
     new_list_of_health_data = []
     new_list_of_images = []
@@ -97,7 +97,7 @@ def normalize_images(list_of_image_name):
     return list_of_normalized_images
 
 
-def split_data_train_test(list_of_health_data,list_of_image_name,percent_for_test):
+def split_data_train_test(run_dir,list_of_health_data,list_of_image_name,percent_for_test):
     list_of_image_name_train = []
     list_of_image_name_test = []
     list_of_health_data_train = []
@@ -112,11 +112,28 @@ def split_data_train_test(list_of_health_data,list_of_image_name,percent_for_tes
     list_of_health_data_train = list_of_health_data[number_of_test_data:]
     list_of_health_data_test = list_of_health_data[:number_of_test_data]
 
-    # print(len(list_of_health_data_train))
-    # print(len(list_of_image_name_train))
-    # print(len(list_of_health_data_test))
-    # print(len(list_of_image_name_test))
-
     get_info_on_data(list_of_health_data_train)
     get_info_on_data(list_of_health_data_test)
+
+    save_csv(run_dir,"train.csv",list_of_health_data_train,list_of_image_name_train)
+    save_csv(run_dir,"test.csv",list_of_health_data_test,list_of_image_name_test)
+
+
     return list_of_image_name_train, list_of_health_data_train, list_of_image_name_test, list_of_health_data_test
+
+def save_csv(run_dir,csv_name,health_data,image_name):
+    print("saving")
+    csv_dir  = run_dir + "/csv_files"
+    image = []
+    #gets just the image name
+    for item in image_name:
+        image.append(os.path.basename(item))
+    level = health_data
+    #pust the data into a dataframe
+    data = pd.DataFrame({"image" : image,"level" : level})
+    #makes the directory if it does not exist
+    if not os.path.exists(csv_dir):
+        os.makedirs(csv_dir)
+    #creates the file and saves it
+    csv_file_path = csv_dir + "/" + csv_name
+    data.to_csv(csv_file_path)
