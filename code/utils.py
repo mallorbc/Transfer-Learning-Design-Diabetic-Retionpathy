@@ -41,6 +41,13 @@ def get_full_image_name(data_path,list_of_image_name):
         new_image_names.append(full_path)
     return new_image_names
 
+def get_full_image_name_no_ext(data_path,list_of_image_name):
+    new_image_names = []
+    for image in list_of_image_name:
+        full_path = data_path + "/" + image
+        new_image_names.append(full_path)
+    return new_image_names
+
 def get_previous_directory(current_dir):
     previous_dir = os.path.abspath(os.path.join(os.path.dirname(current_dir ), '..'))
     return previous_dir

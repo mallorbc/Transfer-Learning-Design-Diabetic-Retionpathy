@@ -32,20 +32,10 @@ from utils import *
 from preprocessData import *
 
 
-# def save_csv(csv_list,image_name,output_dir)
-#     label_dir = output_dir + "/labels"
-#     if not os.path.exists(label_dir):
-#         os.makedirs(label_dir)
-#     for i in range(len(label_list)):
-#     data = pd.DataFrame(csv_list,)
-
-
 
 if __name__ == "__main__":
     now = datetime.now()
     dt_string = now.strftime("%m-%d-%H-%M-%S")
-
-
 
 
     parser = argparse.ArgumentParser(description='Command line tool for easily running this dataset')
@@ -105,12 +95,6 @@ if __name__ == "__main__":
         data_path = os.path.abspath(image_dir)
         image_name = get_full_image_name(data_path,image_name)
 
-        #this shows that the data has way to many zeros
-        #get_info_on_data(health_level)
-        #get_info_on_data(health_level)
-        # print(len(health_level))
-        # print(len(image_name))
-        #get_image_width_height(image_name)
 
     if run_mode == 1:
         resize_image(image_name,new_image_width,new_image_height,output_dir)
@@ -120,29 +104,28 @@ if __name__ == "__main__":
     if run_mode == 3:
         os.makedirs(dt_string)
         run_dir = os.path.abspath(dt_string)
-        #there are 30ish missing files, should make a new csv later
-        health_level,image_name = remove_nonexistent_data(health_level,image_name)
-        #shuffles the data to randomize starting train and test data
-        health_level,image_name = shuffle_data(health_level,image_name)
-        #way to many zeros in the data
-        health_level,image_name = trim_data(run_dir,health_level,image_name)
-        #shuffles the data to randomize starting train and test data
-        health_level,image_name = shuffle_data(health_level,image_name)
-        #splits the data into train and test
-        train_images,train_labels,test_images,test_lables = split_data_train_test(run_dir,health_level,image_name,test_data_percentage)
-        #normalizes the test data
-        test_image_batch = normalize_images(test_images)
-        np_image_batch_test = np.asarray(test_image_batch)
-        #resizes the test data to fit into model
-        np_image_batch_test.reshape(len(test_images),new_image_width,new_image_height,3)
+        if model_to_load is None:
+            #there are 30ish missing files, should make a new csv later
+            health_level,image_name = remove_nonexistent_data(health_level,image_name)
+            #shuffles the data to randomize starting train and test data
+            health_level,image_name = shuffle_data(health_level,image_name)
+            #way to many zeros in the data
+            health_level,image_name = trim_data(run_dir,health_level,image_name)
+            #shuffles the data to randomize starting train and test data
+            health_level,image_name = shuffle_data(health_level,image_name)
+            #splits the data into train and test
+            train_images,train_labels,test_images,test_labels = split_data_train_test(run_dir,health_level,image_name,test_data_percentage)
+            #sets the epochs and save points
+            current_epoch = 0
+            previous_save = 0
+            
+            #loads the trimmed data
+            trimmed_csv_file = run_dir + "/csv_files/trimmed.csv"
+            trimmed_labels,trimmed_images = load_data(trimmed_csv_file)
+            #creates a new model
+            model = create_CNN(new_image_width, new_image_height)
 
-
-
-        model = create_CNN(new_image_width, new_image_height)
-        #model.summary()
-
-        #if we load a model, we need to copy some files over to the new run directory
-        if model_to_load is not None:
+        else:
             #gets the full path of the checkpoint file that is being loaded
             full_check_point_path = os.path.abspath(model_to_load)
             #creates a directory for the plots
@@ -153,7 +136,8 @@ if __name__ == "__main__":
             os.makedirs(checkpoints_run_dir)
             #finds the directory one level up
             one_level_up_dir = get_previous_directory(full_check_point_path)
-            print(one_level_up_dir)
+
+            #sets the plot dir so we can copy files
             old_plot_dir = one_level_up_dir + "/plots/"
             #copies all old files here and moves it to new directory
             files_in_old_plots = os.listdir(old_plot_dir)
@@ -161,22 +145,56 @@ if __name__ == "__main__":
                 source_file = old_plot_dir + files
                 dest_file = plots_run_dir + "/" + files
                 shutil.copyfile(source_file,dest_file)
+
             #copies the checkpoint file to new run folder
             shutil.copyfile(full_check_point_path,checkpoints_run_dir+"/checkpoint0")
 
-        #loads a model if a flag is provided
-        if model_to_load is not None:
-            model = load_model(model_to_load)
+            #loads the last epoch
             epoch_file = old_plot_dir + "epochs.npy"
             current_epoch = get_last_epoch(epoch_file)
             previous_save = math.floor(current_epoch)
-        else:
-            current_epoch = 0
-            previous_save = 0
 
-        
-        
+            #sets old csv_dir to copy
+            old_csv_dir = one_level_up_dir + "/csv_files"
+            #sets new csv dir
+            new_csv_dir = run_dir + "/csv_files"
+            #copies the old csv files to the new directory
+            old_csv_files = os.listdir(old_csv_dir)
+            #makes the directory if it does not exists
+            os.makedirs(new_csv_dir)
+            for files in old_csv_files:
+                source_file = old_csv_dir + "/" + files
+                dest_file = new_csv_dir + "/" + files
+                shutil.copyfile(source_file,dest_file)
+            
+            #loads data from the csv files
+            train_csv_file = new_csv_dir + "/train.csv"
+            test_csv_file = new_csv_dir + "/test.csv"
+            trimmed_csv_file = new_csv_dir + "/trimmed.csv"
 
+            #loads this data into the list
+            train_labels,train_images = load_data(train_csv_file)
+            test_labels,test_images = load_data(test_csv_file)
+            trimmed_laels,trimmed_images = load_data(trimmed_csv_file)
+
+            #loads the saved model
+            model = load_model(model_to_load)
+
+        #normalizes the test data
+        test_images = get_full_image_name_no_ext(data_path,test_images)
+        train_images = get_full_image_name_no_ext(data_path,train_images)
+        trimmed_images = get_full_image_name_no_ext(data_path,trimmed_images)
+
+        # print(test_images)
+        # quit()
+        test_image_batch = normalize_images(test_images)
+        np_image_batch_test = np.asarray(test_image_batch)
+        #resizes the test data to fit into model
+        np_image_batch_test.reshape(len(test_images),new_image_width,new_image_height,3)
+
+
+        #model.summary()
+    
         image_batch = []
         label_batch = []
         total_images = len(train_images)
@@ -200,7 +218,7 @@ if __name__ == "__main__":
             #outputs stats after 5 batchs
             if images_trained_on % (test_interval*batch_size)==0:
                 #gets the metrics
-                metrics = model.evaluate(np_image_batch_test, test_lables)
+                metrics = model.evaluate(np_image_batch_test, test_labels)
                 accuracy = metrics[-1]
                 #adds data to numpy files
                 add_plot_data(accuracy,current_epoch,run_dir)

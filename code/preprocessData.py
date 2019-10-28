@@ -124,7 +124,6 @@ def split_data_train_test(run_dir,list_of_health_data,list_of_image_name,percent
     return list_of_image_name_train, list_of_health_data_train, list_of_image_name_test, list_of_health_data_test
 
 def save_csv(run_dir,csv_name,health_data,image_name):
-    print("saving")
     csv_dir  = run_dir + "/csv_files"
     image = []
     #gets just the image name
