@@ -176,32 +176,29 @@ if __name__ == "__main__":
             #loads this data into the list
             train_labels,train_images = load_data(train_csv_file)
             test_labels,test_images = load_data(test_csv_file)
-            trimmed_laels,trimmed_images = load_data(trimmed_csv_file)
+            trimmed_labels,trimmed_images = load_data(trimmed_csv_file)
+
+            #gets the full paths of the images
+            train_images = get_full_image_name_no_ext(data_path,train_images)
+            test_images = get_full_image_name_no_ext(data_path,test_images)
+            trimmed_images =get_full_image_name_no_ext(data_path,trimmed_images)
 
             #loads the saved model
             model = load_model(model_to_load)
-        #gives trimmed images the full path
-        trimmed_images = get_full_image_name_no_ext(data_path,trimmed_images)
 
         total_test_labels = []
         total_test_labels = test_labels
         test_image_batch = test_images
-        #gets enough trimmed data to reach 3000
-        number_to_get = 2000 - len(test_images)
+        #gets enough trimmed data to reach 1600
+        number_to_get = 1600 - len(test_images)
         test_trimmed_images,test_trimmed_labels = get_trimmed_data(number_to_get,trimmed_images,trimmed_labels)
-        # print(type(test_trimmed_labels[0]))
-        # quit()
         total_test_image_batch = test_image_batch + test_trimmed_images
         total_test_image_batch = normalize_images(total_test_image_batch)
         #appends these labels to the list
         total_test_labels = total_test_labels + test_trimmed_labels
         np_image_batch_test = np.asarray(total_test_image_batch)
         #resizes the test data to fit into model
-        np_image_batch_test.reshape(2000,new_image_width,new_image_height,3)
-        # print(len(total_test_image_batch))
-        # print(len(total_test_labels))
-
-
+        np_image_batch_test.reshape(1600,new_image_width,new_image_height,3)
 
 
 
@@ -247,7 +244,7 @@ if __name__ == "__main__":
                 total_test_labels = total_test_labels + test_trimmed_labels
                 np_image_batch_test = np.asarray(total_test_image_batch)
                 #resizes the test data to fit into model
-                np_image_batch_test.reshape(2000,new_image_width,new_image_height,3)
+                np_image_batch_test.reshape(1600,new_image_width,new_image_height,3)
 
 
 

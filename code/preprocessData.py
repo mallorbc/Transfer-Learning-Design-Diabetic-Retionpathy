@@ -8,6 +8,8 @@ from sklearn.utils import shuffle
 from PIL import Image
 import os
 
+import time
+
 import math
 
 import utils
@@ -93,12 +95,11 @@ def resize_image(image_path,width,height,output_dir):
 def normalize_images(list_of_image_name):
     list_of_normalized_images = []
     counter = 0
-    #print(list_of_image_name)
     for image in list_of_image_name:
-        # print(image)
         normalized_image = cv2.imread(image)
         normalized_image = normalized_image/255.0
         list_of_normalized_images.append(normalized_image)
+        counter = counter + 1
     return list_of_normalized_images
 
 

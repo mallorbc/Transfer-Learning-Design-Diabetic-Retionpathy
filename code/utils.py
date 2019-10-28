@@ -5,6 +5,7 @@ import os
 import numpy as np
 
 import preprocessData
+import time
 
 def get_info_on_data(list_of_data):
     counter = [0,0,0,0,0]
