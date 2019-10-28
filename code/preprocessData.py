@@ -54,6 +54,8 @@ def trim_data(run_dir,list_of_health_data,list_of_image_name):
         elif list_of_health_data[i] == 0 and cat0_counter % 5 != 0:
             discarded_image_names.append(list_of_image_name[i])
             discarded_health_data.append(list_of_health_data[i])
+    
+    save_csv(run_dir,"trimmed.csv",discarded_health_data,discarded_image_names)
 
     return new_list_of_health_data,new_list_of_images
 
