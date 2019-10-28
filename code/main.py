@@ -115,6 +115,7 @@ if __name__ == "__main__":
             health_level,image_name = shuffle_data(health_level,image_name)
             #splits the data into train and test
             train_images,train_labels,test_images,test_labels = split_data_train_test(run_dir,health_level,image_name,test_data_percentage)
+
             #sets the epochs and save points
             current_epoch = 0
             previous_save = 0
@@ -179,18 +180,29 @@ if __name__ == "__main__":
 
             #loads the saved model
             model = load_model(model_to_load)
-
-        #normalizes the test data
-        test_images = get_full_image_name_no_ext(data_path,test_images)
-        train_images = get_full_image_name_no_ext(data_path,train_images)
+        #gives trimmed images the full path
         trimmed_images = get_full_image_name_no_ext(data_path,trimmed_images)
 
-        # print(test_images)
+        total_test_labels = []
+        total_test_labels = test_labels
+        test_image_batch = test_images
+        #gets enough trimmed data to reach 3000
+        number_to_get = 2000 - len(test_images)
+        test_trimmed_images,test_trimmed_labels = get_trimmed_data(number_to_get,trimmed_images,trimmed_labels)
+        # print(type(test_trimmed_labels[0]))
         # quit()
-        test_image_batch = normalize_images(test_images)
-        np_image_batch_test = np.asarray(test_image_batch)
+        total_test_image_batch = test_image_batch + test_trimmed_images
+        total_test_image_batch = normalize_images(total_test_image_batch)
+        #appends these labels to the list
+        total_test_labels = total_test_labels + test_trimmed_labels
+        np_image_batch_test = np.asarray(total_test_image_batch)
         #resizes the test data to fit into model
-        np_image_batch_test.reshape(len(test_images),new_image_width,new_image_height,3)
+        np_image_batch_test.reshape(2000,new_image_width,new_image_height,3)
+        # print(len(total_test_image_batch))
+        # print(len(total_test_labels))
+
+
+
 
 
         #model.summary()
@@ -218,10 +230,27 @@ if __name__ == "__main__":
             #outputs stats after 5 batchs
             if images_trained_on % (test_interval*batch_size)==0:
                 #gets the metrics
-                metrics = model.evaluate(np_image_batch_test, test_labels)
+                metrics = model.evaluate(np_image_batch_test, total_test_labels)
                 accuracy = metrics[-1]
                 #adds data to numpy files
                 add_plot_data(accuracy,current_epoch,run_dir)
+
+
+                total_test_labels.clear()
+                total_test_image_batch.clear()
+                test_image_batch = test_images
+                total_test_labels = test_labels
+                test_trimmed_images,test_trimmed_labels = get_trimmed_data(number_to_get,trimmed_images,trimmed_labels)
+                total_test_image_batch = test_image_batch + test_trimmed_images
+                total_test_image_batch = normalize_images(total_test_image_batch)
+                #appends these labels to the list
+                total_test_labels = total_test_labels + test_trimmed_labels
+                np_image_batch_test = np.asarray(total_test_image_batch)
+                #resizes the test data to fit into model
+                np_image_batch_test.reshape(2000,new_image_width,new_image_height,3)
+
+
+
             image_batch.clear()
             label_batch.clear()
             current_epoch = current_epoch + batch_size/total_images

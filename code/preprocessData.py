@@ -6,10 +6,12 @@ import cv2
 from sklearn.utils import shuffle
 #easy resizing images
 from PIL import Image
+import os
 
 import math
 
-from utils import *
+import utils
+
 
 def load_data(data_csv):
 
@@ -34,7 +36,7 @@ def shuffle_data(list_of_labels,list_of_image_name):
 
 #this cuts down on the number of zeros
 def trim_data(run_dir,list_of_health_data,list_of_image_name):
-    cat0,cat1,cat2,cat3,cat4 = get_info_on_data(list_of_health_data)
+    cat0,cat1,cat2,cat3,cat4 = utils.get_info_on_data(list_of_health_data)
     new_list_of_health_data = []
     new_list_of_images = []
     discarded_image_names = []
@@ -91,8 +93,9 @@ def resize_image(image_path,width,height,output_dir):
 def normalize_images(list_of_image_name):
     list_of_normalized_images = []
     counter = 0
+    #print(list_of_image_name)
     for image in list_of_image_name:
-        #print(image)
+        # print(image)
         normalized_image = cv2.imread(image)
         normalized_image = normalized_image/255.0
         list_of_normalized_images.append(normalized_image)
@@ -114,8 +117,8 @@ def split_data_train_test(run_dir,list_of_health_data,list_of_image_name,percent
     list_of_health_data_train = list_of_health_data[number_of_test_data:]
     list_of_health_data_test = list_of_health_data[:number_of_test_data]
 
-    get_info_on_data(list_of_health_data_train)
-    get_info_on_data(list_of_health_data_test)
+    utils.get_info_on_data(list_of_health_data_train)
+    utils.get_info_on_data(list_of_health_data_test)
 
     save_csv(run_dir,"train.csv",list_of_health_data_train,list_of_image_name_train)
     save_csv(run_dir,"test.csv",list_of_health_data_test,list_of_image_name_test)

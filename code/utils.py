@@ -2,8 +2,9 @@
 from PIL import Image
 #for getting data paths
 import os
-
 import numpy as np
+
+import preprocessData
 
 def get_info_on_data(list_of_data):
     counter = [0,0,0,0,0]
@@ -56,3 +57,9 @@ def get_last_epoch(epoch_file):
     epoch_array = np.load(epoch_file)
     last_epoch = epoch_array[-1]
     return last_epoch
+
+def get_trimmed_data(number_to_get,trimmed_images,trimmed_labels):
+    trimmed_labels,trimmed_images = preprocessData.shuffle_data(trimmed_labels,trimmed_images)
+    trimmed_labels = trimmed_labels[:number_to_get]
+    trimmed_images = trimmed_images[:number_to_get]
+    return trimmed_images,trimmed_labels
