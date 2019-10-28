@@ -100,6 +100,8 @@ def normalize_images(list_of_image_name):
     list_of_normalized_images = []
     counter = 0
     for image in list_of_image_name:
+        #print(image)
+        #print(counter)
         normalized_image = cv2.imread(image)
         normalized_image = normalized_image/255.0
         list_of_normalized_images.append(normalized_image)

@@ -71,15 +71,15 @@ if __name__ == "__main__":
     if plot_directory is not None:
         plot_directory = os.path.abspath(plot_directory)
 
-    if image_dir is None and run_mode!=4:
+    if image_dir is None and run_mode!=5:
         raise SyntaxError('directory for images must be provided')
 
-    if csv_dir is None and run_mode!=4:
+    if csv_dir is None and run_mode!=5:
         raise SyntaxError('Location for data labels csv file must be provided')
 
 
 
-    if run_mode == 1:
+    if run_mode == 1 or run_mode == 2:
         if output_dir is None:
             raise SyntaxError('Must provide a directory for the output')
         output_dir = os.path.abspath(output_dir)
@@ -87,7 +87,7 @@ if __name__ == "__main__":
             os.makedirs(output_dir)
     
 
-    if run_mode !=4:
+    if run_mode !=5:
         #loads the data
         health_level,image_name = load_data(csv_dir)
 
@@ -183,7 +183,7 @@ if __name__ == "__main__":
             #gets the full paths of the images
             train_images = get_full_image_name_no_ext(data_path,train_images)
             test_images = get_full_image_name_no_ext(data_path,test_images)
-            trimmed_images =get_full_image_name_no_ext(data_path,trimmed_images)
+            
 
             #loads the saved model
             model = load_model(model_to_load)
@@ -191,16 +191,27 @@ if __name__ == "__main__":
         total_test_labels = []
         total_test_labels = test_labels
         test_image_batch = test_images
-        #gets enough trimmed data to reach 1600
-        number_to_get = 1600 - len(test_images)
-        test_trimmed_images,test_trimmed_labels = get_trimmed_data(number_to_get,trimmed_images,trimmed_labels)
-        total_test_image_batch = test_image_batch + test_trimmed_images
-        total_test_image_batch = normalize_images(total_test_image_batch)
-        #appends these labels to the list
-        total_test_labels = total_test_labels + test_trimmed_labels
-        np_image_batch_test = np.asarray(total_test_image_batch)
-        #resizes the test data to fit into model
-        np_image_batch_test.reshape(1600,new_image_width,new_image_height,3)
+        test_image_batch = normalize_images(test_image_batch)
+        np_image_batch_test = np.asarray(test_image_batch)
+        np_image_batch_test.reshape(len(test_image_batch),new_image_width,new_image_height,3)
+
+
+
+        #gets enough trimmed data to reach 1500
+        # number_to_get = 1500 - len(test_images)
+        # test_trimmed_images,test_trimmed_labels = get_trimmed_data(number_to_get,trimmed_images,trimmed_labels)
+        # # print(len(test_trimmed_images))
+        # test_trimmed_images =get_full_image_name_no_ext(data_path,test_trimmed_images)
+        # total_test_image_batch = test_image_batch + test_trimmed_images
+        # # print(len(test_image_batch))
+        # # print(len(test_trimmed_images))
+        # # time.sleep(5)
+        # total_test_image_batch = normalize_images(total_test_image_batch)
+        # #appends these labels to the list
+        # total_test_labels = total_test_labels + test_trimmed_labels
+        # np_image_batch_test = np.asarray(total_test_image_batch)
+        # #resizes the test data to fit into model
+        # np_image_batch_test.reshape(1500,new_image_width,new_image_height,3)
 
 
 
@@ -235,18 +246,22 @@ if __name__ == "__main__":
                 add_plot_data(accuracy,current_epoch,run_dir)
 
 
-                total_test_labels.clear()
-                total_test_image_batch.clear()
-                test_image_batch = test_images
-                total_test_labels = test_labels
-                test_trimmed_images,test_trimmed_labels = get_trimmed_data(number_to_get,trimmed_images,trimmed_labels)
-                total_test_image_batch = test_image_batch + test_trimmed_images
-                total_test_image_batch = normalize_images(total_test_image_batch)
-                #appends these labels to the list
-                total_test_labels = total_test_labels + test_trimmed_labels
-                np_image_batch_test = np.asarray(total_test_image_batch)
-                #resizes the test data to fit into model
-                np_image_batch_test.reshape(1600,new_image_width,new_image_height,3)
+                # total_test_labels.clear()
+                # total_test_image_batch.clear()
+                # test_trimmed_images.clear()
+                # test_trimmed_labels.clear()
+                # test_image_batch.clear()
+                # test_image_batch = test_images
+                # total_test_labels = test_labels
+                # test_trimmed_images,test_trimmed_labels = get_trimmed_data(number_to_get,trimmed_images,trimmed_labels)
+                # test_trimmed_images =get_full_image_name_no_ext(data_path,test_trimmed_images)
+                # total_test_image_batch = test_image_batch + test_trimmed_images
+                # total_test_image_batch = normalize_images(total_test_image_batch)
+                # #appends these labels to the list
+                # total_test_labels = total_test_labels + test_trimmed_labels
+                # np_image_batch_test = np.asarray(total_test_image_batch)
+                # #resizes the test data to fit into model
+                # np_image_batch_test.reshape(1500,new_image_width,new_image_height,3)
 
 
 
