@@ -28,6 +28,7 @@ import shutil
 
 from myModels import *
 from plots import *
+from utils import *
 
 
 
@@ -54,17 +55,7 @@ def shuffle_data(list_of_labels,list_of_image_name):
     return health_level,image_name
 
 
-def get_info_on_data(list_of_data):
-    counter = [0,0,0,0,0]
-    for item in list_of_data:
-        counter[item] = counter[item] +1
-    print(counter)
-    cat0 = counter[0]
-    cat1 = counter[1]
-    cat2 =  counter[2]
-    cat3 = counter[3]
-    cat4 = counter[4]
-    return cat0,cat1,cat2,cat3,cat4
+
 
 #this cuts down on the number of zeros
 def trim_data(list_of_health_data,list_of_image_name):
@@ -94,26 +85,9 @@ def trim_data(list_of_health_data,list_of_image_name):
     # return new_list_of_health_data,new_list_of_images,discarded_image_names,discarded_health_data
     
 
-def get_image_width_height(list_of_image_name):
-    min_width = float("inf")
-    min_height = float("inf")
-    for image in list_of_image_name:
-        with Image.open(image) as img:
-            width ,height = img.size
-        if width <min_width:
-            min_width = width
-        if height < min_height:
-            min_height = height
-        print(width,height)
-        print(width/height)
-    print(min_width,min_height)
 
-def get_full_image_name(data_path,list_of_image_name):
-    new_image_names = []
-    for image in list_of_image_name:
-        full_path = data_path + "/" + image + ".jpeg"
-        new_image_names.append(full_path)
-    return new_image_names
+
+
 
 def remove_nonexistent_data(list_of_health_data,list_of_image_name):
     new_list_of_health_data = []
@@ -173,26 +147,7 @@ def split_data_train_test(list_of_health_data,list_of_image_name,percent_for_tes
     get_info_on_data(list_of_health_data_test)
     return list_of_image_name_train, list_of_health_data_train, list_of_image_name_test, list_of_health_data_test
 
-def save_model(model_to_save,date_time):
-    current_dir = os.getcwd()
-    output_dir = current_dir + "/" + date_time +  "/checkpoints"
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    number_of_checkpoints = os.listdir(output_dir)
-    number_of_checkpoints = len(number_of_checkpoints)
-    new_checkpoint_number = number_of_checkpoints + 1
-    model_name = "checkpoint" + str(number_of_checkpoints)
-    model_name = output_dir + "/" + model_name
-    model_to_save.save(model_name)
 
-def load_model(path_to_model):
-    print("Loading Model...")
-    model_to_load = models.load_model(path_to_model)
-    return model_to_load
-
-def get_previous_directory(current_dir):
-    previous_dir = os.path.abspath(os.path.join(os.path.dirname(full_check_point_path ), '..'))
-    return previous_dir
 
 
 
@@ -210,8 +165,8 @@ def get_previous_directory(current_dir):
 if __name__ == "__main__":
     now = datetime.now()
     dt_string = now.strftime("%m-%d-%H-%M-%S")
-    os.makedirs(dt_string)
-    run_dir = os.path.abspath(dt_string)
+
+
 
 
     parser = argparse.ArgumentParser(description='Command line tool for easily running this dataset')
@@ -227,7 +182,9 @@ if __name__ == "__main__":
     parser.add_argument("-si","--save_interval",default=1,help="After how many epochs to save the model to a checkpoint",type=int)
     parser.add_argument("-l","--load_model",default=None,help="Option to load a saved model",type=str)
     parser.add_argument("-td","--test_data_percentage",default=0.1,help="Percentage of data to use for test data",type=float)
+    parser.add_argument("-pd","--plot_dir",default=None,help="directory containing data to plot",type=str)
     args = parser.parse_args()
+
     image_dir = args.dir
     csv_dir = args.csv_location
     run_mode = args.mode
@@ -240,36 +197,16 @@ if __name__ == "__main__":
     save_interval = args.save_interval
     model_to_load = args.load_model
     test_data_percentage = args.test_data_percentage
+    plot_directory = args.plot_dir
+    
+    if plot_directory is not None:
+        plot_directory = os.path.abspath(plot_directory)
 
     if image_dir is None and run_mode!=4:
         raise SyntaxError('directory for images must be provided')
 
     if csv_dir is None and run_mode!=4:
         raise SyntaxError('Location for data labels csv file must be provided')
-
-    #if we load a model, we need to copy some files over to the new run directory
-    if model_to_load is not None:
-        #gets the full path of the checkpoint file that is being loaded
-        full_check_point_path = os.path.abspath(model_to_load)
-        #creates a directory for the plots
-        plots_run_dir = run_dir + "/plots"
-        os.makedirs(plots_run_dir)
-        #creates a directory for checkpoints
-        checkpoints_run_dir = run_dir + "/checkpoints"
-        os.makedirs(checkpoints_run_dir)
-        #finds the directory one level up
-        one_level_up_dir = get_previous_directory(checkpoints_run_dir)
-        print(one_level_up_dir)
-        old_plot_dir = one_level_up_dir + "/plots/"
-        #copies all old files here and moves it to new directory
-        files_in_old_plots = os.listdir(old_plot_dir)
-        for files in files_in_old_plots:
-            source_file = old_plot_dir + files
-            dest_file = plots_run_dir + "/" + files
-            shutil.copyfile(source_file,dest_file)
-        #copies the checkpoint file to new run folder
-        shutil.copyfile(full_check_point_path,checkpoints_run_dir+"/checkpoint0")
-
 
 
 
@@ -302,6 +239,8 @@ if __name__ == "__main__":
         show_images(image_name)
     
     if run_mode == 3:
+        os.makedirs(dt_string)
+        run_dir = os.path.abspath(dt_string)
         #there are 30ish missing files, should make a new csv later
         health_level,image_name = remove_nonexistent_data(health_level,image_name)
         #shuffles the data to randomize starting train and test data
@@ -323,13 +262,42 @@ if __name__ == "__main__":
         model = create_CNN(new_image_width, new_image_height)
         #model.summary()
 
+        #if we load a model, we need to copy some files over to the new run directory
+        if model_to_load is not None:
+            #gets the full path of the checkpoint file that is being loaded
+            full_check_point_path = os.path.abspath(model_to_load)
+            #creates a directory for the plots
+            plots_run_dir = run_dir + "/plots"
+            os.makedirs(plots_run_dir)
+            #creates a directory for checkpoints
+            checkpoints_run_dir = run_dir + "/checkpoints"
+            os.makedirs(checkpoints_run_dir)
+            #finds the directory one level up
+            one_level_up_dir = get_previous_directory(full_check_point_path)
+            print(one_level_up_dir)
+            old_plot_dir = one_level_up_dir + "/plots/"
+            #copies all old files here and moves it to new directory
+            files_in_old_plots = os.listdir(old_plot_dir)
+            for files in files_in_old_plots:
+                source_file = old_plot_dir + files
+                dest_file = plots_run_dir + "/" + files
+                shutil.copyfile(source_file,dest_file)
+            #copies the checkpoint file to new run folder
+            shutil.copyfile(full_check_point_path,checkpoints_run_dir+"/checkpoint0")
+
         #loads a model if a flag is provided
         if model_to_load is not None:
             model = load_model(model_to_load)
+            epoch_file = old_plot_dir + "epochs.npy"
+            current_epoch = get_last_epoch(epoch_file)
+            previous_save = math.floor(current_epoch)
+        else:
+            current_epoch = 0
+            previous_save = 0
+
         
         
-        current_epoch = 0
-        previous_save = 0
+
         image_batch = []
         label_batch = []
         total_images = len(train_images)
@@ -356,16 +324,16 @@ if __name__ == "__main__":
                 metrics = model.evaluate(np_image_batch_test, test_lables)
                 accuracy = metrics[-1]
                 #adds data to numpy files
-                add_plot_data(accuracy,current_epoch,dt_string)
+                add_plot_data(accuracy,current_epoch,run_dir)
             image_batch.clear()
             label_batch.clear()
-            current_epoch = images_trained_on/total_images
+            current_epoch = current_epoch + batch_size/total_images
             if current_epoch - save_interval>previous_save:
-                save_model(model,dt_string)
+                save_model(model,run_dir)
                 previous_save = previous_save + save_interval
             print("epoch: ",current_epoch)
     
 
     if run_mode == 4:
-        plot_accuracy()
+        plot_accuracy(plot_directory)
         

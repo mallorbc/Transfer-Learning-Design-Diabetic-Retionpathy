@@ -7,10 +7,10 @@ import os
 #for image loading and manipulation
 import cv2
 
-def add_plot_data(accuracy,epoch,date_time):
+def add_plot_data(accuracy,epoch,run_dir):
     #creates the directory if it does not exist
-    current_dir = os.getcwd()
-    output_dir = current_dir + "/" + date_time + "/" + "plots"
+    current_dir = run_dir
+    output_dir = current_dir + "/plots"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     epochs_file_path = output_dir + "/" + "epochs.npy"
@@ -41,11 +41,11 @@ def add_plot_data(accuracy,epoch,date_time):
         np.save(epochs_file_path,epochs_numpy_file)
         np.save(accuracy_file_path,accuracy_numpy_file)
 
-def plot_accuracy():
+def plot_accuracy(data_directory):
     #used to build error plot
     error_array = []
     #builds file paths to load files
-    current_dir = os.getcwd()
+    current_dir = data_directory
     plot_dir = current_dir + "/" + "plots"
     epochs_file = plot_dir + "/" + "epochs.npy"
     accuracy_file = plot_dir + "/" + "accuracy.npy"
