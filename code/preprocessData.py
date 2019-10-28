@@ -10,7 +10,11 @@ import os
 
 import time
 
+import glob
+
 import math
+
+import numpy as np
 
 import utils
 
@@ -142,3 +146,95 @@ def save_csv(run_dir,csv_name,health_data,image_name):
     #creates the file and saves it
     csv_file_path = csv_dir + "/" + csv_name
     data.to_csv(csv_file_path)
+
+
+
+def crop_image_from_gray(img,tol=7):
+    """
+    Crop out black borders
+    https://www.kaggle.com/ratthachat/aptos-updated-preprocessing-ben-s-cropping
+    """  
+    
+    if img.ndim ==2:
+        mask = img>tol
+        return img[np.ix_(mask.any(1),mask.any(0))]
+    elif img.ndim==3:
+        gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        mask = gray_img>tol        
+        check_shape = img[:,:,0][np.ix_(mask.any(1),mask.any(0))].shape[0]
+        if (check_shape == 0):
+            return img
+        else:
+            img1=img[:,:,0][np.ix_(mask.any(1),mask.any(0))]
+            img2=img[:,:,1][np.ix_(mask.any(1),mask.any(0))]
+            img3=img[:,:,2][np.ix_(mask.any(1),mask.any(0))]
+            img = np.stack([img1,img2,img3],axis=-1)
+        return img
+
+
+def circle_crop(img):   
+    """
+    Create circular crop around image centre    
+    """    
+    
+    img = cv2.imread(img)
+    img = crop_image_from_gray(img)    
+    
+    height, width, depth = img.shape    
+    
+    x = int(width/2)
+    y = int(height/2)
+    r = np.amin((x,y))
+    
+    circle_img = np.zeros((height, width), np.uint8)
+    cv2.circle(circle_img, (x,y), int(r), 1, thickness=-1)
+    img = cv2.bitwise_and(img, img, mask=circle_img)
+    img = crop_image_from_gray(img)
+    
+    return img 
+
+def circle_crop_v2(image_path,output_dir):
+    """
+    Create circular crop around image centre
+    """
+    image_dir = output_dir + "/images"
+    if not os.path.exists(image_dir):
+        os.makedirs(image_dir)
+    for image in image_path:
+        name = os.path.basename(image)
+        img = cv2.imread(image)
+        img = crop_image_from_gray(img)
+
+        height, width, depth = img.shape
+        largest_side = np.max((height, width))
+        img = cv2.resize(img, (largest_side, largest_side))
+
+        height, width, depth = img.shape
+
+        x = int(width / 2)
+        y = int(height / 2)
+        r = np.amin((x, y))
+
+        circle_img = np.zeros((height, width), np.uint8)
+        cv2.circle(circle_img, (x, y), int(r), 1, thickness=-1)
+        img = cv2.bitwise_and(img, img, mask=circle_img)
+        img = crop_image_from_gray(img)
+        save_location = image_dir + "/" + name
+        img = Image.fromarray(img)
+        img.save(save_location,"JPEG", optimize=True)
+
+    #return img
+
+
+# def resize_image(image_path,width,height,output_dir):
+#     image_dir = output_dir + "/images"
+    # if not os.path.exists(image_dir):
+    #     os.makedirs(image_dir)
+#     for image in image_path:
+#         name = os.path.basename(image)
+#         #print(name)
+#         img = Image.open(image)
+#         new_img = img.resize((width,height))
+        # save_location = image_dir + "/" + name
+#         print("resized image to: ",save_location)
+#         new_img.save(save_location, "JPEG", optimize=True)

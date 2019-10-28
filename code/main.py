@@ -95,13 +95,15 @@ if __name__ == "__main__":
         data_path = os.path.abspath(image_dir)
         image_name = get_full_image_name(data_path,image_name)
 
-
+    #cirlce crops the images
     if run_mode == 1:
-        resize_image(image_name,new_image_width,new_image_height,output_dir)
+        circle_crop_v2(image_name,output_dir)
     if run_mode == 2:
+        resize_image(image_name,new_image_width,new_image_height,output_dir)
+    if run_mode == 3:
         show_images(image_name)
     
-    if run_mode == 3:
+    if run_mode == 4:
         os.makedirs(dt_string)
         run_dir = os.path.abspath(dt_string)
         if model_to_load is None:
@@ -257,6 +259,6 @@ if __name__ == "__main__":
             print("epoch: ",current_epoch)
     
 
-    if run_mode == 4:
+    if run_mode == 5:
         plot_accuracy(plot_directory)
         
