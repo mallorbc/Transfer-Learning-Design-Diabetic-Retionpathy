@@ -52,6 +52,7 @@ if __name__ == "__main__":
     parser.add_argument("-l","--load_model",default=None,help="Option to load a saved model",type=str)
     parser.add_argument("-td","--test_data_percentage",default=0.1,help="Percentage of data to use for test data",type=float)
     parser.add_argument("-pd","--plot_dir",default=None,help="directory containing data to plot",type=str)
+    parser.add_argument("-model","--model_to_use",default=1,help="Selects what model to use",type=int)
     args = parser.parse_args()
 
     image_dir = args.dir
@@ -67,7 +68,9 @@ if __name__ == "__main__":
     model_to_load = args.load_model
     test_data_percentage = args.test_data_percentage
     plot_directory = args.plot_dir
-    
+    model_to_use = args.model_to_use
+
+
     if plot_directory is not None:
         plot_directory = os.path.abspath(plot_directory)
 
@@ -126,7 +129,12 @@ if __name__ == "__main__":
             trimmed_csv_file = run_dir + "/csv_files/trimmed.csv"
             trimmed_labels,trimmed_images = load_data(trimmed_csv_file)
             #creates a new model
-            model = create_CNN(new_image_width, new_image_height)
+            if model_to_use == 1:
+                model = create_CNN(new_image_width, new_image_height)
+            elif model_to_use == 2:
+                model = transfer_learning_model(new_image_width, new_image_height)
+            else:
+                raise SyntaxError('Not an implemented model')
 
         else:
             #gets the full path of the checkpoint file that is being loaded
@@ -243,7 +251,7 @@ if __name__ == "__main__":
                 metrics = model.evaluate(np_image_batch_test, total_test_labels)
                 accuracy = metrics[-1]
                 #adds data to numpy files
-                add_plot_data(accuracy,current_epoch,run_dir)
+                add_plot_data_test(accuracy,current_epoch,run_dir)
 
 
                 # total_test_labels.clear()

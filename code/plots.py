@@ -7,7 +7,7 @@ import os
 #for image loading and manipulation
 import cv2
 
-def add_plot_data(accuracy,epoch,run_dir):
+def add_plot_data_test(accuracy,epoch,run_dir):
     #creates the directory if it does not exist
     current_dir = run_dir
     output_dir = current_dir + "/plots"
