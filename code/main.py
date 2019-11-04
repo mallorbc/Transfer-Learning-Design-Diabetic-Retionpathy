@@ -53,6 +53,7 @@ if __name__ == "__main__":
     parser.add_argument("-td","--test_data_percentage",default=0.1,help="Percentage of data to use for test data",type=float)
     parser.add_argument("-pd","--plot_dir",default=None,help="directory containing data to plot",type=str)
     parser.add_argument("-model","--model_to_use",default=1,help="Selects what model to use",type=int)
+    parser.add_argument("-trainable","--trainable_transfer",default=False,help="Can the transfer learning model learn on the new data",type=bool)
     args = parser.parse_args()
 
     image_dir = args.dir
@@ -69,6 +70,9 @@ if __name__ == "__main__":
     test_data_percentage = args.test_data_percentage
     plot_directory = args.plot_dir
     model_to_use = args.model_to_use
+    transfer_trainable = args.trainable_transfer
+
+    model_name = "None"
 
 
     if plot_directory is not None:
@@ -131,8 +135,14 @@ if __name__ == "__main__":
             #creates a new model
             if model_to_use == 1:
                 model = create_CNN(new_image_width, new_image_height)
+                model_name = "CNN"
             elif model_to_use == 2:
-                model = transfer_learning_model(new_image_width, new_image_height)
+                if transfer_trainable:
+                    model = transfer_learning_model_inception_v3(new_image_width, new_image_height,True)
+                else:
+                    model = transfer_learning_model_inception_v3(new_image_width, new_image_height,False)
+
+                model_name = "inception_transfer"
             else:
                 raise SyntaxError('Not an implemented model')
 
@@ -247,11 +257,18 @@ if __name__ == "__main__":
             model.train_on_batch(np_image_batch, label_batch)
             #outputs stats after 5 batchs
             if images_trained_on % (test_interval*batch_size)==0:
-                #gets the metrics
+                print("Evaulating on test data...")
+                #gets the metrics for the test data
                 metrics = model.evaluate(np_image_batch_test, total_test_labels)
-                accuracy = metrics[-1]
+                accuracy_test = metrics[-1]
+                #gets the metrics for the training data
+                print("Evaluating on training data...")
+                metrics = model.evaluate(np_image_batch,label_batch)
+                accuracy_train = metrics[-1]
                 #adds data to numpy files
-                add_plot_data_test(accuracy,current_epoch,run_dir)
+                add_plot_data(accuracy_test,accuracy_train,current_epoch,run_dir)
+
+
 
 
                 # total_test_labels.clear()

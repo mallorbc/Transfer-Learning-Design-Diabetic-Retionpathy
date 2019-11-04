@@ -41,18 +41,22 @@ def save_model(model_to_save,run_dir):
     model_to_save.save(model_name)
     print("Saved Checkpoint!")
 
-def transfer_learning_model(new_image_width, new_image_height):
+def transfer_learning_model_inception_v3(new_image_width, new_image_height,is_trainable):
+    #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
     base_model = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_shape=(new_image_width, new_image_height, 3))
-    base_model.trainable = False
+    #sets the inception_v3 model to not update its weights
+    base_model.trainable = is_trainable
+    #layer to convert the features to a single n-elemnt vector per image
     global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
     #base_model.summary()
-    # base_model = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False)
+    #adds the two layers for transfer learning
     model = models.Sequential([base_model,global_average_layer])
-    # model.add(base_model.output)
-    # model.add(base_model.output,input_shape=(new_image_width, new_image_height, 3))
+    #adds dense and dropout layers for final output
     model.add(layers.Dense(1024, activation='relu'))
-    model.add(layers.Dense(1024, activation='relu'))
+    model.add(Dropout(0.5))
+    #model.add(layers.Dense(1024, activation='relu'))
     model.add(layers.Dense(512, activation='relu'))
+    model.add(Dropout(0.5))
     model.add(layers.Dense(5, activation='softmax'))
     model.compile(optimizer='adam',
                 loss='sparse_categorical_crossentropy',
