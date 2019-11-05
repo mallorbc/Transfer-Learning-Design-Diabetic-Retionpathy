@@ -225,18 +225,3 @@ def circle_crop_v2(image_path,output_dir):
         img = Image.fromarray(img)
         img.save(save_location,"JPEG", optimize=True)
 
-    #return img
-
-
-# def resize_image(image_path,width,height,output_dir):
-#     image_dir = output_dir + "/images"
-    # if not os.path.exists(image_dir):
-    #     os.makedirs(image_dir)
-#     for image in image_path:
-#         name = os.path.basename(image)
-#         #print(name)
-#         img = Image.open(image)
-#         new_img = img.resize((width,height))
-        # save_location = image_dir + "/" + name
-#         print("resized image to: ",save_location)
-#         new_img.save(save_location, "JPEG", optimize=True)
