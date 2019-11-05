@@ -64,6 +64,8 @@ def plot_accuracy(data_directory):
     epochs_array = np.load(epochs_file)
     accuracy_array_test = np.load(accuracy_file_test)
     accuracy_array_train = np.load(accuracy_file_train)
+    print(np.amax(accuracy_array_test))
+    print(np.amax(accuracy_array_train))
     #calculates and saves the error
     for accuracy in accuracy_array_test:
         error = 1 - accuracy
