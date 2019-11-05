@@ -19,6 +19,8 @@ def create_CNN(new_image_width,new_image_height):
     model.compile(optimizer='adam',
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
+    #model.summary()
+
     return model
 
 
@@ -62,5 +64,6 @@ def transfer_learning_model_inception_v3(new_image_width, new_image_height,is_tr
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
     #model.summary()
+
     return model
 
