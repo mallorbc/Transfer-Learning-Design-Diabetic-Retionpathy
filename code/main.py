@@ -50,7 +50,7 @@ if __name__ == "__main__":
     parser.add_argument("-ti","--test_interval",default=50,help="How oftern to use test the model on the test data",type=int)
     parser.add_argument("-si","--save_interval",default=1,help="After how many epochs to save the model to a checkpoint",type=int)
     parser.add_argument("-l","--load_model",default=None,help="Option to load a saved model",type=str)
-    parser.add_argument("-td","--test_data_percentage",default=0.1,help="Percentage of data to use for test data",type=float)
+    parser.add_argument("-td","--test_data_percentage",default=0.3,help="Percentage of data to use for test data",type=float)
     parser.add_argument("-pd","--plot_dir",default=None,help="directory containing data to plot",type=str)
     parser.add_argument("-model","--model_to_use",default=1,help="Selects what model to use",type=int)
     parser.add_argument("-trainable","--trainable_transfer",default=False,help="Can the transfer learning model learn on the new data",type=bool)
@@ -73,7 +73,6 @@ if __name__ == "__main__":
     transfer_trainable = args.trainable_transfer
 
     model_name = "None"
-
 
     if plot_directory is not None:
         plot_directory = os.path.abspath(plot_directory)
@@ -207,8 +206,10 @@ if __name__ == "__main__":
             model = load_model(model_to_load)
 
         total_test_labels = []
+        test_labels,test_images = shuffle_data(test_labels,test_images)
         total_test_labels = test_labels
-        test_image_batch = test_images
+        test_image_batch = test_images[:1200]
+        test_labels_batch = total_test_labels[:1200]
         test_image_batch = normalize_images(test_image_batch)
         np_image_batch_test = np.asarray(test_image_batch)
         np_image_batch_test.reshape(len(test_image_batch),new_image_width,new_image_height,3)
@@ -259,7 +260,7 @@ if __name__ == "__main__":
             if images_trained_on % (test_interval*batch_size)==0:
                 print("Evaulating on test data...")
                 #gets the metrics for the test data
-                metrics = model.evaluate(np_image_batch_test, total_test_labels)
+                metrics = model.evaluate(np_image_batch_test, test_labels_batch)
                 accuracy_test = metrics[-1]
                 #gets the metrics for the training data
                 print("Evaluating on training data...")
@@ -267,6 +268,15 @@ if __name__ == "__main__":
                 accuracy_train = metrics[-1]
                 #adds data to numpy files
                 add_plot_data(accuracy_test,accuracy_train,current_epoch,run_dir)
+
+                #gets new test data
+                test_labels,test_images = shuffle_data(test_labels,test_images)
+                total_test_labels = test_labels
+                test_image_batch = test_images[:1200]
+                test_labels_batch = total_test_labels[:1200]
+                test_image_batch = normalize_images(test_image_batch)
+                np_image_batch_test = np.asarray(test_image_batch)
+                np_image_batch_test.reshape(len(test_image_batch),new_image_width,new_image_height,3)
 
 
 
