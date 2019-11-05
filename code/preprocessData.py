@@ -8,6 +8,8 @@ from sklearn.utils import shuffle
 from PIL import Image
 import os
 
+import matplotlib.pyplot as plt
+
 import time
 
 import glob
@@ -225,3 +227,25 @@ def circle_crop_v2(image_path,output_dir):
         img = Image.fromarray(img)
         img.save(save_location,"JPEG", optimize=True)
 
+def add_blur(image_path,output_dir):
+    #creates the output for the blurred images
+    image_dir = output_dir + "/images"
+    if not os.path.exists(image_dir):
+        os.makedirs(image_dir)
+    counter = 0
+    for image in image_path:
+        #stores the name of the image to be saved
+        name = os.path.basename(image)
+        #reads in the image
+        img = cv2.imread(image)
+        #gets the height and width
+        height, width, channels = img.shape
+        image_size = height
+        #adds a weight blur as done in the online kaggle demo
+        img=cv2.addWeighted(img,4, cv2.GaussianBlur(img , (0,0) , 10) ,-4 ,128)
+        #saves the modified image in the output directory
+        save_location = image_dir + "/" + name
+        img = Image.fromarray(img)
+        img.save(save_location,"JPEG", optimize=True)
+        counter = counter + 1
+        print(counter)
