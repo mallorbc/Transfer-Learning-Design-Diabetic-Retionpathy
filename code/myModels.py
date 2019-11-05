@@ -38,7 +38,7 @@ def save_model(model_to_save,run_dir):
     number_of_checkpoints = os.listdir(output_dir)
     number_of_checkpoints = len(number_of_checkpoints)
     new_checkpoint_number = number_of_checkpoints + 1
-    model_name = "checkpoint" + str(number_of_checkpoints)
+    model_name = "checkpoint" + str(new_checkpoint_number)
     model_name = output_dir + "/" + model_name
     model_to_save.save(model_name)
     print("Saved Checkpoint!")
