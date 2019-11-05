@@ -53,7 +53,7 @@ if __name__ == "__main__":
     parser.add_argument("-td","--test_data_percentage",default=0.3,help="Percentage of data to use for test data",type=float)
     parser.add_argument("-pd","--plot_dir",default=None,help="directory containing data to plot",type=str)
     parser.add_argument("-model","--model_to_use",default=1,help="Selects what model to use",type=int)
-    parser.add_argument("-trainable","--trainable_transfer",default=False,help="Can the transfer learning model learn on the new data",type=bool)
+    parser.add_argument("-trainable","--trainable_transfer",default=True,help="Can the transfer learning model learn on the new data",type=bool)
     args = parser.parse_args()
 
     image_dir = args.dir
@@ -77,15 +77,15 @@ if __name__ == "__main__":
     if plot_directory is not None:
         plot_directory = os.path.abspath(plot_directory)
 
-    if image_dir is None and run_mode!=5:
+    if image_dir is None and run_mode!=6:
         raise SyntaxError('directory for images must be provided')
 
-    if csv_dir is None and run_mode!=5:
+    if csv_dir is None and run_mode!=6:
         raise SyntaxError('Location for data labels csv file must be provided')
 
 
 
-    if run_mode == 1 or run_mode == 2:
+    if run_mode == 1 or run_mode == 2 or run_mode == 3:
         if output_dir is None:
             raise SyntaxError('Must provide a directory for the output')
         output_dir = os.path.abspath(output_dir)
@@ -93,7 +93,7 @@ if __name__ == "__main__":
             os.makedirs(output_dir)
     
 
-    if run_mode !=5:
+    if run_mode !=6:
         #loads the data
         health_level,image_name = load_data(csv_dir)
 
@@ -107,9 +107,12 @@ if __name__ == "__main__":
     if run_mode == 2:
         resize_image(image_name,new_image_width,new_image_height,output_dir)
     if run_mode == 3:
+        #print(image_name)
+        add_blur(image_name,output_dir)
+    if run_mode == 4:
         show_images(image_name)
     
-    if run_mode == 4:
+    if run_mode == 5:
         os.makedirs(dt_string)
         run_dir = os.path.abspath(dt_string)
         if model_to_load is None:
@@ -208,8 +211,8 @@ if __name__ == "__main__":
         total_test_labels = []
         test_labels,test_images = shuffle_data(test_labels,test_images)
         total_test_labels = test_labels
-        test_image_batch = test_images[:1200]
-        test_labels_batch = total_test_labels[:1200]
+        test_image_batch = test_images[:1000]
+        test_labels_batch = total_test_labels[:1000]
         test_image_batch = normalize_images(test_image_batch)
         np_image_batch_test = np.asarray(test_image_batch)
         np_image_batch_test.reshape(len(test_image_batch),new_image_width,new_image_height,3)
@@ -272,8 +275,8 @@ if __name__ == "__main__":
                 #gets new test data
                 test_labels,test_images = shuffle_data(test_labels,test_images)
                 total_test_labels = test_labels
-                test_image_batch = test_images[:1200]
-                test_labels_batch = total_test_labels[:1200]
+                test_image_batch = test_images[:1000]
+                test_labels_batch = total_test_labels[:1000]
                 test_image_batch = normalize_images(test_image_batch)
                 np_image_batch_test = np.asarray(test_image_batch)
                 np_image_batch_test.reshape(len(test_image_batch),new_image_width,new_image_height,3)
@@ -309,6 +312,8 @@ if __name__ == "__main__":
             print("epoch: ",current_epoch)
     
 
-    if run_mode == 5:
+    if run_mode == 6:
         plot_accuracy(plot_directory)
+
+
         
