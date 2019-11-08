@@ -249,3 +249,16 @@ def add_blur(image_path,output_dir):
         img.save(save_location,"JPEG", optimize=True)
         counter = counter + 1
         print(counter)
+
+
+def prepare_data_for_model(size_of_data,labels,images,image_width,image_height):
+    total_labels = []
+    labels,images = shuffle_data(labels,images)
+    total_labels = labels
+    image_batch = images[:size_of_data]
+    labels_batch = total_labels[:size_of_data]
+    image_batch = normalize_images(image_batch)
+    np_image_batch = np.asarray(image_batch)
+    np_image_batch.reshape(len(image_batch),image_width,image_height,3)
+
+    return np_image_batch,labels_batch
