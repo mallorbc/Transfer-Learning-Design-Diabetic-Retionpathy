@@ -80,8 +80,21 @@ def plot_accuracy(data_directory):
     epochs_array = np.load(epochs_file)
     accuracy_array_test = np.load(accuracy_file_test)
     accuracy_array_train = np.load(accuracy_file_train)
-    print(np.amax(accuracy_array_test))
-    print(np.amax(accuracy_array_train))
+
+
+    high_accuracy_test_index = np.where(accuracy_array_test == np.amax(accuracy_array_test))
+    high_accuracy_train_index = np.where(accuracy_array_train == np.amax(accuracy_array_train))
+    high_accuracy_test = accuracy_array_test[high_accuracy_test_index]
+    high_accuracy_train = accuracy_array_train[high_accuracy_train_index]
+    high_accuracy_test_epoch = epochs_array[high_accuracy_test_index]
+    high_accuracy_train_epoch = epochs_array[high_accuracy_train_index]
+    #prints out the stats of the low loss values
+    print("Highest test accuracy:",high_accuracy_test," at epoch:",high_accuracy_test_epoch)
+    print("Highest train accuracy:",high_accuracy_train," at epoch:",high_accuracy_train_epoch)
+
+
+    # print(np.amax(accuracy_array_test))
+    # print(np.amax(accuracy_array_train))
     #calculates and saves the error
     for accuracy in accuracy_array_test:
         error = 1 - accuracy
@@ -102,10 +115,6 @@ def plot_accuracy(data_directory):
     plt.show()
 
 def plot_loss(data_directory):
-    print("loss")
-    #used to build error plot
-    error_array_test = []
-    error_array_train = []
     #builds file paths to load files
     current_dir = data_directory
     plot_dir = current_dir + "/" + "plots"
@@ -116,8 +125,16 @@ def plot_loss(data_directory):
     epochs_array = np.load(epochs_file)
     loss_array_test = np.load(accuracy_file_test)
     loss_array_train = np.load(accuracy_file_train)
-    print(np.amin(loss_array_test))
-    print(np.amin(loss_array_train))
+    #gets the epochs and values of the lowest loss values
+    low_loss_test_index = np.where(loss_array_test == np.amin(loss_array_test))
+    low_loss_train_index = np.where(loss_array_train == np.amin(loss_array_train))
+    low_loss_test = loss_array_test[low_loss_test_index]
+    low_loss_train = loss_array_train[low_loss_train_index]
+    low_loss_test_epoch = epochs_array[low_loss_test_index]
+    low_loss_train_epoch = epochs_array[low_loss_train_index]
+    #prints out the stats of the low loss values
+    print("Lowest test loss:",low_loss_test," at epoch:",low_loss_test_epoch)
+    print("Lowest train loss:",low_loss_train," at epoch:",low_loss_train_epoch)
     #plots and formats accuracy and error for the test data
     plt.plot(epochs_array,loss_array_test,label="Loss Test")
     #plt.plot(epochs_array,error_array_test,label="Error Test")
