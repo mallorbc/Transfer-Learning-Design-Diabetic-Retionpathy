@@ -77,10 +77,10 @@ if __name__ == "__main__":
     if plot_directory is not None:
         plot_directory = os.path.abspath(plot_directory)
 
-    if image_dir is None and run_mode!=6:
+    if image_dir is None and run_mode!=6 and run_mode!=7:
         raise SyntaxError('directory for images must be provided')
 
-    if csv_dir is None and run_mode!=6:
+    if csv_dir is None and run_mode!=6 and run_mode!=7:
         raise SyntaxError('Location for data labels csv file must be provided')
 
 
@@ -93,7 +93,7 @@ if __name__ == "__main__":
             os.makedirs(output_dir)
     
 
-    if run_mode !=6:
+    if run_mode !=6 and run_mode!=7:
         #loads the data
         health_level,image_name = load_data(csv_dir)
 
@@ -226,13 +226,15 @@ if __name__ == "__main__":
                 print("Evaulating on test data...")
                 #gets the metrics for the test data
                 metrics = model.evaluate(np_image_batch_test, test_labels_batch)
+                loss_test = metrics[0]
                 accuracy_test = metrics[-1]
                 #gets the metrics for the training data
                 print("Evaluating on training data...")
                 metrics = model.evaluate(np_image_batch,label_batch)
+                loss_train = metrics[0]
                 accuracy_train = metrics[-1]
                 #adds data to numpy files
-                add_plot_data(accuracy_test,accuracy_train,current_epoch,run_dir)
+                add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,current_epoch,run_dir)
                 #gets new dataset for testing
                 np_image_batch_test,test_labels_batch = prepare_data_for_model(1000,test_labels,test_images,new_image_width,new_image_height)
             #increments the epoch
@@ -246,6 +248,6 @@ if __name__ == "__main__":
 
     if run_mode == 6:
         plot_accuracy(plot_directory)
-
-
-        
+    if run_mode == 7:
+        plot_loss(plot_directory)
+    
