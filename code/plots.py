@@ -81,7 +81,7 @@ def plot_accuracy(data_directory):
     accuracy_array_test = np.load(accuracy_file_test)
     accuracy_array_train = np.load(accuracy_file_train)
 
-
+    #finds the highest accuracy and the epoch for both test and train
     high_accuracy_test_index = np.where(accuracy_array_test == np.amax(accuracy_array_test))
     high_accuracy_train_index = np.where(accuracy_array_train == np.amax(accuracy_array_train))
     high_accuracy_test = accuracy_array_test[high_accuracy_test_index]
@@ -92,9 +92,6 @@ def plot_accuracy(data_directory):
     print("Highest test accuracy:",high_accuracy_test," at epoch:",high_accuracy_test_epoch)
     print("Highest train accuracy:",high_accuracy_train," at epoch:",high_accuracy_train_epoch)
 
-
-    # print(np.amax(accuracy_array_test))
-    # print(np.amax(accuracy_array_train))
     #calculates and saves the error
     for accuracy in accuracy_array_test:
         error = 1 - accuracy
