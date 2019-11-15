@@ -26,6 +26,12 @@ from datetime import datetime
 #for copying files
 import shutil 
 
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import matplotlib.pyplot as plt
+
+
+
+
 from myModels import *
 from plots import *
 from utils import *
@@ -207,7 +213,27 @@ if __name__ == "__main__":
 
             #loads the saved model if needed
             model = load_model(model_to_load)
-        #gets the first batch of testing data
+
+
+            
+    #     #gets the first batch of testing data
+    #     datagen = ImageDataGenerator(horizontal_flip=True, vertical_flip=True)
+    #     read_images = []
+    #     for image in train_images:
+    #         temp = cv2.imread
+    #         read_images.append(temp)
+    #     print(len(read_images))
+
+    #     datagen.fit(read_images)
+    #     for image_batch, labels_batch in datagen.flow(read_images, train_labels, batch_size=9):
+    #         for i in range(0, 9):
+    #             plt.subplot(330 + 1 + i)
+    #             plt.imshow(image_batch[i].reshape(256, 256))
+	# # show the plot
+    #         plt.show()
+    #         break
+
+
         np_image_batch_test,test_labels_batch = prepare_data_for_model(1000,test_labels,test_images,new_image_width,new_image_height)
 
         #model.summary()
