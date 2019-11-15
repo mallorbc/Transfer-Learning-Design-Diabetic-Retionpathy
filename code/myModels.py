@@ -2,6 +2,8 @@ import tensorflow as tf
 from tensorflow.keras import datasets, layers, models
 from tensorflow.keras.layers import Dropout
 import os
+from tensorflow.keras.optimizers import Adam
+
 # from tensorflow.keras.applications import inception_v3
 
 def create_CNN(new_image_width,new_image_height):
@@ -60,7 +62,7 @@ def transfer_learning_model_inception_v3(new_image_width, new_image_height,is_tr
     model.add(layers.Dense(512, activation='relu'))
     model.add(Dropout(0.5))
     model.add(layers.Dense(5, activation='softmax'))
-    model.compile(optimizer='adam',
+    model.compile(optimizer=Adam(lr=0.00001),
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
     #model.summary()
