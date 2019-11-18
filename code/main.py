@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
 
     parser = argparse.ArgumentParser(description='Command line tool for easily running this dataset')
-    parser.add_argument("-m","--mode",default=0,help="What mode to run will run different code",type=int)
+    parser.add_argument("-m","--mode",default=0,help="What mode to run will run different code. 1:circle crops the images; 2:resizes the images; 3:Adds blur to the images; 4:Shows the images; 5:Trains a model; 6:Plots the accuracy; 7:Plots the loss",type=int)
     parser.add_argument("-width","--image_width", default=256,help="if resizing images what width to resize them to",type=int)
     parser.add_argument("-height", "--image_height",default=256,help="if resizing images what height to resize them to",type=int)
     parser.add_argument("-o","--output_dir",default=None,help="If running a mode the produces an output, saves the items here")
