@@ -40,6 +40,7 @@ from preprocessData import *
 
 
 if __name__ == "__main__":
+    #inception_v3_multiple_inputs(256,256)
     now = datetime.now()
     dt_string = now.strftime("%m-%d-%H-%M-%S")
 
@@ -50,6 +51,7 @@ if __name__ == "__main__":
     parser.add_argument("-height", "--image_height",default=256,help="if resizing images what height to resize them to",type=int)
     parser.add_argument("-o","--output_dir",default=None,help="If running a mode the produces an output, saves the items here")
     parser.add_argument("-d","--dir",default=None,help="directory in which the imagse are located", type=str)
+    parser.add_argument("-d2","--dir2",default=None,help="directory containing second dataset of images",type=str)
     parser.add_argument("-csv","--csv_location",default=None,help="location of the csv data file",type=str)
     parser.add_argument("-b","--batch_size",default=128,help="batch size for training",type=int)
     parser.add_argument("-e","--epochs",default=10000,help="Number of epochs to train the network on",type=int)
@@ -77,6 +79,8 @@ if __name__ == "__main__":
     plot_directory = args.plot_dir
     model_to_use = args.model_to_use
     transfer_trainable = args.trainable_transfer
+
+    second_image_dir = args.dir2
 
     model_name = "None"
 
@@ -151,6 +155,8 @@ if __name__ == "__main__":
                     model = transfer_learning_model_inception_v3(new_image_width, new_image_height,False)
 
                 model_name = "inception_transfer"
+            elif model_to_use == 3:
+                model = inception_v3_multiple_inputs(new_image_width, new_image_height)
             else:
                 raise SyntaxError('Not an implemented model')
 
@@ -234,42 +240,81 @@ if __name__ == "__main__":
     #         break
 
 
-        np_image_batch_test,test_labels_batch = prepare_data_for_model(1000,test_labels,test_images,new_image_width,new_image_height)
 
         #model.summary()
+        if model_to_use!=3:
+            np_image_batch_test,test_labels_batch = prepare_data_for_model(1000,test_labels,test_images,new_image_width,new_image_height)
+            total_images = len(train_images)
+            images_trained_on = 0
+            while current_epoch<total_epochs:
+                #gets images and labels ready for model input
+                np_image_batch,label_batch = prepare_data_for_model(batch_size,train_labels,train_images,new_image_width,new_image_height)
+                #trains on the input
+                model.train_on_batch(np_image_batch, label_batch)
+                #adds the number of images to the total count
+                images_trained_on = images_trained_on + batch_size
+                #outputs stats after 5 batchs
+                if images_trained_on % (test_interval*batch_size)==0:
+                    print("Evaulating on test data...")
+                    #gets the metrics for the test data
+                    metrics = model.evaluate(np_image_batch_test, test_labels_batch)
+                    loss_test = metrics[0]
+                    accuracy_test = metrics[-1]
+                    #gets the metrics for the training data
+                    print("Evaluating on training data...")
+                    metrics = model.evaluate(np_image_batch,label_batch)
+                    loss_train = metrics[0]
+                    accuracy_train = metrics[-1]
+                    #adds data to numpy files
+                    add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,current_epoch,run_dir)
+                    #gets new dataset for testing
+                    np_image_batch_test,test_labels_batch = prepare_data_for_model(1000,test_labels,test_images,new_image_width,new_image_height)
+                #increments the epoch
+                current_epoch = current_epoch + batch_size/total_images
+                #saves the epoch if the save increment has passed
+                if current_epoch - save_interval>previous_save:
+                    save_model(model,run_dir)
+                    previous_save = previous_save + save_interval
+                print("epoch: ",current_epoch)
+        #multiple inputs
+        else:
+            test_images_two = change_dir_name(second_image_dir,test_images)
+            train_images_two = change_dir_name(second_image_dir,train_images)
+            np_image_batch_test,np_image_batch_test_two,test_labels_batch = prepare_data_for_model_two(250,test_labels,test_images,test_images_two,new_image_width,new_image_height)
+            #quit()
+            total_images = len(train_images)
+            images_trained_on = 0
+            while current_epoch<total_epochs:
+                #gets images and labels ready for model input
+                np_image_batch,np_image_batch_two,label_batch = prepare_data_for_model_two(batch_size,train_labels,train_images,train_images_two,new_image_width,new_image_height)
+                #trains on the input
+                model.train_on_batch([np_image_batch,np_image_batch_two], label_batch)
+                #adds the number of images to the total count
+                images_trained_on = images_trained_on + batch_size
+                #outputs stats after 5 batchs
+                if images_trained_on % (test_interval*batch_size)==0:
+                    print("Evaulating on test data...")
+                    #gets the metrics for the test data
+                    metrics = model.evaluate([np_image_batch_test,np_image_batch_test_two], test_labels_batch)
+                    loss_test = metrics[0]
+                    accuracy_test = metrics[-1]
+                    #gets the metrics for the training data
+                    print("Evaluating on training data...")
+                    metrics = model.evaluate([np_image_batch,np_image_batch_two],label_batch)
+                    loss_train = metrics[0]
+                    accuracy_train = metrics[-1]
+                    #adds data to numpy files
+                    add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,current_epoch,run_dir)
+                    #gets new dataset for testing
+                    np_image_batch_test,np_image_batch_test_two,test_labels_batch = prepare_data_for_model_two(250,test_labels,test_images,test_images_two,new_image_width,new_image_height)
+                #increments the epoch
+                current_epoch = current_epoch + batch_size/total_images
+                #saves the epoch if the save increment has passed
+                if current_epoch - save_interval>previous_save:
+                    save_model(model,run_dir)
+                    previous_save = previous_save + save_interval
+                print("epoch: ",current_epoch)
 
-        total_images = len(train_images)
-        images_trained_on = 0
-        while current_epoch<total_epochs:
-            #gets images and labels ready for model input
-            np_image_batch,label_batch = prepare_data_for_model(batch_size,train_labels,train_images,new_image_width,new_image_height)
-            #trains on the input
-            model.train_on_batch(np_image_batch, label_batch)
-            #adds the number of images to the total count
-            images_trained_on = images_trained_on + batch_size
-            #outputs stats after 5 batchs
-            if images_trained_on % (test_interval*batch_size)==0:
-                print("Evaulating on test data...")
-                #gets the metrics for the test data
-                metrics = model.evaluate(np_image_batch_test, test_labels_batch)
-                loss_test = metrics[0]
-                accuracy_test = metrics[-1]
-                #gets the metrics for the training data
-                print("Evaluating on training data...")
-                metrics = model.evaluate(np_image_batch,label_batch)
-                loss_train = metrics[0]
-                accuracy_train = metrics[-1]
-                #adds data to numpy files
-                add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,current_epoch,run_dir)
-                #gets new dataset for testing
-                np_image_batch_test,test_labels_batch = prepare_data_for_model(1000,test_labels,test_images,new_image_width,new_image_height)
-            #increments the epoch
-            current_epoch = current_epoch + batch_size/total_images
-            #saves the epoch if the save increment has passed
-            if current_epoch - save_interval>previous_save:
-                save_model(model,run_dir)
-                previous_save = previous_save + save_interval
-            print("epoch: ",current_epoch)
     
 
     if run_mode == 6:

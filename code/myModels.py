@@ -5,6 +5,8 @@ import os
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import plot_model
 
+import time
+
 
 
 # from tensorflow.keras.applications import inception_v3
@@ -108,7 +110,11 @@ def inception_v3_multiple_inputs(image_width,image_height):
     output = layers.Dense(5,activation='softmax')(output)
     final_model = models.Model(inputs=[image_input1, image_input2], outputs=output)
     final_model.summary()
-    plot_model(final_model, to_file='model_plot2.png')
+    final_model.compile(optimizer=Adam(lr=0.00001),
+                loss='sparse_categorical_crossentropy',
+                metrics=['accuracy'])
+    time.sleep(2)
+    #plot_model(final_model, to_file='model_plot2.png')
     # plot_model(final_model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
-
+    # quit()
     return final_model

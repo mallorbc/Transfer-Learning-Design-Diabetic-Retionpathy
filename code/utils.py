@@ -64,3 +64,12 @@ def get_trimmed_data(number_to_get,trimmed_images,trimmed_labels):
     trimmed_labels = trimmed_labels[:number_to_get]
     trimmed_images = trimmed_images[:number_to_get]
     return trimmed_images,trimmed_labels
+
+
+def change_dir_name(new_dir,images):
+    return_list = []
+    for image in images:
+        temp = os.path.basename(image)
+        temp = new_dir + temp
+        return_list.append(os.path.realpath(temp))
+    return return_list

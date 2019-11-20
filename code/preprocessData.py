@@ -262,3 +262,21 @@ def prepare_data_for_model(size_of_data,labels,images,image_width,image_height):
     np_image_batch.reshape(len(image_batch),image_width,image_height,3)
 
     return np_image_batch,labels_batch
+
+def prepare_data_for_model_two(size_of_data,labels,images,second_images,image_width,image_height):
+    total_labels = []
+    # labels,images = shuffle_data(labels,images)
+    labels,images,second_images = shuffle(labels,images,second_images)
+    total_labels = labels
+    image_batch = images[:size_of_data]
+    image_batch_two = second_images[:size_of_data]
+    labels_batch = total_labels[:size_of_data]
+    image_batch = normalize_images(image_batch)
+    image_batch_two = normalize_images(image_batch_two)
+    np_image_batch = np.asarray(image_batch)
+    np_image_batch_two = np.asarray(image_batch_two)
+    np_image_batch.reshape(len(image_batch),image_width,image_height,3)
+    np_image_batch.reshape(len(image_batch_two),image_width,image_height,3)
+
+
+    return np_image_batch,np_image_batch_two,labels_batch
