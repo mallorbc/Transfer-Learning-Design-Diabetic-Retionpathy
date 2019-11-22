@@ -67,6 +67,8 @@ def add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,epoch,run_di
 
 
 def plot_accuracy(data_directory):
+    #allows one to shorten the plots easily
+    early_stop = -1
     #used to build error plot
     error_array_test = []
     error_array_train = []
@@ -80,6 +82,10 @@ def plot_accuracy(data_directory):
     epochs_array = np.load(epochs_file)
     accuracy_array_test = np.load(accuracy_file_test)
     accuracy_array_train = np.load(accuracy_file_train)
+    if early_stop!=-1:
+        epochs_array = epochs_array[0:early_stop]
+        accuracy_array_test = accuracy_array_test[0:early_stop]
+        accuracy_array_train = accuracy_array_train[0:early_stop]
 
     #finds the highest accuracy and the epoch for both test and train
     high_accuracy_test_index = np.where(accuracy_array_test == np.amax(accuracy_array_test))
@@ -101,11 +107,16 @@ def plot_accuracy(data_directory):
         error_array_train.append(error)
     #plots and formats accuracy and error for the test data
     plt.plot(epochs_array,accuracy_array_test,label="Accuracy Test")
-    #plt.plot(epochs_array[:30],accuracy_array_test[:30],label="Accuracy Test")
-    #plt.plot(epochs_array,error_array_test,label="Error Test")
     #plots and formats the accuracy and error for the train data
     plt.plot(epochs_array,accuracy_array_train,label="Accuracy Train")
-    #plt.plot(epochs_array[:30],accuracy_array_train[:30],label="Accuracy Train")
+    #plots the trend of test
+    z = np.polyfit(epochs_array, accuracy_array_test, 1)
+    p = np.poly1d(z)
+    plt.plot(epochs_array,p(epochs_array),"r--",label="Test Trend")
+    #plots the trend of the train
+    z = np.polyfit(epochs_array, accuracy_array_train, 1)
+    p = np.poly1d(z)
+    plt.plot(epochs_array,p(epochs_array),"g--",label="Train Trend")
 
     #plt.plot(epochs_array,error_array_train,label="Error Train")
     plt.xlabel("Epoch")
@@ -115,16 +126,23 @@ def plot_accuracy(data_directory):
     plt.show()
 
 def plot_loss(data_directory):
+    #allows one to easily shorten the plots
+    early_stop = -1
     #builds file paths to load files
     current_dir = data_directory
     plot_dir = current_dir + "/" + "plots"
     epochs_file = plot_dir + "/" + "epochs.npy"
-    accuracy_file_test = plot_dir + "/" + "loss_test.npy"
-    accuracy_file_train = plot_dir + "/" + "loss_train.npy"
+    loss_file_test = plot_dir + "/" + "loss_test.npy"
+    loss_file_train = plot_dir + "/" + "loss_train.npy"
     #loads the arrays
     epochs_array = np.load(epochs_file)
-    loss_array_test = np.load(accuracy_file_test)
-    loss_array_train = np.load(accuracy_file_train)
+    loss_array_test = np.load(loss_file_test)
+    loss_array_train = np.load(loss_file_train)
+    #shortens the arrays if desired
+    if early_stop!=-1:
+        loss_array_test = loss_array_test[0:early_stop]
+        loss_array_train = loss_array_train[0:early_stop]
+        epochs_array = epochs_array[0:early_stop]
     #gets the epochs and values of the lowest loss values
     low_loss_test_index = np.where(loss_array_test == np.amin(loss_array_test))
     low_loss_train_index = np.where(loss_array_train == np.amin(loss_array_train))
@@ -135,12 +153,18 @@ def plot_loss(data_directory):
     #prints out the stats of the low loss values
     print("Lowest test loss:",low_loss_test," at epoch:",low_loss_test_epoch)
     print("Lowest train loss:",low_loss_train," at epoch:",low_loss_train_epoch)
-    #plots and formats accuracy and error for the test data
+    #plots and formats the loss for the test data
     plt.plot(epochs_array,loss_array_test,label="Loss Test")
-    #plt.plot(epochs_array,error_array_test,label="Error Test")
-    #plots and formats the accuracy and error for the train data
+    #plots and formats the loss for the train data
     plt.plot(epochs_array,loss_array_train,label="Loss Train")
-    #plt.plot(epochs_array,error_array_train,label="Error Train")
+    #plots the trend of test
+    z = np.polyfit(epochs_array, loss_array_test, 1)
+    p = np.poly1d(z)
+    plt.plot(epochs_array,p(epochs_array),"r--",label="Test Trend")
+    #plots the trend of the train
+    z = np.polyfit(epochs_array, loss_array_train, 1)
+    p = np.poly1d(z)
+    plt.plot(epochs_array,p(epochs_array),"g--",label="Train Trend")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.title("Loss vs Epoch")
