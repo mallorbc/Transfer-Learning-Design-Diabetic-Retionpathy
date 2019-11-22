@@ -136,10 +136,10 @@ def plot_loss(data_directory):
     print("Lowest test loss:",low_loss_test," at epoch:",low_loss_test_epoch)
     print("Lowest train loss:",low_loss_train," at epoch:",low_loss_train_epoch)
     #plots and formats accuracy and error for the test data
-    plt.plot(epochs_array[:30],loss_array_test[:30],label="Loss Test")
+    plt.plot(epochs_array,loss_array_test,label="Loss Test")
     #plt.plot(epochs_array,error_array_test,label="Error Test")
     #plots and formats the accuracy and error for the train data
-    plt.plot(epochs_array[:30],loss_array_train[:30],label="Loss Train")
+    plt.plot(epochs_array,loss_array_train,label="Loss Train")
     #plt.plot(epochs_array,error_array_train,label="Error Train")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
