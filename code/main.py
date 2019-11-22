@@ -80,7 +80,7 @@ if __name__ == "__main__":
     model_to_use = args.model_to_use
     transfer_trainable = args.trainable_transfer
 
-    test_size = 250
+    test_size = 100
 
     second_image_dir = args.dir2
 
@@ -283,7 +283,7 @@ if __name__ == "__main__":
         else:
             test_images_two = change_dir_name(second_image_dir,test_images)
             train_images_two = change_dir_name(second_image_dir,train_images)
-            np_image_batch_test,np_image_batch_test_two,test_labels_batch = prepare_data_for_model_two(250,test_labels,test_images,test_images_two,new_image_width,new_image_height)
+            np_image_batch_test,np_image_batch_test_two,test_labels_batch = prepare_data_for_model_two(test_size,test_labels,test_images,test_images_two,new_image_width,new_image_height)
             #quit()
             total_images = len(train_images)
             images_trained_on = 0
@@ -303,13 +303,14 @@ if __name__ == "__main__":
                     accuracy_test = metrics[-1]
                     #gets the metrics for the training data
                     print("Evaluating on training data...")
+                    np_image_batch,np_image_batch_two,label_batch = prepare_data_for_model_two(test_size,train_labels,train_images,train_images_two,new_image_width,new_image_height)
                     metrics = model.evaluate([np_image_batch,np_image_batch_two],label_batch)
                     loss_train = metrics[0]
                     accuracy_train = metrics[-1]
                     #adds data to numpy files
                     add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,current_epoch,run_dir)
                     #gets new dataset for testing
-                    np_image_batch_test,np_image_batch_test_two,test_labels_batch = prepare_data_for_model_two(250,test_labels,test_images,test_images_two,new_image_width,new_image_height)
+                    np_image_batch_test,np_image_batch_test_two,test_labels_batch = prepare_data_for_model_two(test_size,test_labels,test_images,test_images_two,new_image_width,new_image_height)
                 #increments the epoch
                 current_epoch = current_epoch + batch_size/total_images
                 #saves the epoch if the save increment has passed
