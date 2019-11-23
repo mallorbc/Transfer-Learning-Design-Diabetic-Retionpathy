@@ -107,10 +107,16 @@ def inception_v3_multiple_inputs(image_width,image_height):
     output = Dropout(0.5)(output)
     output = layers.Dense(512,activation='relu')(output)
     output = Dropout(0.5)(output)
+    # output = layers.Dense(256,activation='relu')(output)
+    # output = Dropout(0.5)(output)
+    # output = layers.Dense(128,activation='relu')(output)
+    # output = Dropout(0.5)(output)
+    # output = layers.Dense(64,activation='relu')(output)
+    # output = Dropout(0.5)(output)
     output = layers.Dense(5,activation='softmax')(output)
     final_model = models.Model(inputs=[image_input1, image_input2], outputs=output)
     final_model.summary()
-    final_model.compile(optimizer=Adam(lr=0.00001),
+    final_model.compile(optimizer=Adam(lr=0.000001),
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
     time.sleep(2)

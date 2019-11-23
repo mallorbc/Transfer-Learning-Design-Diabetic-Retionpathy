@@ -56,12 +56,13 @@ if __name__ == "__main__":
     parser.add_argument("-b","--batch_size",default=128,help="batch size for training",type=int)
     parser.add_argument("-e","--epochs",default=10000,help="Number of epochs to train the network on",type=int)
     parser.add_argument("-ti","--test_interval",default=50,help="How oftern to use test the model on the test data",type=int)
-    parser.add_argument("-si","--save_interval",default=1,help="After how many epochs to save the model to a checkpoint",type=int)
+    parser.add_argument("-si","--save_interval",default=1,help="After how many epochs to save the model to a checkpoint",type=float)
     parser.add_argument("-l","--load_model",default=None,help="Option to load a saved model",type=str)
     parser.add_argument("-td","--test_data_percentage",default=0.3,help="Percentage of data to use for test data",type=float)
     parser.add_argument("-pd","--plot_dir",default=None,help="directory containing data to plot",type=str)
     parser.add_argument("-model","--model_to_use",default=1,help="Selects what model to use",type=int)
     parser.add_argument("-trainable","--trainable_transfer",default=True,help="Can the transfer learning model learn on the new data",type=bool)
+    parser.add_argument("-pe","--plot_epoch",default=None,help="What eopch to stop early at",type=float)
     args = parser.parse_args()
 
     image_dir = args.dir
@@ -79,8 +80,9 @@ if __name__ == "__main__":
     plot_directory = args.plot_dir
     model_to_use = args.model_to_use
     transfer_trainable = args.trainable_transfer
+    plot_epoch = args.plot_epoch
 
-    test_size = 100
+    test_size = 300
 
     second_image_dir = args.dir2
 
@@ -301,12 +303,16 @@ if __name__ == "__main__":
                     metrics = model.evaluate([np_image_batch_test,np_image_batch_test_two], test_labels_batch)
                     loss_test = metrics[0]
                     accuracy_test = metrics[-1]
+                    np_image_batch_test = None
+                    np_image_batch_test_two = None
                     #gets the metrics for the training data
                     print("Evaluating on training data...")
                     np_image_batch,np_image_batch_two,label_batch = prepare_data_for_model_two(test_size,train_labels,train_images,train_images_two,new_image_width,new_image_height)
                     metrics = model.evaluate([np_image_batch,np_image_batch_two],label_batch)
                     loss_train = metrics[0]
                     accuracy_train = metrics[-1]
+                    np_image_batch = None
+                    np_image_batch_two = None
                     #adds data to numpy files
                     add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,current_epoch,run_dir)
                     #gets new dataset for testing
@@ -322,7 +328,7 @@ if __name__ == "__main__":
     
 
     if run_mode == 6:
-        plot_accuracy(plot_directory)
+        plot_accuracy(plot_directory,plot_epoch)
     if run_mode == 7:
-        plot_loss(plot_directory)
+        plot_loss(plot_directory,plot_epoch)
     

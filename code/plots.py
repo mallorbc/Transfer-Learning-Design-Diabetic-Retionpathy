@@ -66,7 +66,7 @@ def add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,epoch,run_di
         np.save(loss_file_path_train,loss_numpy_file_train)
 
 
-def plot_accuracy(data_directory):
+def plot_accuracy(data_directory,stop_epoch=None):
     #allows one to shorten the plots easily
     early_stop = -1
     #used to build error plot
@@ -82,6 +82,9 @@ def plot_accuracy(data_directory):
     epochs_array = np.load(epochs_file)
     accuracy_array_test = np.load(accuracy_file_test)
     accuracy_array_train = np.load(accuracy_file_train)
+    if stop_epoch is not None:
+        early_stop = np.where(epochs_array > stop_epoch)
+        early_stop = early_stop[0][0]
     if early_stop!=-1:
         epochs_array = epochs_array[0:early_stop]
         accuracy_array_test = accuracy_array_test[0:early_stop]
@@ -125,7 +128,7 @@ def plot_accuracy(data_directory):
     plt.legend()
     plt.show()
 
-def plot_loss(data_directory):
+def plot_loss(data_directory,stop_epoch=None):
     #allows one to easily shorten the plots
     early_stop = -1
     #builds file paths to load files
@@ -138,6 +141,10 @@ def plot_loss(data_directory):
     epochs_array = np.load(epochs_file)
     loss_array_test = np.load(loss_file_test)
     loss_array_train = np.load(loss_file_train)
+    if stop_epoch is not None:
+        early_stop = np.where(epochs_array > stop_epoch)
+        early_stop = early_stop[0][0]
+
     #shortens the arrays if desired
     if early_stop!=-1:
         loss_array_test = loss_array_test[0:early_stop]
