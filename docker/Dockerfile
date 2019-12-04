@@ -19,7 +19,8 @@ RUN apt update \
 && apt install gcc -y \
 && apt install build-essential -y \
 && apt install unzip -y \
-&& apt install nomacs -y
+&& apt install nomacs -y \
+&& apt install git -y
 
 #gets the anaconda package, installs it, and adds it to the path
 #gets the anaconda package
@@ -42,3 +43,8 @@ RUN conda init \
 && conda install -n diabetic tensorflow-gpu=1.14 \
 && conda install -n diabetic Pillow  \
 && conda install -n diabetic pydot
+
+RUN conda init bash \
+&& source ~/.bashrc \
+&& conda activate diabetic \ 
+&& pip install -U efficientnet
