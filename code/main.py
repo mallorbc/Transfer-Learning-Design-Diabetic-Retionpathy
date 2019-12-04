@@ -46,12 +46,14 @@ if __name__ == "__main__":
 
 
     parser = argparse.ArgumentParser(description='Command line tool for easily running this dataset')
+    parser.add_argument("-n","--name",default=None,help="Name of the folder for the run",type=str)
     parser.add_argument("-m","--mode",default=0,help="What mode to run will run different code. 1:circle crops the images; 2:resizes the images; 3:Adds blur to the images; 4:Shows the images; 5:Trains a model; 6:Plots the accuracy; 7:Plots the loss",type=int)
     parser.add_argument("-width","--image_width", default=512,help="if resizing images what width to resize them to",type=int)
     parser.add_argument("-height", "--image_height",default=512,help="if resizing images what height to resize them to",type=int)
     parser.add_argument("-o","--output_dir",default=None,help="If running a mode the produces an output, saves the items here")
     parser.add_argument("-d","--dir",default=None,help="directory in which the imagse are located", type=str)
     parser.add_argument("-d2","--dir2",default=None,help="directory containing second dataset of images",type=str)
+    parser.add_argument("-d3","--dir3",default=None,help="directory containing the third dataset",type=str)
     parser.add_argument("-csv","--csv_location",default=None,help="location of the csv data file",type=str)
     parser.add_argument("-b","--batch_size",default=128,help="batch size for training",type=int)
     parser.add_argument("-e","--epochs",default=10000,help="Number of epochs to train the network on",type=int)
@@ -81,8 +83,12 @@ if __name__ == "__main__":
     model_to_use = args.model_to_use
     transfer_trainable = args.trainable_transfer
     plot_epoch = args.plot_epoch
+    folder_name = args.name
 
-    test_size = 300
+    if folder_name is not None:
+        folder_name = os.path.realpath(folder_name)
+
+    test_size = 100
 
     second_image_dir = args.dir2
 
@@ -127,8 +133,14 @@ if __name__ == "__main__":
         show_images(image_name)
     
     if run_mode == 5:
-        os.makedirs(dt_string)
-        run_dir = os.path.abspath(dt_string)
+        if folder_name is not None:
+            os.makedirs(folder_name)
+            run_dir = folder_name
+        else:
+            os.makedirs(dt_string)
+            run_dir = os.path.abspath(dt_string)
+
+        # run_dir = os.path.abspath(dt_string)
         if model_to_load is None:
             #there are 30ish missing files, should make a new csv later
             health_level,image_name = remove_nonexistent_data(health_level,image_name)
@@ -161,6 +173,8 @@ if __name__ == "__main__":
                 model_name = "inception_transfer"
             elif model_to_use == 3:
                 model = inception_v3_multiple_inputs(new_image_width, new_image_height)
+            elif model_to_use == 4:
+                model = efficientnet(new_image_width, new_image_height)
             else:
                 raise SyntaxError('Not an implemented model')
 
