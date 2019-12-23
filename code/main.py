@@ -65,6 +65,7 @@ if __name__ == "__main__":
     parser.add_argument("-model","--model_to_use",default=1,help="Selects what model to use",type=int)
     parser.add_argument("-trainable","--trainable_transfer",default=True,help="Can the transfer learning model learn on the new data",type=bool)
     parser.add_argument("-pe","--plot_epoch",default=None,help="What eopch to stop early at",type=float)
+    parser.add_argument("-np","--numpy",default=False,help="Whether the data outputed should be numpy, and whether the data loaded is numpy",type=bool)
     args = parser.parse_args()
 
     image_dir = args.dir
@@ -84,6 +85,7 @@ if __name__ == "__main__":
     transfer_trainable = args.trainable_transfer
     plot_epoch = args.plot_epoch
     folder_name = args.name
+    data_is_numpy = args.numpy
 
     if folder_name is not None:
         folder_name = os.path.realpath(folder_name)
@@ -123,12 +125,12 @@ if __name__ == "__main__":
 
     #cirlce crops the images
     if run_mode == 1:
-        circle_crop_v2(image_name,output_dir)
+        circle_crop_v2(image_name,output_dir,data_is_numpy)
     if run_mode == 2:
         resize_image(image_name,new_image_width,new_image_height,output_dir)
     if run_mode == 3:
         #print(image_name)
-        add_blur(image_name,output_dir)
+        add_blur(image_name,output_dir)        
     if run_mode == 4:
         show_images(image_name)
     

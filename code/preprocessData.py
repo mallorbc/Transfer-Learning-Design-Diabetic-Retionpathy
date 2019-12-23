@@ -98,13 +98,16 @@ def resize_image(image_path,width,height,output_dir):
         new_img.save(save_location, "JPEG", optimize=True)
 
 
-def normalize_images(list_of_image_name):
+def normalize_images(list_of_image_name,save_numpy=False):
     list_of_normalized_images = []
     counter = 0
     for image in list_of_image_name:
         #print(image)
         #print(counter)
-        normalized_image = cv2.imread(image)
+        if save_numpy:
+            normalized_image = image
+        else:
+            normalized_image = cv2.imread(image)
         normalized_image = normalized_image/255.0
         list_of_normalized_images.append(normalized_image)
         counter = counter + 1
@@ -158,7 +161,8 @@ def crop_image_from_gray(img,tol=7):
     Crop out black borders
     https://www.kaggle.com/ratthachat/aptos-updated-preprocessing-ben-s-cropping
     """  
-    
+    if img is None:
+        return img
     if img.ndim ==2:
         mask = img>tol
         return img[np.ix_(mask.any(1),mask.any(0))]
@@ -197,7 +201,7 @@ def circle_crop(img):
     
     return img 
 
-def circle_crop_v2(image_path,output_dir):
+def circle_crop_v2(image_path,output_dir,save_numpy):
     """
     Create circular crop around image centre
     """
@@ -208,6 +212,8 @@ def circle_crop_v2(image_path,output_dir):
         name = os.path.basename(image)
         img = cv2.imread(image)
         img = crop_image_from_gray(img)
+        if img is None:
+            continue
 
         height, width, depth = img.shape
         largest_side = np.max((height, width))
@@ -224,8 +230,15 @@ def circle_crop_v2(image_path,output_dir):
         img = cv2.bitwise_and(img, img, mask=circle_img)
         img = crop_image_from_gray(img)
         save_location = image_dir + "/" + name
-        img = Image.fromarray(img)
-        img.save(save_location,"JPEG", optimize=True)
+        if not save_numpy:
+            img = Image.fromarray(img)
+            img.save(save_location,"JPEG", optimize=True)
+        else:
+            img_np = normalize_images(img,save_numpy)
+            save_location = save_location.split(".")
+            save_location = save_location[0]
+            save_location = save_location + ".npy"
+            np.save(save_location,img_np)
 
 def add_blur(image_path,output_dir):
     #creates the output for the blurred images
@@ -280,3 +293,6 @@ def prepare_data_for_model_two(size_of_data,labels,images,second_images,image_wi
 
 
     return np_image_batch,np_image_batch_two,labels_batch
+
+def save_data_as_np(list_of_images):
+    print("save numpy")
