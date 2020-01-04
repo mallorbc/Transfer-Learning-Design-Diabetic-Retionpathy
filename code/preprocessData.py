@@ -296,3 +296,5 @@ def prepare_data_for_model_two(size_of_data,labels,images,second_images,image_wi
 
 def save_data_as_np(list_of_images):
     print("save numpy")
+
+# def get_data_for_prediction(images,labels):
