@@ -39,6 +39,8 @@ from preprocessData import *
 
 
 
+
+
 if __name__ == "__main__":
     #inception_v3_multiple_inputs(256,256)
     now = datetime.now()
@@ -66,7 +68,16 @@ if __name__ == "__main__":
     parser.add_argument("-trainable","--trainable_transfer",default=True,help="Can the transfer learning model learn on the new data",type=bool)
     parser.add_argument("-pe","--plot_epoch",default=None,help="What eopch to stop early at",type=float)
     parser.add_argument("-np","--numpy",default=False,help="Whether the data outputed should be numpy, and whether the data loaded is numpy",type=bool)
+    parser.add_argument("-mem","--gpu_mem",default=None,help="allows us to not use all the memory, useful for testing a model that is currently training",type=float)
+
     args = parser.parse_args()
+
+    if args.gpu_mem is not None:
+        config = tf.ConfigProto()
+        config.gpu_options.per_process_gpu_memory_fraction = args.gpu_mem
+        config.gpu_options.allow_growth = True
+        tf.keras.backend.set_session(tf.Session(config=config))
+
 
     image_dir = args.dir
     csv_dir = args.csv_location
@@ -90,7 +101,7 @@ if __name__ == "__main__":
     if folder_name is not None:
         folder_name = os.path.realpath(folder_name)
 
-    test_size = 100
+    test_size = 250
 
     second_image_dir = args.dir2
 
@@ -134,7 +145,7 @@ if __name__ == "__main__":
     if run_mode == 4:
         show_images(image_name)
     
-    if run_mode == 5:
+    if run_mode == 5 or run_mode == 8:
         if folder_name is not None:
             os.makedirs(folder_name)
             run_dir = folder_name
@@ -262,7 +273,7 @@ if __name__ == "__main__":
 
 
         #model.summary()
-        if model_to_use!=3:
+        if model_to_use!=3 and run_mode == 5:
             np_image_batch_test,test_labels_batch = prepare_data_for_model(test_size,test_labels,test_images,new_image_width,new_image_height)
             total_images = len(train_images)
             images_trained_on = 0
@@ -298,7 +309,7 @@ if __name__ == "__main__":
                     previous_save = previous_save + save_interval
                 print("epoch: ",current_epoch)
         #multiple inputs
-        else:
+        elif run_mode == 5 and model_to_use == 3:
             test_images_two = change_dir_name(second_image_dir,test_images)
             train_images_two = change_dir_name(second_image_dir,train_images)
             np_image_batch_test,np_image_batch_test_two,test_labels_batch = prepare_data_for_model_two(test_size,test_labels,test_images,test_images_two,new_image_width,new_image_height)
@@ -347,4 +358,8 @@ if __name__ == "__main__":
         plot_accuracy(plot_directory,plot_epoch)
     if run_mode == 7:
         plot_loss(plot_directory,plot_epoch)
+    
+    if run_mode == 8:
+        print("make matrix")
+        create_confusion_matrix(model,test_images,test_labels)
     
