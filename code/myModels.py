@@ -4,8 +4,11 @@ from tensorflow.keras.layers import Dropout,Input,concatenate
 import os
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import plot_model
+import numpy as np
 
 import time
+
+from preprocessData import *
 
 # import efficientnet.keras as efn 
 # from keras_efficientnets import EfficientNetB5
@@ -22,20 +25,25 @@ from efficientnet.tfkeras import EfficientNetB7 as Net
 
 def create_CNN(new_image_width,new_image_height):
     model = models.Sequential()
-    model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(new_image_width, new_image_height, 3)))
+    model.add(layers.Conv2D(32, (7, 7), activation='relu', input_shape=(new_image_width, new_image_height, 3)))
     model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+    model.add(layers.Conv2D(64, (5, 5), activation='relu'))
     model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-
+    model.add(layers.Conv2D(128, (3, 3), activation='relu'))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(256, (3, 3), activation='relu'))
+    model.add(layers.MaxPooling2D((2, 2)))
     model.add(layers.Flatten())
     model.add(layers.Dense(64, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(layers.Dense(10,activation='relu'))
     model.add(Dropout(0.5))
     model.add(layers.Dense(5, activation='softmax'))        
     model.compile(optimizer='adam',
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
-    #model.summary()
+    # model.summary()
+    # quit()
 
     return model
 
@@ -213,4 +221,33 @@ def inception_v3_resnet(image_width,image_height):
     # quit()
     return final_model
 
+
+def get_model_predictions(loaded_model,images):
+    print(len(images))
+    total_predictions = []
+    total_predictions = np.asarray(total_predictions)
+
+    test_size = 50
+    number_of_large_groups = math.floor(len(images)/test_size)
+
+    counter = 1
+    for i in range(number_of_large_groups):
+        image_batch = images[((counter - 1)*test_size):((counter*test_size))]
+        image_batch = normalize_images(image_batch)
+        image_batch = np.asarray(image_batch)
+        print(str(counter*test_size) + " images tested")
+        total_predictions = np.append(total_predictions,loaded_model.predict_classes(image_batch))
+        print("total predictions:",np.shape(total_predictions))
+
+        # print("total labels: ",np.shape(total_labels))
+        counter = counter + 1
+
+    #makes the rest of the predictions
+    image_batch = images[(test_size*number_of_large_groups):(len(images))]
+    image_batch = normalize_images(image_batch)
+    image_batch = np.asarray(image_batch)
+
+    total_predictions = np.append(total_predictions,loaded_model.predict_classes(image_batch))
+
+    return total_predictions
 
