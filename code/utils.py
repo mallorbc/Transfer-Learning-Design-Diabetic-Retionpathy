@@ -6,6 +6,7 @@ import numpy as np
 
 import preprocessData
 import time
+import argparse
 
 def get_info_on_data(list_of_data):
     counter = [0,0,0,0,0]
@@ -73,3 +74,14 @@ def change_dir_name(new_dir,images):
         temp = new_dir + temp
         return_list.append(os.path.realpath(temp))
     return return_list
+
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')

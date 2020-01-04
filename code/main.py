@@ -42,6 +42,7 @@ from preprocessData import *
 
 
 if __name__ == "__main__":
+    # inception_into_resnet(512,512)
     #inception_v3_multiple_inputs(256,256)
     now = datetime.now()
     dt_string = now.strftime("%m-%d-%H-%M-%S")
@@ -58,17 +59,20 @@ if __name__ == "__main__":
     parser.add_argument("-d3","--dir3",default=None,help="directory containing the third dataset",type=str)
     parser.add_argument("-csv","--csv_location",default=None,help="location of the csv data file",type=str)
     parser.add_argument("-b","--batch_size",default=128,help="batch size for training",type=int)
-    parser.add_argument("-e","--epochs",default=10000,help="Number of epochs to train the network on",type=int)
+    parser.add_argument("-e","--epochs",default=10000,help="Number of epochs to train the network on",type=float)
     parser.add_argument("-ti","--test_interval",default=50,help="How oftern to use test the model on the test data",type=int)
     parser.add_argument("-si","--save_interval",default=1,help="After how many epochs to save the model to a checkpoint",type=float)
     parser.add_argument("-l","--load_model",default=None,help="Option to load a saved model",type=str)
     parser.add_argument("-td","--test_data_percentage",default=0.3,help="Percentage of data to use for test data",type=float)
     parser.add_argument("-pd","--plot_dir",default=None,help="directory containing data to plot",type=str)
     parser.add_argument("-model","--model_to_use",default=1,help="Selects what model to use",type=int)
-    parser.add_argument("-trainable","--trainable_transfer",default=True,help="Can the transfer learning model learn on the new data",type=bool)
+    parser.add_argument("-trainable","--trainable_transfer",default=True,help="Can the transfer learning model learn on the new data",type=str2bool)
     parser.add_argument("-pe","--plot_epoch",default=None,help="What eopch to stop early at",type=float)
     parser.add_argument("-np","--numpy",default=False,help="Whether the data outputed should be numpy, and whether the data loaded is numpy",type=bool)
     parser.add_argument("-mem","--gpu_mem",default=None,help="allows us to not use all the memory, useful for testing a model that is currently training",type=float)
+    parser.add_argument("-train_csv",default=None,help="This allows us to specifiy what photos to use for training",type=str)
+    parser.add_argument("-test_csv",default=None,help="This allows us to specifiy what photos to use for testing")
+
 
     args = parser.parse_args()
 
@@ -178,6 +182,8 @@ if __name__ == "__main__":
                 model = create_CNN(new_image_width, new_image_height)
                 model_name = "CNN"
             elif model_to_use == 2:
+                print(transfer_trainable)
+                quit()
                 if transfer_trainable:
                     model = transfer_learning_model_inception_v3(new_image_width, new_image_height,True)
                 else:
