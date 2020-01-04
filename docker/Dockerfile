@@ -35,14 +35,15 @@ RUN wget https://repo.anaconda.com/archive/Anaconda3-2019.03-Linux-x86_64.sh \
 
 RUN conda init \
 && conda create -n diabetic python \
-&& conda install -n diabetic matplotlib \
+&& conda install -n diabetic matplotlib=3.0.3 \
 && conda install -n diabetic opencv \
 && conda install -n diabetic pandas \
 && conda install -n diabetic scikit-learn \
 && conda install -n diabetic keras \
 && conda install -n diabetic tensorflow-gpu=1.14 \
 && conda install -n diabetic Pillow  \
-&& conda install -n diabetic pydot
+&& conda install -n diabetic pydot \ 
+&& conda install -n diabetic seaborn
 
 RUN conda init bash \
 && source ~/.bashrc \
