@@ -8,7 +8,7 @@ import os
 import cv2
 #for confusion matrix
 import pandas as pd
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix
 import seaborn as sn
 
 
@@ -198,59 +198,17 @@ def show_images(image_name):
         plt.show()
 
 def create_confusion_matrix(loaded_model,images,labels):
-    print(len(images))
-    print(len(labels))
-    total_predictions = []
     total_labels = []
-    total_predictions = np.asarray(total_predictions)
     total_labels = np.asarray(labels)
 
-    test_size = 50
-    number_of_large_groups = math.floor(len(images)/test_size)
-    # test_image = images[0]
-    # test_list = []
-    # test_list.append(test_image)
-    # print(test_image)
-    # test_label = labels[0]
-    # test_image = normalize_images(test_list)
-    # test_image = np.asarray(test_image)
-    # print("tf prediction: ",loaded_model.predict_classes(test_image))
-    # quit()
-    # print("prediction: " ,get_model_prediction(loaded_model,test_image))
-    # quit()
-    #makes predictions in groups of 100
-    counter = 1
-    for i in range(number_of_large_groups):
-        image_batch = images[((counter - 1)*test_size):((counter*test_size))]
-        # label_batch = labels[((counter - 1)*test_size):((counter*test_size)-1)]
-        image_batch = normalize_images(image_batch)
-        # print(np.shape(image_batch))
-        image_batch = np.asarray(image_batch)
-        print(str(counter*test_size) + " images tested")
-        total_predictions = np.append(total_predictions,loaded_model.predict_classes(image_batch))
-        # print(total_predictions[0])
-        print("total predictions:",np.shape(total_predictions))
-        # quit()
-        # test = loaded_model.predict(image_batch)
-        # np.concatenate(total_predictions,test)
-        # total_labels = np.append(total_labels,label_batch)
-        print("total labels: ",np.shape(total_labels))
-        counter = counter + 1
-
-    #makes the rest of the predictions
-    image_batch = images[(test_size*number_of_large_groups):(len(images))]
-    label_batch = labels[(test_size*number_of_large_groups):(len(images))]
-    image_batch = normalize_images(image_batch)
-    image_batch = np.asarray(image_batch)
-
-    total_predictions = np.append(total_predictions,loaded_model.predict_classes(image_batch))
-    # total_labels=  np.append(total_labels,label_batch)
+    total_predictions = get_model_predictions(loaded_model,images)
 
     print(np.shape(total_predictions))
     print(np.shape(total_labels))
 
     print("Converting into matrix...")
     matrix = make_confusion_matrix_array(total_labels,total_predictions)
+    print(classification_report(total_labels, total_predictions))    
     print("Plotting...")
     plot_confusion_matrix(matrix,"test")
 
