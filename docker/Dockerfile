@@ -49,3 +49,20 @@ RUN conda init bash \
 && source ~/.bashrc \
 && conda activate diabetic \ 
 && pip install -U efficientnet
+
+RUN conda init \
+&& conda create -n diabetic2 python \
+&& conda install -n diabetic2 matplotlib=3.0.3 \
+&& conda install -n diabetic2 opencv \
+&& conda install -n diabetic2 pandas \
+&& conda install -n diabetic2 scikit-learn \
+&& conda install -n diabetic2 keras \
+&& conda install -n diabetic2 tensorflow-gpu \
+&& conda install -n diabetic2 Pillow  \
+&& conda install -n diabetic2 pydot \ 
+&& conda install -n diabetic2 seaborn
+
+RUN conda init bash \
+&& source ~/.bashrc \
+&& conda activate diabetic2 \ 
+&& pip install -U efficientnet
