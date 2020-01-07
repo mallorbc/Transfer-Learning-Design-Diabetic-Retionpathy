@@ -102,6 +102,9 @@ if __name__ == "__main__":
     folder_name = args.name
     data_is_numpy = args.numpy
 
+    train_csv = args.train_csv
+    test_csv = args.test_csv
+
     if folder_name is not None:
         folder_name = os.path.realpath(folder_name)
 
@@ -114,15 +117,18 @@ if __name__ == "__main__":
     if plot_directory is not None:
         plot_directory = os.path.abspath(plot_directory)
 
-    if image_dir is None and run_mode!=6 and run_mode!=7:
+    if image_dir is None and run_mode!=7 and run_mode!=8:
         raise SyntaxError('directory for images must be provided')
 
     if csv_dir is None and run_mode!=6 and run_mode!=7:
-        raise SyntaxError('Location for data labels csv file must be provided')
+        if(train_csv is None and test_csv is None):
+            raise SyntaxError('Location for data labels csv file must be provided')
+    elif csv_dir is not None and (train_csv is not None or train_csv is not None):
+        raise SyntaxError('You must either use random train test split or provide a split, not both')
 
 
 
-    if run_mode == 1 or run_mode == 2 or run_mode == 3 or run_mode==4:
+    if run_mode == 2 or run_mode == 3 or run_mode==4:
         if output_dir is None:
             raise SyntaxError('Must provide a directory for the output')
         output_dir = os.path.abspath(output_dir)
@@ -130,7 +136,7 @@ if __name__ == "__main__":
             os.makedirs(output_dir)
     
 
-    if run_mode !=7 and run_mode !=8 and run_mode!=1:
+    if run_mode !=7 and run_mode!=8:
         #loads the data
         health_level,image_name = load_data(csv_dir)
 
@@ -148,7 +154,16 @@ if __name__ == "__main__":
     
 
     if run_mode == 1:
-
+        #there are 30ish missing files, should make a new csv later
+        health_level,image_name = remove_nonexistent_data(health_level,image_name)
+        #shuffles the data to randomize starting train and test data
+        health_level,image_name = shuffle_data(health_level,image_name)
+        #way to many zeros in the data
+        health_level,image_name = trim_data(run_dir,health_level,image_name)
+        #shuffles the data to randomize starting train and test data
+        health_level,image_name = shuffle_data(health_level,image_name)
+        #splits the data into train and test
+        train_images,train_labels,test_images,test_labels = split_data_train_test(run_dir,health_level,image_name,test_data_percentage)
     #cirlce crops the images
     if run_mode == 2:
         circle_crop_v2(image_name,output_dir,data_is_numpy)
@@ -160,7 +175,7 @@ if __name__ == "__main__":
     if run_mode == 5:
         show_images(image_name)
     
-    if run_mode == 6 or run_mode == 9 
+    if run_mode == 6 or run_mode == 9: 
         # run_dir = os.path.abspath(dt_string)
         if model_to_load is None:
             #there are 30ish missing files, should make a new csv later
