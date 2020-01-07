@@ -122,7 +122,7 @@ if __name__ == "__main__":
 
 
 
-    if run_mode == 1 or run_mode == 2 or run_mode == 3:
+    if run_mode == 1 or run_mode == 2 or run_mode == 3 or run_mode==4:
         if output_dir is None:
             raise SyntaxError('Must provide a directory for the output')
         output_dir = os.path.abspath(output_dir)
@@ -130,7 +130,7 @@ if __name__ == "__main__":
             os.makedirs(output_dir)
     
 
-    if run_mode !=6 and run_mode!=7:
+    if run_mode !=7 and run_mode !=8 and run_mode!=1:
         #loads the data
         health_level,image_name = load_data(csv_dir)
 
@@ -138,25 +138,29 @@ if __name__ == "__main__":
         data_path = os.path.abspath(image_dir)
         image_name = get_full_image_name(data_path,image_name)
 
-    #cirlce crops the images
-    if run_mode == 1:
-        circle_crop_v2(image_name,output_dir,data_is_numpy)
-    if run_mode == 2:
-        resize_image(image_name,new_image_width,new_image_height,output_dir)
-    if run_mode == 3:
-        #print(image_name)
-        add_blur(image_name,output_dir)        
-    if run_mode == 4:
-        show_images(image_name)
-    
-    if run_mode == 5 or run_mode == 8:
+    if run_mode == 1 or run_mode == 6 or run_mode == 9:
         if folder_name is not None:
             os.makedirs(folder_name)
             run_dir = folder_name
         else:
             os.makedirs(dt_string)
             run_dir = os.path.abspath(dt_string)
+    
 
+    if run_mode == 1:
+
+    #cirlce crops the images
+    if run_mode == 2:
+        circle_crop_v2(image_name,output_dir,data_is_numpy)
+    if run_mode == 3:
+        resize_image(image_name,new_image_width,new_image_height,output_dir)
+    if run_mode == 4:
+        #print(image_name)
+        add_blur(image_name,output_dir)        
+    if run_mode == 5:
+        show_images(image_name)
+    
+    if run_mode == 6 or run_mode == 9 
         # run_dir = os.path.abspath(dt_string)
         if model_to_load is None:
             #there are 30ish missing files, should make a new csv later
@@ -182,8 +186,6 @@ if __name__ == "__main__":
                 model = create_CNN(new_image_width, new_image_height)
                 model_name = "CNN"
             elif model_to_use == 2:
-                print(transfer_trainable)
-                quit()
                 if transfer_trainable:
                     model = transfer_learning_model_inception_v3(new_image_width, new_image_height,True)
                 else:
@@ -279,7 +281,7 @@ if __name__ == "__main__":
 
 
         #model.summary()
-        if model_to_use!=3 and run_mode == 5:
+        if model_to_use!=4 and run_mode == 6:
             np_image_batch_test,test_labels_batch = prepare_data_for_model(test_size,test_labels,test_images,new_image_width,new_image_height)
             total_images = len(train_images)
             images_trained_on = 0
@@ -315,7 +317,7 @@ if __name__ == "__main__":
                     previous_save = previous_save + save_interval
                 print("epoch: ",current_epoch)
         #multiple inputs
-        elif run_mode == 5 and model_to_use == 3:
+        elif run_mode == 6 and model_to_use == 4:
             test_images_two = change_dir_name(second_image_dir,test_images)
             train_images_two = change_dir_name(second_image_dir,train_images)
             np_image_batch_test,np_image_batch_test_two,test_labels_batch = prepare_data_for_model_two(test_size,test_labels,test_images,test_images_two,new_image_width,new_image_height)
@@ -360,12 +362,12 @@ if __name__ == "__main__":
 
     
 
-    if run_mode == 6:
-        plot_accuracy(plot_directory,plot_epoch)
     if run_mode == 7:
+        plot_accuracy(plot_directory,plot_epoch)
+    if run_mode == 8:
         plot_loss(plot_directory,plot_epoch)
     
-    if run_mode == 8:
+    if run_mode == 9:
         print("make matrix")
         create_confusion_matrix(model,test_images,test_labels)
     
