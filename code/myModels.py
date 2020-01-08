@@ -15,6 +15,9 @@ from preprocessData import *
 #import efficientnet.keras as efn 
 from efficientnet.tfkeras import EfficientNetB7 as Net
 
+# from keras_radam import RAdam
+
+
 
 
 
@@ -80,17 +83,34 @@ def transfer_learning_model_inception_v3(new_image_width, new_image_height,is_tr
     #adds the two layers for transfer learning
     model = models.Sequential([base_model,global_average_layer])
     #adds dense and dropout layers for final output
-    model.add(layers.Dense(1024, activation='relu'))
+    model.add(layers.Dense(1024))
+    model.add(layers.LeakyReLU())
     model.add(Dropout(0.5))
     #model.add(layers.Dense(1024, activation='relu'))
-    model.add(layers.Dense(512, activation='relu'))
+    # model.add(layers.Dense(512, activation='relu'))
+    model.add(layers.Dense(512))
+    # model.add(layers.LeakyReLU())
+    model.add(layers.PReLU())
     model.add(Dropout(0.5))
+    model.add(layers.Dense(256))
+    model.add(layers.PReLU())
+    # model.add(layers.LeakyReLU())
+    model.add(Dropout(0.5))
+    model.add(layers.Dense(128))
+    # model.add(layers.LeakyReLU())
+    model.add(layers.PReLU())
+    model.add(Dropout(0.5))
+    # model.add(layers.Dense(64, activation='relu'))
+    # model.add(Dropout(0.5))
     model.add(layers.Dense(5, activation='softmax'))
     model.compile(optimizer=Adam(lr=0.00001),
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
-    #model.summary()
-
+    # model.compile(optimizer=RAdam(lr=0.00001),
+    #             loss='sparse_categorical_crossentropy',
+    #             metrics=['accuracy'])
+    model.summary()
+    time.sleep(2)
     return model
 
 def inception_v3_multiple_inputs(image_width,image_height):
@@ -250,4 +270,12 @@ def get_model_predictions(loaded_model,images):
     total_predictions = np.append(total_predictions,loaded_model.predict_classes(image_batch))
 
     return total_predictions
+
+def complicated_cnn(image_width,image_height):
+    print("hi")
+
+
+
+
+
 
