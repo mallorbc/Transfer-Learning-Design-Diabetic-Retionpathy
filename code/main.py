@@ -60,7 +60,7 @@ if __name__ == "__main__":
     parser.add_argument("-csv","--csv_location",default=None,help="location of the csv data file",type=str)
     parser.add_argument("-b","--batch_size",default=128,help="batch size for training",type=int)
     parser.add_argument("-e","--epochs",default=10000,help="Number of epochs to train the network on",type=float)
-    parser.add_argument("-ti","--test_interval",default=50,help="How oftern to use test the model on the test data",type=int)
+    parser.add_argument("-ti","--test_interval",default=50,help="How oftern to use test the model on the test data",type=float)
     parser.add_argument("-si","--save_interval",default=1,help="After how many epochs to save the model to a checkpoint",type=float)
     parser.add_argument("-l","--load_model",default=None,help="Option to load a saved model",type=str)
     parser.add_argument("-td","--test_data_percentage",default=0.3,help="Percentage of data to use for test data",type=float)
@@ -316,6 +316,9 @@ if __name__ == "__main__":
 
 
         #model.summary()
+
+        #value used to test the network every test interval
+        previous_test_epoch = 0.0
         if model_to_use!=4 and run_mode == 6:
             np_image_batch_test,test_labels_batch = prepare_data_for_model(test_size,test_labels,test_images,new_image_width,new_image_height)
             total_images = len(train_images)
@@ -327,8 +330,8 @@ if __name__ == "__main__":
                 model.train_on_batch(np_image_batch, label_batch)
                 #adds the number of images to the total count
                 images_trained_on = images_trained_on + batch_size
-                #outputs stats after 5 batchs
-                if images_trained_on % (test_interval*batch_size)==0:
+                #outputs stats after every test interval passes
+                if (current_epoch - previous_test_epoch)> test_interval:
                     print("Evaulating on test data...")
                     #gets the metrics for the test data
                     metrics = model.evaluate(np_image_batch_test, test_labels_batch)
@@ -344,6 +347,8 @@ if __name__ == "__main__":
                     add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,current_epoch,run_dir)
                     #gets new dataset for testing
                     np_image_batch_test,test_labels_batch = prepare_data_for_model(test_size,test_labels,test_images,new_image_width,new_image_height)
+                    #updates the test interval
+                    previous_test_epoch = current_epoch
                 #increments the epoch
                 current_epoch = current_epoch + batch_size/total_images
                 #saves the epoch if the save increment has passed
@@ -367,7 +372,7 @@ if __name__ == "__main__":
                 #adds the number of images to the total count
                 images_trained_on = images_trained_on + batch_size
                 #outputs stats after 5 batchs
-                if images_trained_on % (test_interval*batch_size)==0:
+                if (current_epoch - previous_test_epoch)> test_interval:
                     print("Evaulating on test data...")
                     #gets the metrics for the test data
                     metrics = model.evaluate([np_image_batch_test,np_image_batch_test_two], test_labels_batch)
@@ -387,6 +392,8 @@ if __name__ == "__main__":
                     add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,current_epoch,run_dir)
                     #gets new dataset for testing
                     np_image_batch_test,np_image_batch_test_two,test_labels_batch = prepare_data_for_model_two(test_size,test_labels,test_images,test_images_two,new_image_width,new_image_height)
+                    #updates the previous_test_epoch
+                    previous_test_epoch = current_epoch
                 #increments the epoch
                 current_epoch = current_epoch + batch_size/total_images
                 #saves the epoch if the save increment has passed
