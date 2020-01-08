@@ -102,8 +102,8 @@ if __name__ == "__main__":
     folder_name = args.name
     data_is_numpy = args.numpy
 
-    train_csv = args.train_csv
-    test_csv = args.test_csv
+    loaded_train_csv = args.train_csv
+    loaded_test_csv = args.test_csv
 
     if folder_name is not None:
         folder_name = os.path.realpath(folder_name)
@@ -119,12 +119,16 @@ if __name__ == "__main__":
 
     if image_dir is None and run_mode!=7 and run_mode!=8:
         raise SyntaxError('directory for images must be provided')
-
+    
+    #this variable tracks whether we are loading csv files or not
+    loaded_train_test_csv = False
     if csv_dir is None and run_mode!=6 and run_mode!=7:
-        if(train_csv is None and test_csv is None):
+        if loaded_train_csv is None or loaded_test_csv is None:
             raise SyntaxError('Location for data labels csv file must be provided')
-    elif csv_dir is not None and (train_csv is not None or train_csv is not None):
-        raise SyntaxError('You must either use random train test split or provide a split, not both')
+    elif csv_dir is not None and (loaded_train_csv is not None or loaded_train_csv is not None):
+        # raise SyntaxError('You must either use random train test split or provide a split, not both')
+        loaded_train_test_csv = True
+
 
 
 
@@ -178,24 +182,40 @@ if __name__ == "__main__":
     if run_mode == 6 or run_mode == 9: 
         # run_dir = os.path.abspath(dt_string)
         if model_to_load is None:
-            #there are 30ish missing files, should make a new csv later
-            health_level,image_name = remove_nonexistent_data(health_level,image_name)
-            #shuffles the data to randomize starting train and test data
-            health_level,image_name = shuffle_data(health_level,image_name)
-            #way to many zeros in the data
-            health_level,image_name = trim_data(run_dir,health_level,image_name)
-            #shuffles the data to randomize starting train and test data
-            health_level,image_name = shuffle_data(health_level,image_name)
-            #splits the data into train and test
-            train_images,train_labels,test_images,test_labels = split_data_train_test(run_dir,health_level,image_name,test_data_percentage)
+            if loaded_train_test_csv is False:
+                #there are 30ish missing files, should make a new csv later
+                health_level,image_name = remove_nonexistent_data(health_level,image_name)
+                #shuffles the data to randomize starting train and test data
+                health_level,image_name = shuffle_data(health_level,image_name)
+                #way to many zeros in the data
+                health_level,image_name = trim_data(run_dir,health_level,image_name)
+                #shuffles the data to randomize starting train and test data
+                health_level,image_name = shuffle_data(health_level,image_name)
+                #splits the data into train and test
+                train_images,train_labels,test_images,test_labels = split_data_train_test(run_dir,health_level,image_name,test_data_percentage)
+                #loads the trimmed data
+                trimmed_csv_file = run_dir + "/csv_files/trimmed.csv"
+                trimmed_labels,trimmed_images = load_data(trimmed_csv_file)
+            #else we are loading data from other csv files
+            else:
+                train_labels,train_images = load_data(loaded_train_csv)
+                test_labels,test_images = load_data(loaded_test_csv)
+                # trimmed_labels,trimmed_images = load_data(trimmed_csv_file)
+
+                #gets the full paths of the images
+                train_images = get_full_image_name_no_ext(data_path,train_images)
+                test_images = get_full_image_name_no_ext(data_path,test_images)
+                #saves the csv files into the new run directory
+                save_csv(run_dir,"train.csv",train_labels,train_images)
+                save_csv(run_dir,"test.csv",test_labels,test_images)
+
+
 
             #sets the epochs and save points
             current_epoch = 0
             previous_save = 0
             
-            #loads the trimmed data
-            trimmed_csv_file = run_dir + "/csv_files/trimmed.csv"
-            trimmed_labels,trimmed_images = load_data(trimmed_csv_file)
+
             #creates a new model
             if model_to_use == 1:
                 model = create_CNN(new_image_width, new_image_height)
