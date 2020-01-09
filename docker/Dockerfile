@@ -20,7 +20,8 @@ RUN apt update \
 && apt install build-essential -y \
 && apt install unzip -y \
 && apt install nomacs -y \
-&& apt install git -y
+&& apt install git -y \
+&& apt install nano -y
 
 #gets the anaconda package, installs it, and adds it to the path
 #gets the anaconda package
