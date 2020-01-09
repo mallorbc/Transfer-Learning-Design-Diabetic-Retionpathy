@@ -197,11 +197,11 @@ def show_images(image_name):
         plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
         plt.show()
 
-def create_confusion_matrix(loaded_model,images,labels):
+def create_confusion_matrix_one_input(loaded_model,images,labels):
     total_labels = []
     total_labels = np.asarray(labels)
 
-    total_predictions = get_model_predictions(loaded_model,images)
+    total_predictions = get_model_predictions_one_input(loaded_model,images)
 
     print(np.shape(total_predictions))
     print(np.shape(total_labels))
@@ -212,8 +212,20 @@ def create_confusion_matrix(loaded_model,images,labels):
     print("Plotting...")
     plot_confusion_matrix(matrix,"test")
 
+def create_confusion_matrix_two_inputs(model,images_one,images_two,labels):
+    total_labels = []
+    total_labels = np.asarray(labels)
+    total_predictions = get_model_predictions_two_inputs(model,images_one,images_two)
 
-    print("matrix")
+    print(np.shape(total_predictions))
+    print(np.shape(total_labels))
+
+    print("Converting into matrix...")
+    matrix = make_confusion_matrix_array(total_labels,total_predictions)
+    print(classification_report(total_labels, total_predictions))    
+    print("Plotting...")
+    plot_confusion_matrix(matrix,"test")
+
 
 def make_confusion_matrix_array(actual, predicted):
     matrix = confusion_matrix(actual, predicted)
