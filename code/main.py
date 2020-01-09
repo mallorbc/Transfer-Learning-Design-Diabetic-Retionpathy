@@ -58,10 +58,10 @@ if __name__ == "__main__":
     parser.add_argument("-d2","--dir2",default=None,help="directory containing second dataset of images",type=str)
     parser.add_argument("-d3","--dir3",default=None,help="directory containing the third dataset",type=str)
     parser.add_argument("-csv","--csv_location",default=None,help="location of the csv data file",type=str)
-    parser.add_argument("-b","--batch_size",default=128,help="batch size for training",type=int)
-    parser.add_argument("-e","--epochs",default=10000,help="Number of epochs to train the network on",type=float)
-    parser.add_argument("-ti","--test_interval",default=50,help="How oftern to use test the model on the test data",type=float)
-    parser.add_argument("-si","--save_interval",default=1,help="After how many epochs to save the model to a checkpoint",type=float)
+    parser.add_argument("-b","--batch_size",default=64,help="batch size for training",type=int)
+    parser.add_argument("-e","--epochs",default=50,help="Number of epochs to train the network on",type=float)
+    parser.add_argument("-ti","--test_interval",default=0.25,help="How oftern to use test the model on the test data",type=float)
+    parser.add_argument("-si","--save_interval",default=0.25,help="After how many epochs to save the model to a checkpoint",type=float)
     parser.add_argument("-l","--load_model",default=None,help="Option to load a saved model",type=str)
     parser.add_argument("-td","--test_data_percentage",default=0.3,help="Percentage of data to use for test data",type=float)
     parser.add_argument("-pd","--plot_dir",default=None,help="directory containing data to plot",type=str)
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     
     #this variable tracks whether we are loading csv files or not
     loaded_train_test_csv = False
-    if csv_dir is None and run_mode!=6 and run_mode!=7:
+    if csv_dir is None and run_mode!=7 and run_mode!=8:
         if loaded_train_csv is None or loaded_test_csv is None:
             raise SyntaxError('Location for data labels csv file must be provided')
     elif csv_dir is not None and (loaded_train_csv is not None or loaded_train_csv is not None):
@@ -411,5 +411,10 @@ if __name__ == "__main__":
     
     if run_mode == 9:
         print("make matrix")
-        create_confusion_matrix(model,test_images,test_labels)
+        if model_to_use !=3:
+            create_confusion_matrix_one_input(model,test_images,test_labels)
+        else:
+            test_images_two = change_dir_name(second_image_dir,test_images)
+            # train_images_two = change_dir_name(second_image_dir,train_images)
+            create_confusion_matrix_two_inputs(model,test_images,test_images_two,test_labels)
     
