@@ -72,6 +72,8 @@ if __name__ == "__main__":
     parser.add_argument("-mem","--gpu_mem",default=None,help="allows us to not use all the memory, useful for testing a model that is currently training",type=float)
     parser.add_argument("-train_csv",default=None,help="This allows us to specifiy what photos to use for training",type=str)
     parser.add_argument("-test_csv",default=None,help="This allows us to specifiy what photos to use for testing")
+    parser.add_argument("-zca","--zca_batch_size",default=1,help="number of images per ZCA preprocessing batch",type=int)
+    parser.add_argument("-blur","--blur",default=False,help="applies Gaussian blur prior to ZCA preprocessing",type=str2bool)
 
 
     args = parser.parse_args()
@@ -101,6 +103,8 @@ if __name__ == "__main__":
     plot_epoch = args.plot_epoch
     folder_name = args.name
     data_is_numpy = args.numpy
+    zca_batch_size = args.zca_batch_size        #added recently
+    zca_blur = args.blur                        #added recently
 
     loaded_train_csv = args.train_csv
     loaded_test_csv = args.test_csv
@@ -132,7 +136,7 @@ if __name__ == "__main__":
 
 
 
-    if run_mode == 2 or run_mode == 3 or run_mode==4:
+    if run_mode == 2 or run_mode == 3 or run_mode==4 or run_mode==22:
         if output_dir is None:
             raise SyntaxError('Must provide a directory for the output')
         output_dir = os.path.abspath(output_dir)
@@ -169,6 +173,10 @@ if __name__ == "__main__":
         #splits the data into train and test
         train_images,train_labels,test_images,test_labels = split_data_train_test(run_dir,health_level,image_name,test_data_percentage)
     #cirlce crops the images
+
+    if run_mode = 22:
+        zca_nocirc(image_name, output_dir, zca_batch_size, zca_blur) 
+
     if run_mode == 2:
         circle_crop_v2(image_name,output_dir,data_is_numpy)
     if run_mode == 3:
