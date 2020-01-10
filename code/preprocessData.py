@@ -211,6 +211,7 @@ def circle_crop_v2(image_path,output_dir,save_numpy):
     for image in image_path:
         name = os.path.basename(image)
         img = cv2.imread(image)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = crop_image_from_gray(img)
         if img is None:
             continue
