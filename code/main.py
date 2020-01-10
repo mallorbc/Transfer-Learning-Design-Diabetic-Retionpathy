@@ -174,7 +174,7 @@ if __name__ == "__main__":
         train_images,train_labels,test_images,test_labels = split_data_train_test(run_dir,health_level,image_name,test_data_percentage)
     #cirlce crops the images
 
-    if run_mode = 22:
+    if run_mode == 22:
         zca_nocirc(image_name, output_dir, zca_batch_size, zca_blur) 
 
     if run_mode == 2:
