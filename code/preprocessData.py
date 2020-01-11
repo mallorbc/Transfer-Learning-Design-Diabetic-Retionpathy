@@ -241,6 +241,32 @@ def circle_crop_v2(image_path,output_dir,save_numpy):
             save_location = save_location + ".npy"
             np.save(save_location,img_np)
 
+def regcrop(image_path,output_dir,save_numpy):
+    """
+    Basic crop_image_from_gray for a dataset
+    """
+    image_dir = output_dir + "/images"
+    if not os.path.exists(image_dir):
+        os.makedirs(image_dir)
+    for image in image_path:
+        name = os.path.basename(image)
+        img = cv2.imread(image)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = crop_image_from_gray(img)
+        if img is None:
+            continue
+
+        save_location = image_dir + "/" + name
+        if not save_numpy:
+            img = Image.fromarray(img)
+            img.save(save_location,"JPEG", optimize=True)
+        else:
+            img_np = normalize_images(img,save_numpy)
+            save_location = save_location.split(".")
+            save_location = save_location[0]
+            save_location = save_location + ".npy"
+            np.save(save_location,img_np)
+
 def add_blur(image_path,output_dir):
     #creates the output for the blurred images
     image_dir = output_dir + "/images"
