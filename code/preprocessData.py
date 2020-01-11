@@ -278,6 +278,7 @@ def add_blur(image_path,output_dir):
         name = os.path.basename(image)
         #reads in the image
         img = cv2.imread(image)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         #gets the height and width
         height, width, channels = img.shape
         image_size = height
