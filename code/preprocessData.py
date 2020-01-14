@@ -378,7 +378,7 @@ def zca_nocirc(image_path,output_dir, batch_size, blur):
 
         cov = np.cov(X_norm, rowvar = True)     #calculating covariance matrix, finding eigenvectors/values, defining epsilon
         U,S,V = np.linalg.svd(cov)
-        epsilon = 0.1
+        epsilon = 0.01
 
         print("Performing whitening.")
         X_ZCA = U.dot(np.diag(1.0/np.sqrt(S + epsilon))).dot(U.T).dot(X_norm)    #performing whitening
