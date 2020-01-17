@@ -60,6 +60,23 @@ def get_last_epoch(epoch_file):
     last_epoch = epoch_array[-1]
     return last_epoch
 
+def get_lowest_loss(epoch_file,loss_file):
+    epoch_array = np.load(epoch_file)
+    loss_array = np.load(loss_file)
+    low_loss_index = np.where(loss_array == np.amin(loss_array))
+    lowest_loss_epoch = epoch_array[low_loss_index]
+    lowest_loss_value = loss_array[low_loss_index]
+
+    return lowest_loss_value,lowest_loss_epoch
+
+def get_highest_accuracy(epoch_file,acc_file):
+    epoch_array = np.load(epoch_file)
+    accuracy_array = np.load(acc_file)
+    highest_acc_index = np.where(accuracy_array == np.amax(accuracy_array))
+    highest_acc_epoch = epoch_array[highest_acc_index]
+    highest_acc_value = accuracy_array[highest_acc_index]
+    return highest_acc_value,highest_acc_epoch
+
 def get_trimmed_data(number_to_get,trimmed_images,trimmed_labels):
     trimmed_labels,trimmed_images = preprocessData.shuffle_data(trimmed_labels,trimmed_images)
     trimmed_labels = trimmed_labels[:number_to_get]
