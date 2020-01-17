@@ -133,11 +133,12 @@ def transfer_learning_model_inception_v3(new_image_width, new_image_height,is_tr
     # model.compile(optimizer=Adam(lr=0.00001),
     #             loss='sparse_categorical_crossentropy',
     #             metrics=['accuracy'])
+    # return model
     model.compile(optimizer=ranger,
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
     model.summary()
-    time.sleep(2)
+    # time.sleep(2)
     return model
 
 def inception_v3_multiple_inputs(image_width,image_height):
