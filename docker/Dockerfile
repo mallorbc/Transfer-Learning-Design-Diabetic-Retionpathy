@@ -67,3 +67,21 @@ RUN conda init bash \
 && conda activate diabetic2 \ 
 && pip install -U efficientnet \
 && pip install tensorflow-addons==0.6.0
+
+
+RUN conda init \
+&& conda create -n no_gpu python \
+&& conda install -n no_gpu matplotlib=3.0.3 \
+&& conda install -n no_gpu opencv \
+&& conda install -n no_gpu pandas \
+&& conda install -n no_gpu scikit-learn \
+&& conda install -n no_gpu tensorflow=2.0.0 \
+&& conda install -n no_gpu Pillow  \
+&& conda install -n no_gpu pydot \ 
+&& conda install -n no_gpu seaborn
+
+RUN conda init bash \
+&& source ~/.bashrc \
+&& conda activate no_gpu \ 
+&& pip install -U efficientnet \
+&& pip install tensorflow-addons==0.6.0
