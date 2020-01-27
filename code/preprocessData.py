@@ -299,4 +299,17 @@ def prepare_data_for_model_two(size_of_data,labels,images,second_images,image_wi
 def save_data_as_np(list_of_images):
     print("save numpy")
 
+def make_csv_dict(health_level,image_name):
+    pickle_dict = {}
+
+    for i in range(len(image_name)):
+        # print(image_name[i])
+        pickle_dict[os.path.basename(image_name[i])] = health_level[i]
+        # print(str(i) + " total entries in dict")
+    
+    return pickle_dict
+
+#This will create a dict of classification numbers, with the stored values being a list of images of that class
+def make_diagnose_class_dict(health_level,image_name):
+    print("test")
 # def get_data_for_prediction(images,labels):
