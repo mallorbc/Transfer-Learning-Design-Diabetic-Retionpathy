@@ -73,6 +73,7 @@ if __name__ == "__main__":
     parser.add_argument("-train_csv",default=None,help="This allows us to specifiy what photos to use for training",type=str)
     parser.add_argument("-test_csv",default=None,help="This allows us to specifiy what photos to use for testing",type=str)
     parser.add_argument("-aug","--augment_data",default=True,help="flag on whether to use image data augmentation",type=str2bool)
+    parser.add_argument("-test_size",default=75,help="what batch size to use for testing the performance of the models",type=int)
 
     
     args = parser.parse_args()
@@ -112,7 +113,7 @@ if __name__ == "__main__":
     if folder_name is not None:
         folder_name = os.path.realpath(folder_name)
 
-    test_size = 75
+    test_size = args.test_size
 
     second_image_dir = args.dir2
 

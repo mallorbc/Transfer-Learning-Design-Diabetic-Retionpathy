@@ -15,6 +15,8 @@ from myModels import *
 from utils import *
 from plots import *
 import copy
+from random import randint
+
 
 
 if __name__ == "__main__":
@@ -84,26 +86,16 @@ if __name__ == "__main__":
         image = np.load(npy_file)
         print(np.shape(image))
         for i,m in enumerate(image):
-        # for item in image[0]:
             plt.imshow(m)
             plt.show()
-            # m = m*255.0
-            # image = Image.fromarray(m,mode='RGB')
-            # image.show()
-            # image.save(str(i)+".jpg")
-            if i == 5:
-                break
-            # print("test")
-            # print(np.shape(m))
-            # m = m *255.0
-            # plt.imshow(m)
-            # print(m)
-            # plt.show()
+
     elif mode_to_run == 5:
         base_path = args.image
         images = os.listdir(args.image)
+        number_of_images = len(images)
 
-        image_to_test = images[0]
+        # image_to_test = images[0]
+        image_to_test = images[randint(0,(number_of_images-1))]
         image_to_test = np.load(base_path+"/"+image_to_test)
 
         print(np.shape(image_to_test))
@@ -113,30 +105,25 @@ if __name__ == "__main__":
         # quit()
         image = Image.fromarray(image_to_test,mode="RGB")
         image.show()
+
+        
     elif mode_to_run == 6:
-        base_path = args.image
-        images = os.listdir(args.image)
-        image_to_test = images[0]
+        if class_to_test is not None:
+            image_name = get_images_of_one_class(class_to_test,image_name,health_dict)
+
+        image_name = add_extension(image_name,".jpeg")
+
+        number_of_images = len(image_name)
+        image_to_test = image_name[randint(0,(number_of_images-1))]
         image_to_test = cv2.imread(image_to_test)
-        image_to_test = np.asarray(image_to_test).astype(np.uint8)
-        # image_to_test = np.array(image_to_test)
-        # test = normalize(image_to_test)
-        im = Image.fromarray(image_to_test)
-        im.show()
-        # data_path = os.path.abspath(args.image)
-        # image_name = get_full_image_name_no_ext(data_path,image_name)
 
-    elif mode_to_run == 7:
-        im = Image.open('1_tree.jpg')
-        im = im.convert('RGB')
-        r, g, b = im.split()
-        r = r.point(lambda i: i * 1.5)
-        out = Image.merge('RGB', (r, g, b))
-        out.show()
+        image_to_test = cv2.cvtColor(image_to_test, cv2.COLOR_BGR2RGB)
+        plt.imshow(image_to_test)
+        plt.show()
 
 
 
-    
+
     print(mode_to_run)
 
 

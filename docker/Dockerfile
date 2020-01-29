@@ -22,7 +22,9 @@ RUN apt update \
 && apt install nomacs -y \
 && apt install git -y \
 && apt install nano -y \
-&& apt install gedit -y
+&& apt install gedit -y \
+&& apt install imagemagick
+
 
 #gets the anaconda package, installs it, and adds it to the path
 #gets the anaconda package
