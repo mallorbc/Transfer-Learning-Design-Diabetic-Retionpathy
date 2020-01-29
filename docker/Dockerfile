@@ -21,7 +21,10 @@ RUN apt update \
 && apt install unzip -y \
 && apt install nomacs -y \
 && apt install git -y \
-&& apt install nano -y
+&& apt install nano -y \
+&& apt install gedit -y \
+&& apt install imagemagick
+
 
 #gets the anaconda package, installs it, and adds it to the path
 #gets the anaconda package
@@ -40,7 +43,6 @@ RUN conda init \
 && conda install -n diabetic opencv \
 && conda install -n diabetic pandas \
 && conda install -n diabetic scikit-learn \
-&& conda install -n diabetic keras \
 && conda install -n diabetic tensorflow-gpu=1.14 \
 && conda install -n diabetic Pillow  \
 && conda install -n diabetic pydot \ 
@@ -57,8 +59,7 @@ RUN conda init \
 && conda install -n diabetic2 opencv \
 && conda install -n diabetic2 pandas \
 && conda install -n diabetic2 scikit-learn \
-&& conda install -n diabetic2 keras \
-&& conda install -n diabetic2 tensorflow-gpu \
+&& conda install -n diabetic2 tensorflow-gpu=2.0.0 \
 && conda install -n diabetic2 Pillow  \
 && conda install -n diabetic2 pydot \ 
 && conda install -n diabetic2 seaborn
@@ -66,4 +67,23 @@ RUN conda init \
 RUN conda init bash \
 && source ~/.bashrc \
 && conda activate diabetic2 \ 
-&& pip install -U efficientnet
+&& pip install -U efficientnet \
+&& pip install tensorflow-addons==0.6.0
+
+
+RUN conda init \
+&& conda create -n no_gpu python \
+&& conda install -n no_gpu matplotlib=3.0.3 \
+&& conda install -n no_gpu opencv \
+&& conda install -n no_gpu pandas \
+&& conda install -n no_gpu scikit-learn \
+&& conda install -n no_gpu tensorflow=2.0.0 \
+&& conda install -n no_gpu Pillow  \
+&& conda install -n no_gpu pydot \ 
+&& conda install -n no_gpu seaborn
+
+RUN conda init bash \
+&& source ~/.bashrc \
+&& conda activate no_gpu \ 
+&& pip install -U efficientnet \
+&& pip install tensorflow-addons==0.6.0

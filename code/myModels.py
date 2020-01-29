@@ -15,7 +15,7 @@ from preprocessData import *
 #import efficientnet.keras as efn 
 from efficientnet.tfkeras import EfficientNetB7 as Net
 
-# from keras_radam import RAdam
+import tensorflow_addons as tfa
 
 
 
@@ -60,8 +60,12 @@ def create_CNN(new_image_width,new_image_height):
     model.add(layers.Flatten())
     model.add(layers.Dense(64, activation='relu'))
     model.add(Dropout(0.5))
-    model.add(layers.Dense(5, activation='softmax'))        
-    model.compile(optimizer=Adam(lr=0.0001),
+    model.add(layers.Dense(5, activation='softmax'))
+    opt = tfa.optimizers.RectifiedAdam(lr=0.0001)
+    # model.compile(optimizer=Adam(lr=0.0001),
+    #             loss='sparse_categorical_crossentropy',
+    #             metrics=['accuracy'])
+    model.compile(optimizer=opt,
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
     #model.summary()
@@ -86,6 +90,7 @@ def save_model(model_to_save,run_dir):
     model_name = "checkpoint" + str(new_checkpoint_number)
     model_name = output_dir + "/" + model_name
     model_to_save.save(model_name)
+    # model_to_save.save_model(model_name)
     print("Saved Checkpoint!")
 
 def transfer_learning_model_inception_v3(new_image_width, new_image_height,is_trainable):
@@ -120,15 +125,20 @@ def transfer_learning_model_inception_v3(new_image_width, new_image_height,is_tr
     model.add(Dropout(0.5))
     # model.add(layers.Dense(64, activation='relu'))
     # model.add(Dropout(0.5))
+    # opt = tfa.optimizers.RectifiedAdam(lr=0.00001)
+    radam = tfa.optimizers.RectifiedAdam(lr=0.00001)
+    ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
+
     model.add(layers.Dense(5, activation='softmax'))
-    model.compile(optimizer=Adam(lr=0.00001),
-                loss='sparse_categorical_crossentropy',
-                metrics=['accuracy'])
-    # model.compile(optimizer=RAdam(lr=0.00001),
+    # model.compile(optimizer=Adam(lr=0.00001),
     #             loss='sparse_categorical_crossentropy',
     #             metrics=['accuracy'])
+    # return model
+    model.compile(optimizer=ranger,
+                loss='sparse_categorical_crossentropy',
+                metrics=['accuracy'])
     model.summary()
-    time.sleep(2)
+    # time.sleep(2)
     return model
 
 def inception_v3_multiple_inputs(image_width,image_height):

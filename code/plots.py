@@ -8,7 +8,7 @@ import os
 import cv2
 #for confusion matrix
 import pandas as pd
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, precision_recall_curve, roc_curve, roc_auc_score
 import seaborn as sn
 
 
@@ -16,6 +16,7 @@ import math
 
 from preprocessData import *
 from myModels import *
+from utils import *
 
 def add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,epoch,run_dir):
     #creates the directory if it does not exist
@@ -247,3 +248,75 @@ def plot_confusion_matrix(matrix, title):
     ax.set(xlabel='Predicted', ylabel='Actual')
     plt.title(title)
     plt.show()
+
+#this will conver the data from 5 classes to a boolean, either the class or not and then also the confidence
+def get_prob_of_correct(model,pickle_dict,list_of_images):
+    return_values = []
+    return_probs = []
+    counter = 1
+    for image in list_of_images:
+        #gets the correct class
+        correct_class_index = int(pickle_dict[os.path.basename(image)])
+        #converts to a list to prepare to be normalized
+        image = [image]
+        image_to_test = normalize_images(image)
+        image_to_test = np.asarray(image_to_test)
+        #predicts and finds the class
+        prediction_array = model.predict(image_to_test)
+        prediction_array = np.squeeze(prediction_array,axis=0)
+        # prediction_class = model.predict_classes(image_to_test)
+        prediction_class = np.where(prediction_array == np.amax(prediction_array))
+        # prediction_class = int(prediction_class)
+        prediction_class = np.asarray(prediction_class)
+        prediction_class = np.squeeze(prediction_class,axis=0)
+        #sets the probs and results accordingly
+        if prediction_class == correct_class_index:
+            prediction_prob = float(prediction_array[correct_class_index])
+            prediction_value = 1
+        else:
+            # print(prediction_array)
+            # time.sleep(1)
+            prediction_prob = float(1 - prediction_array[prediction_class])
+            prediction_value = 0
+        return_values.append(prediction_value)
+        return_probs.append(prediction_prob)
+        print("Predicted "+str(counter) + " images")
+        counter = counter + 1 
+    return return_values,return_probs
+
+def make_precision_recall_curve(class_to_test,images_to_test,class_dict,model_to_use):
+    images_to_test = get_images_of_one_class(class_to_test,images_to_test,class_dict)
+    results,probs = get_prob_of_correct(model_to_use,class_dict,images_to_test)
+    plot_precision_recall_curve(results,probs)
+
+
+def plot_precision_recall_curve(results,probs):
+    precision, recall, thresholds = precision_recall_curve(results, probs)
+    plt.plot(recall,precision)
+    plt.xlabel("Recall")
+    plt.ylabel("Precision")
+    plt.title("Precision Recall Curve")
+    plt.show()
+
+
+def make_roc_curve(class_to_test,images_to_test,class_dict,model_to_use):
+    images_to_test = get_images_of_one_class(class_to_test,images_to_test,class_dict)
+    results,probs = get_prob_of_correct(model_to_use,class_dict,images_to_test)
+    plot_roc_curve(results,probs)
+
+def plot_roc_curve(results,probs):
+    fpr, tpr, thresholds = roc_curve(results, probs)
+    score = roc_auc_score(results,probs)
+    print("ROC AUC score: ",score)
+
+    base_line_x = np.arange(0.0,1.0,0.01)
+    base_line_y = np.arange(0.0,1.0,0.01)
+    plt.plot(fpr,tpr,label="ROC")
+    plt.plot(base_line_x,base_line_y,"r--",label="Base Line")
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title("Precision Recall Curve")
+    plt.legend()
+    plt.show()
+
+
