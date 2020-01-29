@@ -211,6 +211,7 @@ def circle_crop_v2(image_path,output_dir,save_numpy):
     for image in image_path:
         name = os.path.basename(image)
         img = cv2.imread(image)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = crop_image_from_gray(img)
         if img is None:
             continue
@@ -240,6 +241,32 @@ def circle_crop_v2(image_path,output_dir,save_numpy):
             save_location = save_location + ".npy"
             np.save(save_location,img_np)
 
+def regcrop(image_path,output_dir,save_numpy):
+    """
+    Basic crop_image_from_gray for a dataset
+    """
+    image_dir = output_dir + "/images"
+    if not os.path.exists(image_dir):
+        os.makedirs(image_dir)
+    for image in image_path:
+        name = os.path.basename(image)
+        img = cv2.imread(image)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = crop_image_from_gray(img)
+        if img is None:
+            continue
+
+        save_location = image_dir + "/" + name
+        if not save_numpy:
+            img = Image.fromarray(img)
+            img.save(save_location,"JPEG", optimize=True)
+        else:
+            img_np = normalize_images(img,save_numpy)
+            save_location = save_location.split(".")
+            save_location = save_location[0]
+            save_location = save_location + ".npy"
+            np.save(save_location,img_np)
+
 def add_blur(image_path,output_dir):
     #creates the output for the blurred images
     image_dir = output_dir + "/images"
@@ -251,6 +278,7 @@ def add_blur(image_path,output_dir):
         name = os.path.basename(image)
         #reads in the image
         img = cv2.imread(image)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         #gets the height and width
         height, width, channels = img.shape
         image_size = height
@@ -263,6 +291,119 @@ def add_blur(image_path,output_dir):
         counter = counter + 1
         print(counter)
 
+def zca_nocirc(image_path,output_dir, batch_size, blur):
+    """
+    Crops (not circular)
+    Performs ZCA whitening on images
+    """
+    image_dir = output_dir + "/images"
+    if not os.path.exists(image_dir):
+        os.makedirs(image_dir)
+
+    filepath_list = []
+    imagecounter = 0
+
+    for image in image_path:
+        #print("Image path: "+str(image_path))
+        print("Image value: "+str(image))
+        filepath_list.append(image)
+        print(os.path.basename(image) + " added to master list.")
+        imagecounter = imagecounter + 1
+    
+    #print("Image path: "+str(image_path))
+    print("Imagecounter value: " + str(imagecounter))
+    print("Master filepath list made. Length: " + str(len(filepath_list)))
+    #print(filepath_list)
+
+    
+    num_batch = int(len(filepath_list)/batch_size) + 1
+    #num_batch = int(len(image_dir)/batch_size) + 1
+    print("Number of batches: " + str(num_batch))
+
+    container = []
+
+    #for i in range(0, num_batch):
+        #container.append([])
+    
+    for i in range(0, num_batch):
+        temp = []
+        for j in range(0, batch_size):
+            filepath_pos = i*batch_size+j
+            if filepath_pos < len(filepath_list):
+                print("Adding file "+str(filepath_list[filepath_pos])+" to batch "+str(i+1))
+                temp.append(filepath_list[filepath_pos])
+        container.append(temp)
+
+    #print("Count of last batch: "+str(len(container[8]))+" images.")
+    print("Number of batches in container: "+str(len(container)))
+    for i in range(0, num_batch):
+        print(str(len(container[i])))
+    print("Last image of batch 1: "+container[0][batch_size-1])
+    #sys.exit("Exiting program.")
+
+    for batch in container:         #Runs on a per-batch basis to avoid memory overflow
+        count = 1
+        X_names = []
+
+        for image in batch:          #Reads, changes to RGB from BGR, crops, and resizes to 512x512.
+            name = os.path.basename(image)
+            img = cv2.imread(image)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = crop_image_from_gray(img)
+            img = cv2.resize(img, (512, 512))
+            if blur == True:
+                img = cv2.addWeighted(img, 4, cv2.GaussianBlur(img, (0,0), 10), -4, 128)
+
+            if count == 1:              #adds image numpy array to an array containing the data from 1 image in each row
+                X = np.array([img])
+                X_names.append(name)
+                print("Image shape: ", img.shape)
+                print("Processed image: " + name + "\n")
+            else:
+                X = np.append(X, [img], axis=0)
+                X_names.append(name)
+                print("Image shape: ", img.shape)
+                print("Processed image: " + name + "\n")
+            count = count + 1
+            print(str(count))
+
+        print("X.shape: ", X.shape)
+        X = X.reshape(X.shape[0], X.shape[1]*X.shape[2]*X.shape[3])  #flattening image data to 1 row
+        print("Reshaped images.")
+
+        X_norm = X/255          #size and mean normalizing on per-pixel basis
+        mean = X_norm.mean(axis=0)
+        X_norm = X_norm - mean
+        print("Size and mean normalized images.")
+
+        cov = np.cov(X_norm, rowvar = True)     #calculating covariance matrix, finding eigenvectors/values, defining epsilon
+        U,S,V = np.linalg.svd(cov)
+        epsilon = 0.001
+
+        print("Performing whitening.")
+        X_ZCA = U.dot(np.diag(1.0/np.sqrt(S + epsilon))).dot(U.T).dot(X_norm)    #performing whitening
+        
+        print("Rescaling to normal RGB range.")
+        X_ZCA_rescaled = (X_ZCA - X_ZCA.min()) / (X_ZCA.max() - X_ZCA.min()) * 255    #rescaling back to normal image values
+
+        count = 0
+        os.chdir(image_dir)
+
+        print("Creating image files..")
+        for imgarray in X_ZCA_rescaled:
+            saved_img = (X_ZCA_rescaled[count,:].reshape(512,512,3))[:,:,[2,1,0]]
+            cv2.imwrite(X_names[count], saved_img)
+            print("Image file " + X_names[count] + " created.")
+            count = count + 1
+
+        X = None
+        X_norm = None
+        cov = None
+        X_ZCA = None
+        X_ZCA_rescaled = None
+        saved_img = None
+        
+        print("Function completed.")
 
 def prepare_data_for_model(size_of_data,labels,images,image_width,image_height):
     total_labels = []
