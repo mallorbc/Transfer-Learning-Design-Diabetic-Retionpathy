@@ -380,7 +380,7 @@ def add_blur(image_path,output_dir):
         height, width, channels = img.shape
         image_size = height
         #adds a weight blur as done in the online kaggle demo
-        img=cv2.addWeighted(img,4, cv2.GaussianBlur(img , (0,0) , 10) ,-4 ,128)
+        img=cv2.addWeighted(img,4, cv2.GaussianBlur(img , (0,0) , 5) ,-4 ,128)
         #saves the modified image in the output directory
         save_location = image_dir + "/" + name
         img = Image.fromarray(img)
