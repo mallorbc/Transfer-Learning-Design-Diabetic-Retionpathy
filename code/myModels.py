@@ -107,7 +107,7 @@ def create_CNN(new_image_width,new_image_height):
     # model.add(layers.PReLU())
     model.add(Dropout(0.5))
     model.add(layers.Dense(5, activation='softmax'))
-    radam = tfa.optimizers.RectifiedAdam(lr=0.0001)
+    radam = tfa.optimizers.RectifiedAdam(lr=0.001)
     ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
 
     model.compile(optimizer=ranger,
