@@ -334,7 +334,7 @@ if __name__ == "__main__":
 
             #loads the saved model if needed
             # print(model_to_use)
-            model = load_model(model_to_load,model_to_use)
+            model = load_model(model_to_load,model_to_use,new_image_width,new_image_height)
 
 
             
