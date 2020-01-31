@@ -55,6 +55,10 @@ def get_previous_directory(current_dir):
     previous_dir = os.path.abspath(os.path.join(os.path.dirname(current_dir ), '..'))
     return previous_dir
 
+def get_two_directories_up(current_dir):
+    previous_dir = os.path.abspath(os.path.join(os.path.dirname(current_dir ), '../..'))
+    return previous_dir
+
 def get_last_epoch(epoch_file):
     epoch_array = np.load(epoch_file)
     last_epoch = epoch_array[-1]

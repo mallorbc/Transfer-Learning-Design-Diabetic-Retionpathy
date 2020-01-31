@@ -23,7 +23,7 @@ RUN apt update \
 && apt install git -y \
 && apt install nano -y \
 && apt install gedit -y \
-&& apt install imagemagick
+&& apt install imagemagick -y
 
 
 #gets the anaconda package, installs it, and adds it to the path
@@ -46,7 +46,9 @@ RUN conda init \
 && conda install -n diabetic tensorflow-gpu=1.14 \
 && conda install -n diabetic Pillow  \
 && conda install -n diabetic pydot \ 
-&& conda install -n diabetic seaborn
+&& conda install -n diabetic seaborn \
+&& conda install -n diabetic h5py
+
 
 RUN conda init bash \
 && source ~/.bashrc \
@@ -62,7 +64,8 @@ RUN conda init \
 && conda install -n diabetic2 tensorflow-gpu=2.0.0 \
 && conda install -n diabetic2 Pillow  \
 && conda install -n diabetic2 pydot \ 
-&& conda install -n diabetic2 seaborn
+&& conda install -n diabetic2 seaborn \
+&& conda install -n diabetic2 h5py
 
 RUN conda init bash \
 && source ~/.bashrc \
