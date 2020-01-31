@@ -70,7 +70,104 @@ def trim_data(run_dir,list_of_health_data,list_of_image_name):
     return new_list_of_health_data,new_list_of_images
 
     # return new_list_of_health_data,new_list_of_images,discarded_image_names,discarded_health_data
-    
+
+def trim_data_even(run_dir,list_of_health_data,list_of_image_name,size_of_each_class):
+    cat0,cat1,cat2,cat3,cat4 = utils.get_info_on_data(list_of_health_data)
+    # print(cat0)
+    # print(cat1)
+    # print(cat2)
+    # print(cat4)
+    new_list_of_health_data = []
+    new_list_of_images = []
+    discarded_image_names = []
+    discarded_health_data = []
+
+    #gets the modulys for each class
+    cat0_mod = int(cat0/size_of_each_class)
+    cat1_mod = int(cat1/size_of_each_class)
+    cat2_mod = int(cat2/size_of_each_class)
+    cat3_mod = int(cat3/size_of_each_class)
+    cat4_mod = int(cat4/size_of_each_class)
+    #counter that will be used to increase the modulo
+    cat0_counter = 0
+    cat1_counter = 0
+    cat2_counter = 0
+    cat3_counter = 0
+    cat4_counter = 0
+
+    total_0 = 0
+    total_1 = 0
+    total_2 = 0
+    total_3 = 0
+    total_4 = 0
+
+    for i in range(len(list_of_image_name)):
+        current_image_class = list_of_health_data[i]
+        if current_image_class == 0 and total_0<size_of_each_class:
+            cat0_counter = cat0_counter + 1
+            if cat0_counter%cat0_mod == 0:
+                new_list_of_health_data.append(list_of_health_data[i])
+                new_list_of_images.append(list_of_image_name[i])
+                cat0_counter = 0
+                total_0 = total_0 + 1
+
+            else:
+                discarded_image_names.append(list_of_image_name[i])
+                discarded_health_data.append(list_of_health_data[i])
+
+        elif current_image_class == 1 and total_1<size_of_each_class:
+            cat1_counter = cat1_counter + 1
+            if cat1_counter%cat1_mod == 0:
+                new_list_of_health_data.append(list_of_health_data[i])
+                new_list_of_images.append(list_of_image_name[i])
+                cat1_counter = 0
+                total_1 = total_1 + 1
+            else:
+                discarded_image_names.append(list_of_image_name[i])
+                discarded_health_data.append(list_of_health_data[i])
+
+        elif current_image_class == 2 and total_2<size_of_each_class:
+            cat2_counter = cat2_counter + 1
+            if cat2_counter%cat2_mod == 0:
+                new_list_of_health_data.append(list_of_health_data[i])
+                new_list_of_images.append(list_of_image_name[i])
+                cat2_counter = 0
+                total_2 = total_2 + 1
+
+            else:
+                discarded_image_names.append(list_of_image_name[i])
+                discarded_health_data.append(list_of_health_data[i])
+
+        elif current_image_class == 3 and total_3<size_of_each_class:
+            cat3_counter = cat3_counter + 1
+            if cat3_counter%cat3_mod == 0:
+                new_list_of_health_data.append(list_of_health_data[i])
+                new_list_of_images.append(list_of_image_name[i])
+                cat3_counter = 0
+                total_3 = total_3 + 1
+
+            else:
+                discarded_image_names.append(list_of_image_name[i])
+                discarded_health_data.append(list_of_health_data[i])
+
+        elif current_image_class == 4:
+            cat4_counter = cat4_counter + 1
+            if cat4_counter%cat4_mod == 0 and total_4<size_of_each_class:
+                new_list_of_health_data.append(list_of_health_data[i])
+                new_list_of_images.append(list_of_image_name[i])
+                cat4_counter = 0
+                total_4 = total_4 + 1
+
+            else:
+                discarded_image_names.append(list_of_image_name[i])
+                discarded_health_data.append(list_of_health_data[i])
+        
+    save_csv(run_dir,"validation.csv",discarded_health_data,discarded_image_names)
+    cat0,cat1,cat2,cat3,cat4 = utils.get_info_on_data(new_list_of_health_data)
+
+    return new_list_of_health_data,new_list_of_images
+
+
 
 
 def remove_nonexistent_data(list_of_health_data,list_of_image_name):
