@@ -69,14 +69,22 @@ def create_CNN(new_image_width,new_image_height):
     model = models.Sequential()
     model.add(layers.Conv2D(32, (3, 3),strides=2, input_shape=(new_image_width, new_image_height, 3)))
     model.add(layers.PReLU())
-    model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(32, (3, 3),strides=2))
-    model.add(layers.PReLU())
-    model.add(layers.MaxPooling2D((2, 2)))
+    # model.add(layers.MaxPooling2D((2, 2)))
     model.add(layers.Conv2D(64, (3, 3),strides=2))
     model.add(layers.PReLU())
-    model.add(layers.MaxPooling2D((2, 2)))
+    # model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(64, (3, 3),strides=2))
+    model.add(layers.PReLU())
+    # model.add(layers.MaxPooling2D((2, 2)))
     model.add(layers.Conv2D(128, (3, 3),strides=2))
+    model.add(layers.PReLU())
+    model.add(layers.Conv2D(128, (3, 3),strides=2))
+    model.add(layers.PReLU())
+    model.add(layers.Conv2D(256, (3, 3),strides=2))
+    model.add(layers.PReLU())
+    model.add(layers.Conv2D(256, (3, 3),strides=2))
+    model.add(layers.PReLU())
+    model.add(layers.Conv2D(512, (3, 3),strides=2))
     model.add(layers.PReLU())
     # model.add(layers.Conv2D(128, (3, 3),strides=2))
     # model.add(layers.PReLU())
@@ -94,6 +102,9 @@ def create_CNN(new_image_width,new_image_height):
     model.add(Dropout(0.5))
     model.add(layers.Dense(128))
     model.add(layers.PReLU())
+    # model.add(Dropout(0.5))
+    # model.add(layers.Dense(32))
+    # model.add(layers.PReLU())
     model.add(Dropout(0.5))
     model.add(layers.Dense(5, activation='softmax'))
     radam = tfa.optimizers.RectifiedAdam(lr=0.0001)
@@ -103,6 +114,7 @@ def create_CNN(new_image_width,new_image_height):
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
     model.summary()
+    quit()
 
     return model
 
@@ -252,6 +264,8 @@ def inception_v3_multiple_inputs(image_width,image_height):
     #plot_model(final_model, to_file='model_plot2.png')
     # plot_model(final_model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
     # quit()
+    final_model.summary()
+    quit()
     return final_model
 
 def efficientnet(new_image_width, new_image_height):
