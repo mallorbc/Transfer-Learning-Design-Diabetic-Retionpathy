@@ -114,7 +114,7 @@ def create_CNN(new_image_width,new_image_height):
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
     model.summary()
-    quit()
+    # quit()
 
     return model
 
@@ -265,7 +265,7 @@ def inception_v3_multiple_inputs(image_width,image_height):
     # plot_model(final_model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
     # quit()
     final_model.summary()
-    quit()
+    # quit()
     return final_model
 
 def efficientnet(new_image_width, new_image_height):
