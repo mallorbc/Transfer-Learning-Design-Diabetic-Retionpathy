@@ -16,6 +16,7 @@ from preprocessData import *
 from efficientnet.tfkeras import EfficientNetB7 as Net
 
 import tensorflow_addons as tfa
+import gc
 
 
 
@@ -50,50 +51,112 @@ def create_CNN(new_image_width,new_image_height):
 
     # return model
 
-    model = models.Sequential()
-    model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(new_image_width, new_image_height, 3)))
-    model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-    model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+    # model = models.Sequential()
+    # model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(new_image_width, new_image_height, 3)))
+    # model.add(layers.MaxPooling2D((2, 2)))
+    # model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+    # model.add(layers.MaxPooling2D((2, 2)))
+    # model.add(layers.Conv2D(64, (3, 3), activation='relu'))
 
-    model.add(layers.Flatten())
-    model.add(layers.Dense(64, activation='relu'))
-    model.add(Dropout(0.5))
-    model.add(layers.Dense(5, activation='softmax'))
-    opt = tfa.optimizers.RectifiedAdam(lr=0.0001)
+    # model.add(layers.Flatten())
+    # model.add(layers.Dense(64, activation='relu'))
+    # model.add(Dropout(0.5))
+    # model.add(layers.Dense(5, activation='softmax'))
+    # opt = tfa.optimizers.RectifiedAdam(lr=0.0001)
     # model.compile(optimizer=Adam(lr=0.0001),
     #             loss='sparse_categorical_crossentropy',
     #             metrics=['accuracy'])
-    model.compile(optimizer=opt,
+    model = models.Sequential()
+    model.add(layers.Conv2D(32, (3, 3),strides=2, input_shape=(new_image_width, new_image_height, 3)))
+    model.add(layers.PReLU())
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(32, (3, 3),strides=2))
+    model.add(layers.PReLU())
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(64, (3, 3),strides=2))
+    model.add(layers.PReLU())
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(128, (3, 3),strides=2))
+    model.add(layers.PReLU())
+    # model.add(layers.Conv2D(128, (3, 3),strides=2))
+    # model.add(layers.PReLU())
+
+
+    model.add(layers.Flatten())
+    model.add(layers.Dense(1024))
+    model.add(layers.PReLU())
+    model.add(Dropout(0.5))
+    model.add(layers.Dense(512))
+    model.add(layers.PReLU())
+    model.add(Dropout(0.5))
+    model.add(layers.Dense(256))
+    model.add(layers.PReLU())
+    model.add(Dropout(0.5))
+    model.add(layers.Dense(128))
+    model.add(layers.PReLU())
+    model.add(Dropout(0.5))
+    model.add(layers.Dense(5, activation='softmax'))
+    radam = tfa.optimizers.RectifiedAdam(lr=0.0001)
+    ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
+
+    model.compile(optimizer=ranger,
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
-    #model.summary()
+    model.summary()
 
     return model
 
 
-def load_model(path_to_model):
+def load_model(path_to_model,model_number=None,width=None,height=None):
     print("Loading Model...")
-    model_to_load = models.load_model(path_to_model)
+    if model_number is None:
+        model_to_load = models.load_model(path_to_model)
+        model_to_load.summary()
+        print("Loaded entire model")
+    elif model_number == 1:
+        model_to_load = create_CNN(width,height)
+        model_to_load.load_weights(path_to_model)
+        print("Loaded model weights")
+
+    elif model_number == 2:
+        model_to_load = transfer_learning_model_inception_v3(width,height)
+        model_to_load.load_weights(path_to_model)
+        print("Loaded model weights")
+
+    elif model_number == 3:
+        model_to_load = inception_v3_multiple_inputs(width,height)
+        model_to_load.load_weights(path_to_model)
+        print("Loaded model weights")
+
     return model_to_load
 
 
-def save_model(model_to_save,run_dir):
+def save_model(model_to_save,run_dir,whole_model=None):
     current_dir = run_dir
     output_dir = current_dir + "/checkpoints"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    number_of_checkpoints = os.listdir(output_dir)
-    number_of_checkpoints = len(number_of_checkpoints)
+    number_of_checkpoints = list(os.walk(output_dir))
+    number_of_checkpoints = len(number_of_checkpoints[0][1])
     new_checkpoint_number = number_of_checkpoints + 1
     model_name = "checkpoint" + str(new_checkpoint_number)
     model_name = output_dir + "/" + model_name
-    model_to_save.save(model_name)
-    # model_to_save.save_model(model_name)
+    os.makedirs(model_name)
+    if whole_model is None:
+        model_name = model_name + "/savepoint.h5"
+        # tf.keras.models.save_model(model_to_save,model_name)
+        # tf.keras.backend.clear_session()
+        # model_to_save.save_model(model_name)
+        model_to_save.save_weights(model_name)
+        print("Saved Model Weights!")
+    else:
+        model_name = model_name + "/whole_model"
+        tf.keras.models.save_model(model_to_save,model_name)
+        print("Saved Entire Model!")
+
     print("Saved Checkpoint!")
 
-def transfer_learning_model_inception_v3(new_image_width, new_image_height,is_trainable):
+def transfer_learning_model_inception_v3(new_image_width, new_image_height,is_trainable=True):
     #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
     base_model = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_shape=(new_image_width, new_image_height, 3))
     # base_model = EfficientNetB5(weights='imagenet',include_top=False,input_shape=(new_image_width, new_image_height, 3))
@@ -107,29 +170,22 @@ def transfer_learning_model_inception_v3(new_image_width, new_image_height,is_tr
     model = models.Sequential([base_model,global_average_layer])
     #adds dense and dropout layers for final output
     model.add(layers.Dense(1024))
-    model.add(layers.LeakyReLU())
+    model.add(layers.PReLU())
     model.add(Dropout(0.5))
-    #model.add(layers.Dense(1024, activation='relu'))
-    # model.add(layers.Dense(512, activation='relu'))
     model.add(layers.Dense(512))
-    # model.add(layers.LeakyReLU())
     model.add(layers.PReLU())
     model.add(Dropout(0.5))
     model.add(layers.Dense(256))
     model.add(layers.PReLU())
-    # model.add(layers.LeakyReLU())
     model.add(Dropout(0.5))
     model.add(layers.Dense(128))
-    # model.add(layers.LeakyReLU())
     model.add(layers.PReLU())
     model.add(Dropout(0.5))
-    # model.add(layers.Dense(64, activation='relu'))
-    # model.add(Dropout(0.5))
-    # opt = tfa.optimizers.RectifiedAdam(lr=0.00001)
+    model.add(layers.Dense(5, activation='softmax'))
+
     radam = tfa.optimizers.RectifiedAdam(lr=0.00001)
     ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
 
-    model.add(layers.Dense(5, activation='softmax'))
     # model.compile(optimizer=Adam(lr=0.00001),
     #             loss='sparse_categorical_crossentropy',
     #             metrics=['accuracy'])
@@ -138,7 +194,6 @@ def transfer_learning_model_inception_v3(new_image_width, new_image_height,is_tr
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
     model.summary()
-    # time.sleep(2)
     return model
 
 def inception_v3_multiple_inputs(image_width,image_height):
@@ -170,23 +225,30 @@ def inception_v3_multiple_inputs(image_width,image_height):
     concat_layer = concatenate([flat1,flat2])
 
     # output = layers.Flatten()(concat_layer)
-    output = layers.Dense(1024,activation='relu')(concat_layer)
+    output = layers.Dense(1024)(concat_layer)
+    output = layers.PReLU()(output)
     output = Dropout(0.5)(output)
-    output = layers.Dense(512,activation='relu')(output)
+    output = layers.Dense(512)(output)
+    output = layers.PReLU()(output)
     output = Dropout(0.5)(output)
-    # output = layers.Dense(256,activation='relu')(output)
-    # output = Dropout(0.5)(output)
-    # output = layers.Dense(128,activation='relu')(output)
-    # output = Dropout(0.5)(output)
-    # output = layers.Dense(64,activation='relu')(output)
-    # output = Dropout(0.5)(output)
+    output = layers.Dense(256)(output)
+    output = layers.PReLU()(output)
+    output = Dropout(0.5)(output)
+    output = layers.Dense(128)(output)
+    output = layers.PReLU()(output)
+
+
     output = layers.Dense(5,activation='softmax')(output)
     final_model = models.Model(inputs=[image_input1, image_input2], outputs=output)
     final_model.summary()
-    final_model.compile(optimizer=Adam(lr=0.000001),
+    radam = tfa.optimizers.RectifiedAdam(lr=0.000001)
+    ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
+    final_model.compile(optimizer=ranger,
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
-    time.sleep(2)
+    # final_model.compile(optimizer=Adam(lr=0.000001),
+    #             loss='sparse_categorical_crossentropy',
+    #             metrics=['accuracy'])
     #plot_model(final_model, to_file='model_plot2.png')
     # plot_model(final_model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
     # quit()
