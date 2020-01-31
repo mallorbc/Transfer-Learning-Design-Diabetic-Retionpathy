@@ -42,8 +42,6 @@ from preprocessData import *
 
 
 if __name__ == "__main__":
-    # inception_into_resnet(512,512)
-    #inception_v3_multiple_inputs(256,256)
     now = datetime.now()
     dt_string = now.strftime("%m-%d-%H-%M-%S")
 
@@ -65,15 +63,17 @@ if __name__ == "__main__":
     parser.add_argument("-l","--load_model",default=None,help="Option to load a saved model",type=str)
     parser.add_argument("-td","--test_data_percentage",default=0.3,help="Percentage of data to use for test data",type=float)
     parser.add_argument("-pd","--plot_dir",default=None,help="directory containing data to plot",type=str)
-    parser.add_argument("-model","--model_to_use",default=1,help="Selects what model to use",type=int)
+    parser.add_argument("-model","--model_to_use",default=None,help="Selects what model to use",type=int)
     parser.add_argument("-trainable","--trainable_transfer",default=True,help="Can the transfer learning model learn on the new data",type=str2bool)
     parser.add_argument("-pe","--plot_epoch",default=None,help="What eopch to stop early at",type=float)
     parser.add_argument("-np","--numpy",default=False,help="Whether the data outputed should be numpy, and whether the data loaded is numpy",type=bool)
     parser.add_argument("-mem","--gpu_mem",default=None,help="allows us to not use all the memory, useful for testing a model that is currently training",type=float)
     parser.add_argument("-train_csv",default=None,help="This allows us to specifiy what photos to use for training",type=str)
     parser.add_argument("-test_csv",default=None,help="This allows us to specifiy what photos to use for testing",type=str)
-    parser.add_argument("-aug","--augment_data",default=True,help="flag on whether to use image data augmentation",type=str2bool)
+    parser.add_argument("-aug","--augment_data",default=False,help="flag on whether to use image data augmentation",type=str2bool)
     parser.add_argument("-test_size",default=75,help="what batch size to use for testing the performance of the models",type=int)
+    parser.add_argument('-saver',"--saver_mode",default=None,help="Whether or not to save the whole model or just the weights",type=int)
+    parser.add_argument('-class_size',default=560,help="how big each class should be; Can't be larger than 700",type=int)
 
     
     args = parser.parse_args()
@@ -108,6 +108,10 @@ if __name__ == "__main__":
     loaded_test_csv = args.test_csv
 
     data_aug = args.augment_data
+
+    saver_mode = args.saver_mode
+
+    size_of_each_class = args.class_size
     
 
     if folder_name is not None:
@@ -168,8 +172,9 @@ if __name__ == "__main__":
         #shuffles the data to randomize starting train and test data
         health_level,image_name = shuffle_data(health_level,image_name)
         #way to many zeros in the data
-        health_level,image_name = trim_data(run_dir,health_level,image_name)
+        # health_level,image_name = trim_data(run_dir,health_level,image_name)
         #shuffles the data to randomize starting train and test data
+        health_level,image_name = trim_data_even(run_dir,health_level,image_name,size_of_each_class)
         health_level,image_name = shuffle_data(health_level,image_name)
         #splits the data into train and test
         train_images,train_labels,test_images,test_labels = split_data_train_test(run_dir,health_level,image_name,test_data_percentage)
@@ -193,14 +198,14 @@ if __name__ == "__main__":
                 #shuffles the data to randomize starting train and test data
                 health_level,image_name = shuffle_data(health_level,image_name)
                 #way to many zeros in the data
-                health_level,image_name = trim_data(run_dir,health_level,image_name)
+                health_level,image_name = trim_data_even(run_dir,health_level,image_name,size_of_each_class)
                 #shuffles the data to randomize starting train and test data
                 health_level,image_name = shuffle_data(health_level,image_name)
                 #splits the data into train and test
                 train_images,train_labels,test_images,test_labels = split_data_train_test(run_dir,health_level,image_name,test_data_percentage)
                 #loads the trimmed data
-                trimmed_csv_file = run_dir + "/csv_files/trimmed.csv"
-                trimmed_labels,trimmed_images = load_data(trimmed_csv_file)
+                # trimmed_csv_file = run_dir + "/csv_files/trimmed.csv"
+                # trimmed_labels,trimmed_images = load_data(trimmed_csv_file)
             #else we are loading data from other csv files
             else:
                 train_labels,train_images = load_data(loaded_train_csv)
@@ -219,8 +224,9 @@ if __name__ == "__main__":
             #sets the epochs and save points
             current_epoch = 0
             previous_save = 0
-            
-
+            #allows user to pass nothing for loading a model
+            if model_to_use is None:
+                model_to_use = 1
             #creates a new model
             if model_to_use == 1:
                 model = create_CNN(new_image_width, new_image_height)
@@ -249,7 +255,9 @@ if __name__ == "__main__":
             checkpoints_run_dir = run_dir + "/checkpoints"
             os.makedirs(checkpoints_run_dir)
             #finds the directory one level up
-            one_level_up_dir = get_previous_directory(full_check_point_path)
+            # one_level_up_dir = get_previous_directory(full_check_point_path)
+            one_level_up_dir = get_two_directories_up(full_check_point_path)
+
 
             #sets the plot dir so we can copy files
             old_plot_dir = one_level_up_dir + "/plots/"
@@ -261,7 +269,7 @@ if __name__ == "__main__":
                 shutil.copyfile(source_file,dest_file)
 
             #copies the checkpoint file to new run folder
-            shutil.copytree(full_check_point_path,checkpoints_run_dir+"/checkpoint0")
+            # shutil.copytree(full_check_point_path,checkpoints_run_dir+"/checkpoint0")
 
             #loads the last epoch
             epoch_file = old_plot_dir + "epochs.npy"
@@ -300,7 +308,7 @@ if __name__ == "__main__":
             #loads data from the csv files
             train_csv_file = new_csv_dir + "/train.csv"
             test_csv_file = new_csv_dir + "/test.csv"
-            trimmed_csv_file = new_csv_dir + "/trimmed.csv"
+            trimmed_csv_file = new_csv_dir + "/validation.csv"
 
             #loads this data into the list
             train_labels,train_images = load_data(train_csv_file)
@@ -313,7 +321,8 @@ if __name__ == "__main__":
             
 
             #loads the saved model if needed
-            model = load_model(model_to_load)
+            # print(model_to_use)
+            model = load_model(model_to_load,model_to_use)
 
 
             
@@ -336,6 +345,9 @@ if __name__ == "__main__":
         #used to limit printing
         next_print = 0.00
         total_images = len(train_images)
+        # print(train_labels)
+        # quit()
+
         images_trained_on = 0
 
         if data_aug is True:
@@ -351,19 +363,11 @@ if __name__ == "__main__":
             # df = pd.DataFrame(data_frame_data,columns=["image","label"])
             df = pd.DataFrame({"image": train_images,
                                 "label": train_labels})
-            # print(df)
-            # quit()
-            # while current_epoch<total_epochs:
-            #     for x_batch, y_batch in datagen_train.flow_from_dataframe(dataframe=df,x_col="image",y_col="label",target_size=(new_image_width, new_image_height),class_mode="raw", batch_size=args.batch_size):
-            #         print("x_batch",len(x_batch))
-            #         print("y_batch",len(y_batch))
-            #         print(len(data))
-
-            #         model.train_on_batch(x_batch,y_batch)
-            #         current_epoch = current_epoch + batch_size/total_images
-            #         print(current_epoch)
 
 
+        start_time = time.time()
+        time_array = []
+        time_array = np.asarray(time_array)
         if model_to_use!=3 and run_mode == 6:
             np_image_batch_test,test_labels_batch = prepare_data_for_model(test_size,test_labels,test_images,new_image_width,new_image_height)
             while current_epoch<total_epochs:
@@ -375,6 +379,7 @@ if __name__ == "__main__":
                     images_trained_on = images_trained_on + batch_size
                     if next_print <= current_epoch:
                         print("epoch: % .2f , train loss: % .4f , % 0.2f, train acc: % .4f , % .2f, test loss: % .4f , % .2f, test acc: % .4f, % .2f " % (current_epoch, lowest_train_loss,lowest_train_loss_epoch,highest_train_accuracy,highest_train_accuracy_epoch,lowest_test_loss,lowest_test_loss_epoch,highest_test_accuracy,highest_test_accuracy_epoch))
+                        # tracker.print_diff()
                         next_print = next_print + 0.01
                 else:
                     for x_batch, y_batch in datagen_train.flow_from_dataframe(dataframe=df,x_col="image",y_col="label",target_size=(new_image_width, new_image_height),class_mode="raw", batch_size=args.batch_size):
@@ -384,7 +389,8 @@ if __name__ == "__main__":
                         if next_print <= current_epoch:
                             print("epoch: % .2f , train loss: % .4f , % 0.2f, train acc: % .4f , % .2f, test loss: % .4f , % .2f, test acc: % .4f, % .2f " % (current_epoch, lowest_train_loss,lowest_train_loss_epoch,highest_train_accuracy,highest_train_accuracy_epoch,lowest_test_loss,lowest_test_loss_epoch,highest_test_accuracy,highest_test_accuracy_epoch))
                             next_print = next_print + 0.01
-                        if (current_epoch - previous_test_epoch)>= test_interval:
+                        if ((current_epoch - previous_test_epoch)>= test_interval) or ((current_epoch - save_interval)>=previous_save):
+                            # tracker.print_diff()
                             break
 
                 #adds the number of images to the total count
@@ -432,15 +438,17 @@ if __name__ == "__main__":
                 #increments the epoch
                 current_epoch = current_epoch + batch_size/total_images
                 #saves the epoch if the save increment has passed
-                if current_epoch - save_interval>previous_save:
-                    save_model(model,run_dir)
+                if (current_epoch - save_interval)>=previous_save:
+                    save_model(model,run_dir,saver_mode)
+                    new_time = time.time()-start_time
+                    time_array = np.append(time_array,new_time)
+                    np.save(run_dir+"/time.npy",time_array)
                     previous_save = previous_save + save_interval
+            save_model(model,run_dir,1)
+            print("Finished Training")
 
 
-                # print("epoch: ",current_epoch, "train loss: ",lowest_train_loss," ",lowest_test_loss_epoch,
-                # "train acc: ",highest_train_accuracy," ",highest_train_accuracy_epoch, "test loss: ",lowest_test_loss, " ",lowest_test_loss_epoch,
-                # "test acc: ",highest_test_accuracy," ",highest_train_accuracy_epoch)        
-
+       
         #multiple inputs
         elif run_mode == 6 and model_to_use == 3:
             test_images_two = change_dir_name(second_image_dir,test_images)
@@ -498,12 +506,13 @@ if __name__ == "__main__":
                 current_epoch = current_epoch + batch_size/total_images
                 #saves the epoch if the save increment has passed
                 if current_epoch - save_interval>previous_save:
-                    save_model(model,run_dir)
+                    save_model(model,run_dir,saver_mode)
                     previous_save = previous_save + save_interval
                 print("epoch: % .2f , train loss: % .4f , % 0.2f, train acc: % .4f , % .2f, test loss: % .4f , % .2f, test acc: % .4f, % .2f " % (current_epoch, lowest_train_loss,lowest_train_loss_epoch,highest_train_accuracy,highest_train_accuracy_epoch,lowest_test_loss,lowest_test_loss_epoch,highest_test_accuracy,highest_test_accuracy_epoch))
-                # print("epoch: ",current_epoch, "train loss: ",lowest_train_loss," ",lowest_test_loss_epoch,
-                # "train acc: ",highest_train_accuracy," ",highest_train_accuracy_epoch, "test loss: ",lowest_test_loss, " ",lowest_test_loss_epoch,
-                # "test acc: ",highest_test_accuracy," ",highest_train_accuracy_epoch)
+            #will save the entire model
+            save_model(model,run_dir,1)
+            print("Finished Training")
+
 
     
 
