@@ -27,96 +27,39 @@ import gc
 
 # from tensorflow.keras.applications import inception_v3
 
-def create_CNN(new_image_width,new_image_height):
-    # model = models.Sequential()
-    # model.add(layers.Conv2D(32, (7, 7), activation='relu', input_shape=(new_image_width, new_image_height, 3)))
-    # model.add(layers.MaxPooling2D((2, 2)))
-    # model.add(layers.Conv2D(64, (5, 5), activation='relu'))
-    # model.add(layers.MaxPooling2D((2, 2)))
-    # model.add(layers.Conv2D(128, (3, 3), activation='relu'))
-    # model.add(layers.MaxPooling2D((2, 2)))
-    # model.add(layers.Conv2D(256, (3, 3), activation='relu'))
-    # model.add(layers.MaxPooling2D((2, 2)))
-    # model.add(layers.Flatten())
-    # model.add(layers.Dense(64, activation='relu'))
-    # model.add(Dropout(0.5))
-    # model.add(layers.Dense(10,activation='relu'))
-    # model.add(Dropout(0.5))
-    # model.add(layers.Dense(5, activation='softmax'))        
-    # model.compile(optimizer='adam',
-    #             loss='sparse_categorical_crossentropy',
-    #             metrics=['accuracy'])
-    # # model.summary()
-    # # quit()
-
-    # return model
-
-    # model = models.Sequential()
-    # model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(new_image_width, new_image_height, 3)))
-    # model.add(layers.MaxPooling2D((2, 2)))
-    # model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-    # model.add(layers.MaxPooling2D((2, 2)))
-    # model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-
-    # model.add(layers.Flatten())
-    # model.add(layers.Dense(64, activation='relu'))
-    # model.add(Dropout(0.5))
-    # model.add(layers.Dense(5, activation='softmax'))
-    # opt = tfa.optimizers.RectifiedAdam(lr=0.0001)
-    # model.compile(optimizer=Adam(lr=0.0001),
-    #             loss='sparse_categorical_crossentropy',
-    #             metrics=['accuracy'])
-    model = models.Sequential()
-    model.add(layers.Conv2D(32, (3, 3),strides=2, input_shape=(new_image_width, new_image_height, 3)))
-    model.add(layers.PReLU())
-    # model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(64, (3, 3),strides=2))
-    model.add(layers.PReLU())
-    # model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(64, (3, 3),strides=2))
-    model.add(layers.PReLU())
-    # model.add(layers.MaxPooling2D((2, 2)))
-    model.add(layers.Conv2D(128, (3, 3),strides=2))
-    model.add(layers.PReLU())
-    model.add(layers.Conv2D(128, (3, 3),strides=2))
-    model.add(layers.PReLU())
-    model.add(layers.Conv2D(256, (3, 3),strides=2))
-    model.add(layers.PReLU())
-    model.add(layers.Conv2D(256, (3, 3),strides=2))
-    model.add(layers.PReLU())
-    model.add(layers.Conv2D(512, (3, 3),strides=2))
-    model.add(layers.PReLU())
-    # model.add(layers.Conv2D(128, (3, 3),strides=2))
-    # model.add(layers.PReLU())
+def create_CNN(image_width,image_height):
+    input_shape = (image_width,image_height,3)
+    image_input = Input(shape = input_shape)
+    output = simple_layer(32,2,image_input)
+    output = simple_layer(64,2,output)
+    output = simple_layer(128,2,output)
+    output = simple_layer(256,3,output)
+    output = simple_layer(512,3,output)
+    output = tf.keras.layers.GlobalAveragePooling2D()(output)
+    output = layers.Dense(1024)(output)
+    output = layers.PReLU()(output)
+    output = Dropout(0.5)(output)
+    output = layers.Dense(512)(output)
+    output = layers.PReLU()(output)
+    output = Dropout(0.5)(output)
+    output = layers.Dense(256)(output)
+    output = layers.PReLU()(output)
+    output = Dropout(0.5)(output)
+    output = layers.Dense(5,activation='softmax')(output)
 
 
-    model.add(layers.Flatten())
-    model.add(layers.Dense(1024))
-    model.add(layers.PReLU())
-    model.add(Dropout(0.5))
-    model.add(layers.Dense(512))
-    model.add(layers.PReLU())
-    model.add(Dropout(0.5))
-    model.add(layers.Dense(256))
-    model.add(layers.PReLU())
-    model.add(Dropout(0.5))
-    model.add(layers.Dense(128))
-    model.add(layers.PReLU())
-    # model.add(Dropout(0.5))
-    # model.add(layers.Dense(32))
-    # model.add(layers.PReLU())
-    model.add(Dropout(0.5))
-    model.add(layers.Dense(5, activation='softmax'))
-    radam = tfa.optimizers.RectifiedAdam(lr=0.001)
+    final_model = models.Model(inputs=[image_input], outputs=output)
+    radam = tfa.optimizers.RectifiedAdam(lr=0.0001)
     ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
 
-    model.compile(optimizer=ranger,
+    final_model.compile(optimizer=ranger,
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
-    model.summary()
-    # quit()
 
-    return model
+    final_model.summary()
+    time.sleep(2)
+    return final_model
+
 
 
 def load_model(path_to_model,model_number=None,width=None,height=None):
@@ -144,6 +87,7 @@ def load_model(path_to_model,model_number=None,width=None,height=None):
 
 
 def save_model(model_to_save,run_dir,whole_model=None):
+    gc.collect()
     current_dir = run_dir
     output_dir = current_dir + "/checkpoints"
     if not os.path.exists(output_dir):
@@ -342,7 +286,6 @@ def inception_v3_resnet(image_width,image_height):
     time.sleep(2)
     #plot_model(final_model, to_file='model_plot2.png')
     # plot_model(final_model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
-    # quit()
     return final_model
 
 
@@ -411,8 +354,18 @@ def get_model_predictions_two_inputs(loaded_model,image_one,image_two):
     return total_predictions
 
 
-def complicated_cnn(image_width,image_height):
-    print("hi")
+
+def simple_layer(filters,number_of_layers,input_layer = None):
+    output = layers.Conv2D(filters, (3, 3),strides=1,activation="relu")(input_layer)
+    if number_of_layers>=2:
+        for i in range(number_of_layers-2):
+            output = layers.Conv2D(filters, (3, 3),strides=1,activation="relu")(output)
+        output = layers.Conv2D(filters, (3, 3),strides=2,activation="relu")(output)
+
+    return output
+
+
+
 
 
 
