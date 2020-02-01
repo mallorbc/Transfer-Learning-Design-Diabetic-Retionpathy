@@ -20,6 +20,8 @@ import numpy as np
 
 import utils
 
+import gc
+
 
 def load_data(data_csv):
 
@@ -503,6 +505,7 @@ def zca_nocirc(image_path,output_dir, batch_size, blur):
         print("Function completed.")
 
 def prepare_data_for_model(size_of_data,labels,images,image_width,image_height):
+    gc.collect()
     total_labels = []
     labels,images = shuffle_data(labels,images)
     total_labels = labels
