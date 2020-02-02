@@ -76,7 +76,7 @@ if __name__ == "__main__":
     parser.add_argument("-aug","--augment_data",default=False,help="flag on whether to use image data augmentation",type=str2bool)
     parser.add_argument("-test_size",default=75,help="what batch size to use for testing the performance of the models",type=int)
     parser.add_argument('-saver',"--saver_mode",default=None,help="Whether or not to save the whole model or just the weights",type=int)
-    parser.add_argument('-class_size',default=560,help="how big each class should be; Can't be larger than 700",type=int)
+    parser.add_argument('-class_size',default=708,help="how big each class should be; Can't be larger than 700",type=int)
 
 
     
@@ -183,9 +183,7 @@ if __name__ == "__main__":
         health_level,image_name = trim_data_even(run_dir,health_level,image_name,size_of_each_class)
         health_level,image_name = shuffle_data(health_level,image_name)
         #splits the data into train and test
-        train_images,train_labels,test_images,test_labels = split_data_train_test(run_dir,health_level,image_name,test_data_percentage)
-        print(len(test_images))
-        quit()
+        train_images,train_labels,test_images,test_labels = split_data_train_test_val(run_dir,health_level,image_name,test_data_percentage,0.20)
     #cirlce crops the images
 
     if run_mode == 21:
@@ -528,6 +526,9 @@ if __name__ == "__main__":
                 if current_epoch - save_interval>previous_save:
                     save_model(model,run_dir,saver_mode)
                     previous_save = previous_save + save_interval
+                    new_time = time.time()-start_time
+                    time_array = np.append(time_array,new_time)
+                    np.save(run_dir+"/time.npy",time_array)
                 print("epoch: % .2f , train loss: % .4f , % 0.2f, train acc: % .4f , % .2f, test loss: % .4f , % .2f, test acc: % .4f, % .2f " % (current_epoch, lowest_train_loss,lowest_train_loss_epoch,highest_train_accuracy,highest_train_accuracy_epoch,lowest_test_loss,lowest_test_loss_epoch,highest_test_accuracy,highest_test_accuracy_epoch))
             #will save the entire model
             save_model(model,run_dir,1)
