@@ -542,6 +542,7 @@ def prepare_data_for_model(size_of_data,labels,images,image_width,image_height):
     return np_image_batch,labels_batch
 
 def prepare_data_for_model_two(size_of_data,labels,images,second_images,image_width,image_height):
+    gc.collect()
     total_labels = []
     # labels,images = shuffle_data(labels,images)
     labels,images,second_images = shuffle(labels,images,second_images)
