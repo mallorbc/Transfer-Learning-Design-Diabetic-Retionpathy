@@ -21,6 +21,7 @@ import numpy as np
 import utils
 
 import gc
+from sklearn.model_selection import train_test_split
 
 
 def load_data(data_csv):
@@ -164,7 +165,7 @@ def trim_data_even(run_dir,list_of_health_data,list_of_image_name,size_of_each_c
                 discarded_image_names.append(list_of_image_name[i])
                 discarded_health_data.append(list_of_health_data[i])
         
-    save_csv(run_dir,"validation.csv",discarded_health_data,discarded_image_names)
+    save_csv(run_dir,"garbage.csv",discarded_health_data,discarded_image_names)
     cat0,cat1,cat2,cat3,cat4 = utils.get_info_on_data(new_list_of_health_data)
 
     return new_list_of_health_data,new_list_of_images
@@ -234,6 +235,27 @@ def split_data_train_test(run_dir,list_of_health_data,list_of_image_name,percent
     save_csv(run_dir,"train.csv",list_of_health_data_train,list_of_image_name_train)
     save_csv(run_dir,"test.csv",list_of_health_data_test,list_of_image_name_test)
 
+    return list_of_image_name_train, list_of_health_data_train, list_of_image_name_test, list_of_health_data_test
+
+def split_data_train_test_val(run_dir,list_of_health_data,list_of_image_name,percent_for_test,val_percent):
+    list_of_image_name_train = []
+    list_of_image_name_test = []
+    list_of_health_data_train = []
+    list_of_health_data_test = []
+    list_of_image_name_val = []
+    list_of_health_data_val = []
+    
+    list_of_image_name_train,list_of_image_name_val,list_of_health_data_train,list_of_health_data_val = train_test_split(list_of_image_name,list_of_health_data,test_size=0.2,random_state=1)
+    list_of_image_name_train,list_of_image_name_test,list_of_health_data_train,list_of_health_data_test = train_test_split(list_of_image_name_train,list_of_health_data_train,test_size=0.25,random_state=1)
+
+    utils.get_info_on_data(list_of_health_data_train)
+    utils.get_info_on_data(list_of_health_data_test)
+    utils.get_info_on_data(list_of_health_data_val)
+
+
+    save_csv(run_dir,"train.csv",list_of_health_data_train,list_of_image_name_train)
+    save_csv(run_dir,"test.csv",list_of_health_data_test,list_of_image_name_test)
+    save_csv(run_dir,"validation.csv",list_of_health_data_val,list_of_image_name_val)
 
     return list_of_image_name_train, list_of_health_data_train, list_of_image_name_test, list_of_health_data_test
 
