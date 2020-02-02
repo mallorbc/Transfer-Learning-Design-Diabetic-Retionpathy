@@ -42,6 +42,7 @@ from preprocessData import *
 
 
 if __name__ == "__main__":
+    # transfer_learning_model_inception_v3(512,512)
     now = datetime.now()
     dt_string = now.strftime("%m-%d-%H-%M-%S")
 
@@ -183,6 +184,8 @@ if __name__ == "__main__":
         health_level,image_name = shuffle_data(health_level,image_name)
         #splits the data into train and test
         train_images,train_labels,test_images,test_labels = split_data_train_test(run_dir,health_level,image_name,test_data_percentage)
+        print(len(test_images))
+        quit()
     #cirlce crops the images
 
     if run_mode == 21:
@@ -380,6 +383,8 @@ if __name__ == "__main__":
         start_time = time.time()
         time_array = []
         time_array = np.asarray(time_array)
+        if len(test_images)<test_size:
+            test_size = len(test_images)
         if model_to_use!=3 and run_mode == 6:
             np_image_batch_test,test_labels_batch = prepare_data_for_model(test_size,test_labels,test_images,new_image_width,new_image_height)
             while current_epoch<total_epochs:
@@ -480,17 +485,20 @@ if __name__ == "__main__":
                 if (current_epoch - previous_test_epoch)>= test_interval:
                     print("Evaulating on test data...")
                     #gets the metrics for the test data
-                    metrics = model.evaluate([np_image_batch_test,np_image_batch_test_two], test_labels_batch)
+                    metrics = model.evaluate([np_image_batch_test,np_image_batch_test_two], test_labels_batch,verbose=0)
                     loss_test = metrics[0]
                     accuracy_test = metrics[-1]
+                    print("New test loss: ",loss_test," New test acc: ",accuracy_test)
                     np_image_batch_test = None
                     np_image_batch_test_two = None
                     #gets the metrics for the training data
                     print("Evaluating on training data...")
                     np_image_batch,np_image_batch_two,label_batch = prepare_data_for_model_two(test_size,train_labels,train_images,train_images_two,new_image_width,new_image_height)
-                    metrics = model.evaluate([np_image_batch,np_image_batch_two],label_batch)
+                    metrics = model.evaluate([np_image_batch,np_image_batch_two],label_batch,verbose=0)
                     loss_train = metrics[0]
                     accuracy_train = metrics[-1]
+                    print("New train loss: ",loss_train," New train acc: ",accuracy_train)
+
 
                     #used to print out best results in terminal
                     if loss_train<lowest_train_loss:
