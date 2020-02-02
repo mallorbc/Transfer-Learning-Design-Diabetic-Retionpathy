@@ -134,9 +134,7 @@ def transfer_learning_model_inception_v3(new_image_width, new_image_height,is_tr
     model.add(layers.Dense(256))
     model.add(layers.PReLU())
     model.add(Dropout(0.5))
-    # model.add(layers.Dense(128))
-    # model.add(layers.PReLU())
-    # model.add(Dropout(0.5))
+
     model.add(layers.Dense(5, activation='softmax'))
 
     radam = tfa.optimizers.RectifiedAdam(lr=0.00001)
@@ -150,6 +148,7 @@ def transfer_learning_model_inception_v3(new_image_width, new_image_height,is_tr
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
     model.summary()
+    quit()
     return model
 
 def inception_v3_multiple_inputs(image_width,image_height):
