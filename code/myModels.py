@@ -157,10 +157,8 @@ def inception_v3_multiple_inputs(image_width,image_height):
     image_input2 = Input(shape = input_shape)
 
     #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
-    input1 = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_tensor = image_input1, pooling='avg')
-    input2 = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_tensor = image_input2, pooling='avg')
-    # input1 = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_shape=(image_width, image_height, 3))
-    # input2 = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_shape=(image_width, image_height, 3))
+    input1 = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_shape=(image_width, image_height, 3))
+    input2 = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_shape=(image_width, image_height, 3))
     input1.trainable = True
     input2.trainable = True
     
@@ -170,16 +168,11 @@ def inception_v3_multiple_inputs(image_width,image_height):
         
     layer1_1 = input1.output
     layer2_1 = input2.output
-    # layer1_1 = tf.keras.layers.GlobalAveragePooling2D(name='avg_pool')(layer1_1)
-    # layer2_1 = tf.keras.layers.GlobalAveragePooling2D(name='avg_pool')(layer2_1)
+    layer1_1 = tf.keras.layers.GlobalAveragePooling2D(name='avg_pool')(layer1_1)
+    layer2_1 = tf.keras.layers.GlobalAveragePooling2D(name='avg_pool2')(layer2_1)
 
+    concat_layer = concatenate([layer1_1,layer2_1],axis=-1)
 
-    flat1 = layers.Flatten()(layer1_1)
-    flat2 = layers.Flatten()(layer2_1)
-
-    concat_layer = concatenate([flat1,flat2])
-
-    # output = layers.Flatten()(concat_layer)
     output = layers.Dense(1024)(concat_layer)
     output = layers.PReLU()(output)
     output = Dropout(0.5)(output)
@@ -189,12 +182,11 @@ def inception_v3_multiple_inputs(image_width,image_height):
     output = layers.Dense(256)(output)
     output = layers.PReLU()(output)
     output = Dropout(0.5)(output)
-    # output = layers.Dense(128)(output)
-    # output = layers.PReLU()(output)
+
 
 
     output = layers.Dense(5,activation='softmax')(output)
-    final_model = models.Model(inputs=[image_input1, image_input2], outputs=output)
+    final_model = models.Model(inputs=[input1.input, input2.input], outputs=output)
     final_model.summary()
     radam = tfa.optimizers.RectifiedAdam(lr=0.000001)
     ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
@@ -206,9 +198,7 @@ def inception_v3_multiple_inputs(image_width,image_height):
     #             metrics=['accuracy'])
     #plot_model(final_model, to_file='model_plot2.png')
     # plot_model(final_model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
-    # quit()
     final_model.summary()
-    # quit()
     return final_model
 
 def efficientnet(new_image_width, new_image_height):
