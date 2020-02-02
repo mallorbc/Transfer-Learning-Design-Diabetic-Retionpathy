@@ -527,6 +527,7 @@ def prepare_data_for_model_two(size_of_data,labels,images,second_images,image_wi
     image_batch = images[:size_of_data]
     image_batch_two = second_images[:size_of_data]
     labels_batch = total_labels[:size_of_data]
+    np_labels_batch = np.asarray(labels_batch)
     image_batch = normalize_images(image_batch)
     image_batch_two = normalize_images(image_batch_two)
     np_image_batch = np.asarray(image_batch)
@@ -535,7 +536,7 @@ def prepare_data_for_model_two(size_of_data,labels,images,second_images,image_wi
     np_image_batch.reshape(len(image_batch_two),image_width,image_height,3)
 
 
-    return np_image_batch,np_image_batch_two,labels_batch
+    return np_image_batch,np_image_batch_two,np_labels_batch
 
 def save_data_as_np(list_of_images):
     print("save numpy")
