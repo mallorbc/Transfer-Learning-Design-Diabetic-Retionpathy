@@ -62,7 +62,8 @@ if __name__ == "__main__":
     parser.add_argument("-ti","--test_interval",default=1.0,help="How oftern to use test the model on the test data",type=float)
     parser.add_argument("-si","--save_interval",default=1.0,help="After how many epochs to save the model to a checkpoint",type=float)
     parser.add_argument("-l","--load_model",default=None,help="Option to load a saved model",type=str)
-    parser.add_argument("-td","--test_data_percentage",default=0.3,help="Percentage of data to use for test data",type=float)
+    parser.add_argument("-td","--test_data_percentage",default=0.25,help="Percentage of data to use for test data",type=float)
+    parser.add_argument("-vd","--val_data_percentage",default=0.2,help="Percentage of data for validation",type=float)
     parser.add_argument("-pd","--plot_dir",default=None,help="directory containing data to plot",type=str)
     parser.add_argument("-model","--model_to_use",default=None,help="Selects what model to use",type=int)
     parser.add_argument("-trainable","--trainable_transfer",default=True,help="Can the transfer learning model learn on the new data",type=str2bool)
@@ -101,6 +102,7 @@ if __name__ == "__main__":
     save_interval = args.save_interval
     model_to_load = args.load_model
     test_data_percentage = args.test_data_percentage
+    validation_data_percent = args.val_data_percentage
     plot_directory = args.plot_dir
     model_to_use = args.model_to_use
     transfer_trainable = args.trainable_transfer
@@ -183,7 +185,7 @@ if __name__ == "__main__":
         health_level,image_name = trim_data_even(run_dir,health_level,image_name,size_of_each_class)
         health_level,image_name = shuffle_data(health_level,image_name)
         #splits the data into train and test
-        train_images,train_labels,test_images,test_labels = split_data_train_test_val(run_dir,health_level,image_name,test_data_percentage,0.20)
+        train_images,train_labels,test_images,test_labels = split_data_train_test_val(run_dir,health_level,image_name,test_data_percentage,validation_data_percent)
     #cirlce crops the images
 
     if run_mode == 21:

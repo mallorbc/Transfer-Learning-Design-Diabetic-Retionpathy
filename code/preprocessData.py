@@ -245,8 +245,8 @@ def split_data_train_test_val(run_dir,list_of_health_data,list_of_image_name,per
     list_of_image_name_val = []
     list_of_health_data_val = []
     
-    list_of_image_name_train,list_of_image_name_val,list_of_health_data_train,list_of_health_data_val = train_test_split(list_of_image_name,list_of_health_data,test_size=0.2,random_state=1)
-    list_of_image_name_train,list_of_image_name_test,list_of_health_data_train,list_of_health_data_test = train_test_split(list_of_image_name_train,list_of_health_data_train,test_size=0.25,random_state=1)
+    list_of_image_name_train,list_of_image_name_val,list_of_health_data_train,list_of_health_data_val = train_test_split(list_of_image_name,list_of_health_data,test_size=val_percent,random_state=1)
+    list_of_image_name_train,list_of_image_name_test,list_of_health_data_train,list_of_health_data_test = train_test_split(list_of_image_name_train,list_of_health_data_train,test_size=percent_for_test,random_state=1)
 
     utils.get_info_on_data(list_of_health_data_train)
     utils.get_info_on_data(list_of_health_data_test)
