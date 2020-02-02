@@ -70,6 +70,10 @@ def get_lowest_loss(epoch_file,loss_file):
     low_loss_index = np.where(loss_array == np.amin(loss_array))
     lowest_loss_epoch = epoch_array[low_loss_index]
     lowest_loss_value = loss_array[low_loss_index]
+    #if there are multiple occurences of the lowest value, get the latest one
+    if isinstance(lowest_loss_value,np.ndarray):
+        lowest_loss_value = lowest_loss_value[-1]
+        lowest_loss_epoch = lowest_loss_epoch[-1]
 
     return lowest_loss_value,lowest_loss_epoch
 
@@ -79,6 +83,10 @@ def get_highest_accuracy(epoch_file,acc_file):
     highest_acc_index = np.where(accuracy_array == np.amax(accuracy_array))
     highest_acc_epoch = epoch_array[highest_acc_index]
     highest_acc_value = accuracy_array[highest_acc_index]
+    #if there are multiple occurences of the highest value, get the latest one
+    if isinstance(highest_acc_value,np.ndarray):
+        highest_acc_value = highest_acc_value[-1]
+        highest_acc_epoch = highest_acc_epoch[-1]
     return highest_acc_value,highest_acc_epoch
 
 def get_trimmed_data(number_to_get,trimmed_images,trimmed_labels):
