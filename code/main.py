@@ -57,7 +57,7 @@ if __name__ == "__main__":
     parser.add_argument("-d3","--dir3",default=None,help="directory containing the third dataset",type=str)
     parser.add_argument("-csv","--csv_location",default=None,help="location of the csv data file",type=str)
     parser.add_argument("-b","--batch_size",default=64,help="batch size for training",type=int)
-    parser.add_argument("-e","--epochs",default=50,help="Number of epochs to train the network on",type=float)
+    parser.add_argument("-e","--epochs",default=300,help="Number of epochs to train the network on",type=float)
     parser.add_argument("-ti","--test_interval",default=1.0,help="How oftern to use test the model on the test data",type=float)
     parser.add_argument("-si","--save_interval",default=1.0,help="After how many epochs to save the model to a checkpoint",type=float)
     parser.add_argument("-l","--load_model",default=None,help="Option to load a saved model",type=str)
@@ -77,6 +77,7 @@ if __name__ == "__main__":
     parser.add_argument("-test_size",default=75,help="what batch size to use for testing the performance of the models",type=int)
     parser.add_argument('-saver',"--saver_mode",default=None,help="Whether or not to save the whole model or just the weights",type=int)
     parser.add_argument('-class_size',default=708,help="how big each class should be; Can't be larger than 700",type=int)
+    parser.add_argument('-compat',"--compatibility",default=False,help="whether or not to use compat mode",type=str2bool)
 
 
     
@@ -119,6 +120,15 @@ if __name__ == "__main__":
     saver_mode = args.saver_mode
 
     size_of_each_class = args.class_size
+
+    compat_mode = args.compatibility
+    if compat_mode is True:
+        from tensorflow.compat.v1 import ConfigProto
+        from tensorflow.compat.v1 import InteractiveSession
+
+        config = ConfigProto()
+        config.gpu_options.allow_growth = True
+        session = InteractiveSession(config=config)
     
 
     if folder_name is not None:
