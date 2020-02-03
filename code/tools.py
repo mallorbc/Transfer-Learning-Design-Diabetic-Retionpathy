@@ -16,6 +16,8 @@ from utils import *
 from plots import *
 import copy
 from random import randint
+from keract import get_activations, display_heatmaps
+
 
 
 
@@ -30,6 +32,7 @@ if __name__ == "__main__":
     parser.add_argument("-m","--mode",default=None,help="What mode to run for metrics",type=int)
     parser.add_argument("-o","--output",default=None,help="Where to save outputs",type=str)
     parser.add_argument("-npy",default=None,help="npy file to view",type=str)
+    parser.add_argument("-model_num",default=1,help="What model type to load",type=int)
 
 
     args = parser.parse_args()
@@ -43,6 +46,7 @@ if __name__ == "__main__":
     mode_to_run = args.mode
     output_folder = args.output
     npy_file = args.npy
+    model_num = args.model_num
 
     health_level,image_name = load_data(csv_dir)
     
@@ -120,7 +124,77 @@ if __name__ == "__main__":
         image_to_test = cv2.cvtColor(image_to_test, cv2.COLOR_BGR2RGB)
         plt.imshow(image_to_test)
         plt.show()
+    elif mode_to_run == 7:
+        compat_mode = True
+        if compat_mode is True:
+            from tensorflow.compat.v1 import ConfigProto
+            from tensorflow.compat.v1 import InteractiveSession
 
+        config = ConfigProto()
+        config.gpu_options.allow_growth = True
+        session = InteractiveSession(config=config)
+        width =512
+        height =512
+        #loads the full path
+        model_to_load = os.path.realpath(args.model)
+        #loads the model with the weights
+        model = load_model(model_to_load,model_num,width,height)
+        #converts array to string
+        image_to_test = image_to_test[0]
+        #reads the image
+        img_data = cv2.imread(image_to_test)
+        print("image read successful")
+        #converts the data into a np array
+        img_arr = np.asarray(img_data)
+        #reshapes the data 
+        img_arr.reshape(width, height,3)
+        #expands the dimensions, needed for api
+        img_arr = np.expand_dims(img_arr, axis=0)
+        #gets al activations for conv layers
+        img_activation = get_activations(model, img_arr, auto_compile=True)
+
+        #uncomment this to see keys
+        # print(img_activation.keys())
+
+        #key used for simple cnn, may need changed
+        layer_to_use = img_activation["conv2d_14"]
+
+
+        #removes first dimension that was needed to get activations
+        layer_to_use = np.squeeze(layer_to_use,axis=0)
+        #gets the average of all the filters so we can have one image instead of 100s
+        layer_to_use = np.mean(layer_to_use,axis=-1)
+        #increases resolution of the activation
+        activation_resized = cv2.resize(layer_to_use,(width,height))
+        # activation_resized_added_channel = np.expand_dims(activation_resized,axis=-1)
+        # activation_resized_added_channel = np.tile(activation_resized_added_channel,(1,1,3))
+        print(np.shape(activation_resized))
+        print(activation_resized.dtype)
+
+        #removes chanel dimension so we can overlay data
+        img_data = img_data[:, :, 0]
+
+        #converts image data to float32
+        img_data = img_data.astype("float32")
+
+        #overlays the data, may need to tweak parameters
+        overlay = cv2.addWeighted(src1=activation_resized, alpha=1, src2=img_data, beta=1, gamma=0)
+        #shows just the activation
+        plt.imshow(activation_resized)
+        plt.show()
+        #displays overlay
+        plt.imshow(overlay)
+        plt.show()
+
+
+
+
+
+        #dictionary that will be passed back to api
+        layer_act = {}
+        #puts the layer we want in the dictionary
+        layer_act[1] = layer_to_use
+        # display_heatmaps(layer_act, img_arr, save=False)
 
 
 
