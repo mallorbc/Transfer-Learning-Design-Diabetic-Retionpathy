@@ -248,6 +248,7 @@ def plot_confusion_matrix(matrix, title):
     ax.set(xlabel='Predicted', ylabel='Actual')
     plt.title(title)
     plt.show()
+    plt.figsave("confusion_matrix.png")
 
 #this will conver the data from 5 classes to a boolean, either the class or not and then also the confidence
 def get_prob_of_correct(model,pickle_dict,list_of_images):
@@ -297,6 +298,8 @@ def plot_precision_recall_curve(results,probs):
     plt.ylabel("Precision")
     plt.title("Precision Recall Curve")
     plt.show()
+    plt.figsave("precision_recall.png")
+
 
 
 def make_roc_curve(class_to_test,images_to_test,class_dict,model_to_use):
@@ -318,5 +321,7 @@ def plot_roc_curve(results,probs):
     plt.title("Precision Recall Curve")
     plt.legend()
     plt.show()
+    plt.figsave("ROC.png")
+
 
 
