@@ -1,2 +1,2 @@
 #!/bin/bash
-docker build -t diabetic-kaggle .
+docker build -t diabetic_kaggle .

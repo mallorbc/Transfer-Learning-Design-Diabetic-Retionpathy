@@ -5,6 +5,7 @@ import os
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import plot_model
 import numpy as np
+import cv2
 
 import time
 
@@ -18,7 +19,7 @@ from efficientnet.tfkeras import EfficientNetB7 as Net
 import tensorflow_addons as tfa
 import gc
 
-
+from keract import get_activations, display_heatmaps
 
 
 
@@ -28,36 +29,89 @@ import gc
 # from tensorflow.keras.applications import inception_v3
 
 def create_CNN(image_width,image_height):
-    input_shape = (image_width,image_height,3)
-    image_input = Input(shape = input_shape)
-    output = simple_layer(32,2,image_input)
-    output = simple_layer(64,2,output)
-    output = simple_layer(128,2,output)
-    output = simple_layer(256,3,output)
-    output = simple_layer(512,3,output)
-    output = tf.keras.layers.GlobalAveragePooling2D()(output)
-    output = layers.Dense(1024)(output)
-    output = layers.PReLU()(output)
-    output = Dropout(0.5)(output)
-    output = layers.Dense(512)(output)
-    output = layers.PReLU()(output)
-    output = Dropout(0.5)(output)
-    output = layers.Dense(256)(output)
-    output = layers.PReLU()(output)
-    output = Dropout(0.5)(output)
-    output = layers.Dense(5,activation='softmax')(output)
+    # input_shape = (image_width,image_height,3)
+    # image_input = Input(shape = input_shape)
+    # output = simple_layer(32,2,image_input)
+    # output = simple_layer(64,2,output)
+    # output = simple_layer(128,2,output)
+    # output = simple_layer(256,3,output)
+    # output = simple_layer(512,3,output)
+    # output = tf.keras.layers.GlobalAveragePooling2D()(output)
+    # output = layers.Dense(1024)(output)
+    # output = layers.PReLU()(output)
+    # output = Dropout(0.5)(output)
+    # output = layers.Dense(512)(output)
+    # output = layers.PReLU()(output)
+    # output = Dropout(0.5)(output)
+    # output = layers.Dense(256)(output)
+    # output = layers.PReLU()(output)
+    # output = Dropout(0.5)(output)
+    # output = layers.Dense(5,activation='softmax')(output)
 
 
-    final_model = models.Model(inputs=[image_input], outputs=output)
-    radam = tfa.optimizers.RectifiedAdam(lr=0.0001)
-    ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
+    # final_model = models.Model(inputs=[image_input], outputs=output)
+    # radam = tfa.optimizers.RectifiedAdam(lr=0.0001)
+    # ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
 
-    final_model.compile(optimizer=ranger,
+    # final_model.compile(optimizer=ranger,
+    #             loss='sparse_categorical_crossentropy',
+    #             metrics=['accuracy'])
+
+    # final_model.summary()
+    # time.sleep(2)
+
+    model = models.Sequential()
+    model.add(layers.Conv2D(32, (3, 3),strides=2, input_shape=(image_width, image_height, 3)))
+    model.add(layers.PReLU())
+    # model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(64, (3, 3),strides=2))
+    model.add(layers.PReLU())
+    # model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(64, (3, 3),strides=2))
+    model.add(layers.PReLU())
+    # model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(128, (3, 3),strides=2))
+    model.add(layers.PReLU())
+    model.add(layers.Conv2D(128, (3, 3),strides=2))
+    model.add(layers.PReLU())
+    model.add(layers.Conv2D(256, (3, 3),strides=2))
+    model.add(layers.PReLU())
+    model.add(layers.Conv2D(256, (3, 3),strides=2))
+    model.add(layers.PReLU())
+    model.add(layers.Conv2D(512, (3, 3),strides=2))
+    model.add(layers.PReLU())
+    # model.add(layers.Conv2D(128, (3, 3),strides=2))
+    # model.add(layers.PReLU())
+
+
+    model.add(layers.Flatten())
+    model.add(layers.Dense(1024))
+    model.add(layers.PReLU())
+    model.add(Dropout(0.5))
+    model.add(layers.Dense(512))
+    model.add(layers.PReLU())
+    model.add(Dropout(0.5))
+    model.add(layers.Dense(256))
+    model.add(layers.PReLU())
+    model.add(Dropout(0.5))
+    model.add(layers.Dense(128))
+    model.add(layers.PReLU())
+    # model.add(Dropout(0.5))
+    # model.add(layers.Dense(32))
+    # model.add(layers.PReLU())
+    model.add(Dropout(0.5))
+    model.add(layers.Dense(5, activation='softmax'))
+    # radam = tfa.optimizers.RectifiedAdam(lr=0.01)
+    # ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
+
+    model.compile(optimizer=Adam(lr=0.01),
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
+    model.summary()
+    # quit()
 
-    final_model.summary()
-    time.sleep(2)
+    
+    return model
     return final_model
 
 
@@ -72,6 +126,17 @@ def load_model(path_to_model,model_number=None,width=None,height=None):
         model_to_load = create_CNN(width,height)
         model_to_load.load_weights(path_to_model)
         print("Loaded model weights")
+        #np_image_batch,label_batch = prepare_data_for_model(batch_size,train_labels,train_images,new_image_width,new_image_height)
+        #np_image_batch_test,test_labels_batch = prepare_data_for_model(test_size,test_labels,test_images,new_image_width,new_image_height)
+        img_data = cv2.imread('/home/zhang4ym/Desktop/Senior-Design-Diabetic-Retionpathy/data/512_resize/images/10_right.jpeg')
+        print("image read successful")
+        #img_norm = normalize_images(img_data)
+        img_arr = np.asarray(img_data)
+        img_arr.reshape(width, height,3)
+        img_arr = np.expand_dims(img_arr, axis=0)
+        img_activation = get_activations(model_to_load, img_arr, auto_compile=True)
+        display_heatmaps(img_activation, img_arr, save=False)
+        
 
     elif model_number == 2:
         model_to_load = transfer_learning_model_inception_v3(width,height)
