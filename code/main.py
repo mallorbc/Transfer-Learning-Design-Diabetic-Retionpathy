@@ -42,7 +42,6 @@ from preprocessData import *
 
 
 if __name__ == "__main__":
-    # transfer_learning_model_inception_v3(512,512)
     now = datetime.now()
     dt_string = now.strftime("%m-%d-%H-%M-%S")
 

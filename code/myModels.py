@@ -30,9 +30,9 @@ import gc
 def create_CNN(image_width,image_height):
     input_shape = (image_width,image_height,3)
     image_input = Input(shape = input_shape)
-    output = simple_layer(32,2,image_input)
-    output = simple_layer(64,2,output)
-    output = simple_layer(128,2,output)
+    output = simple_layer(32,3,image_input)
+    output = simple_layer(64,3,output)
+    output = simple_layer(128,3,output)
     output = simple_layer(256,3,output)
     output = simple_layer(512,3,output)
     output = tf.keras.layers.GlobalAveragePooling2D()(output)
@@ -49,7 +49,7 @@ def create_CNN(image_width,image_height):
 
 
     final_model = models.Model(inputs=[image_input], outputs=output)
-    radam = tfa.optimizers.RectifiedAdam(lr=0.0001)
+    radam = tfa.optimizers.RectifiedAdam(lr=0.000025)
     ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
 
     final_model.compile(optimizer=ranger,
@@ -57,6 +57,7 @@ def create_CNN(image_width,image_height):
                 metrics=['accuracy'])
 
     final_model.summary()
+    # quit()
     time.sleep(2)
     return final_model
 
@@ -344,12 +345,24 @@ def get_model_predictions_two_inputs(loaded_model,image_one,image_two):
 
 
 
-def simple_layer(filters,number_of_layers,input_layer = None):
-    output = layers.Conv2D(filters, (3, 3),strides=1,activation="relu")(input_layer)
-    if number_of_layers>=2:
-        for i in range(number_of_layers-2):
-            output = layers.Conv2D(filters, (3, 3),strides=1,activation="relu")(output)
-        output = layers.Conv2D(filters, (3, 3),strides=2,activation="relu")(output)
+def simple_layer(filters,number_of_layers,input_layer = None,prelu=None):
+    if prelu is None:
+        output = layers.Conv2D(filters, (3, 3),strides=1,activation="relu",padding="same")(input_layer)        
+        if number_of_layers>=2:
+            for i in range(number_of_layers-2):
+                output = layers.Conv2D(filters, (3, 3),strides=1,activation="relu",padding="same")(output)
+            output = layers.Conv2D(filters, (3, 3),strides=2,activation="relu",padding="same")(output)
+    else:
+        output = layers.Conv2D(filters, (3, 3),strides=1,padding="same")(input_layer)
+        output = layers.PReLU()(output)
+        if number_of_layers>=2:
+            for i in range(number_of_layers-2):
+                output = layers.Conv2D(filters, (3, 3),strides=1,padding="same")(output)
+                output = layers.PReLU()(output)
+            output = layers.Conv2D(filters, (3, 3),strides=2,padding="same")(output)
+            output = layers.PReLU()(output)
+
+
 
     return output
 
