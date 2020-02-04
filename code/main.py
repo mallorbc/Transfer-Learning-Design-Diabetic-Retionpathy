@@ -252,9 +252,9 @@ if __name__ == "__main__":
                 model_name = "CNN"
             elif model_to_use == 2:
                 if transfer_trainable:
-                    model = transfer_learning_model_inception_v3(new_image_width, new_image_height,True)
+                    model = transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,True)
                 else:
-                    model = transfer_learning_model_inception_v3(new_image_width, new_image_height,False)
+                    model = transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,False)
 
                 model_name = "inception_transfer"
             elif model_to_use == 3:
