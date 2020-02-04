@@ -76,7 +76,7 @@ def load_model(path_to_model,model_number=None,width=None,height=None):
         print("Loaded model weights")
 
     elif model_number == 2:
-        model_to_load = transfer_learning_model_inception_v3(width,height)
+        model_to_load = transfer_learning_model_inception_v3_functional(width,height)
         model_to_load.load_weights(path_to_model)
         print("Loaded model weights")
 
@@ -294,7 +294,8 @@ def get_model_predictions_one_input(loaded_model,images):
         image_batch = normalize_images(image_batch)
         image_batch = np.asarray(image_batch)
         print(str(counter*test_size) + " images tested")
-        total_predictions = np.append(total_predictions,loaded_model.predict_classes(image_batch))
+        # total_predictions = np.append(total_predictions,loaded_model.predict_classes(image_batch))
+        total_predictions = np.append(total_predictions,custom_predict_class(loaded_model,image_batch))
         print("total predictions:",np.shape(total_predictions))
 
         # print("total labels: ",np.shape(total_labels))
@@ -305,7 +306,7 @@ def get_model_predictions_one_input(loaded_model,images):
     image_batch = normalize_images(image_batch)
     image_batch = np.asarray(image_batch)
 
-    total_predictions = np.append(total_predictions,loaded_model.predict_classes(image_batch))
+    total_predictions = np.append(total_predictions,custom_predict_class(loaded_model,image_batch))
 
     return total_predictions
 
@@ -368,7 +369,56 @@ def simple_layer(filters,number_of_layers,input_layer = None,prelu=None):
     return output
 
 
+def transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,is_trainable=True):
+    #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
+    base_model = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_shape=(new_image_width, new_image_height, 3))
+    # base_model = EfficientNetB5(weights='imagenet',include_top=False,input_shape=(new_image_width, new_image_height, 3))
 
+    #sets the inception_v3 model to not update its weights
+    base_model.trainable = is_trainable
+    #layer to convert the features to a single n-elemnt vector per image
+    global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
+    model = global_average_layer(base_model.output)
+    model = layers.Dense(1024)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    model =  layers.Dense(512)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    model = layers.Dense(256)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    output = layers.Dense(5, activation='softmax')(model)
+    final_model = models.Model(inputs=[base_model.input], outputs=output)
+
+
+
+    radam = tfa.optimizers.RectifiedAdam(lr=0.00001)
+    ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
+
+    # model.compile(optimizer=Adam(lr=0.00001),
+    #             loss='sparse_categorical_crossentropy',
+    #             metrics=['accuracy'])
+    # return model
+    final_model.compile(optimizer=ranger,
+                loss='sparse_categorical_crossentropy',
+                metrics=['accuracy'])
+    final_model.summary()
+    # quit()
+    return final_model
+
+def custom_predict_class(model,image_to_test):
+    return_values = []
+    for image in image_to_test:
+        image = np.expand_dims(image,axis=0)
+        prediction_array = model.predict(image)
+        prediction_array = np.squeeze(prediction_array,axis=0)
+        prediction_class = np.where(prediction_array == np.amax(prediction_array))
+        # prediction_class = int(prediction_class)
+        prediction_class = np.asarray(prediction_class)
+        prediction_class = np.squeeze(prediction_class,axis=0)
+        return_values.append(prediction_class)
+    return return_values
 
 
 
