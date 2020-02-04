@@ -84,7 +84,10 @@ def load_model(path_to_model,model_number=None,width=None,height=None):
         model_to_load = inception_v3_multiple_inputs(width,height)
         model_to_load.load_weights(path_to_model)
         print("Loaded model weights")
-
+    elif model_number == 4:
+        model_to_load = transfer_learning_model_inception_v3(width,height)
+        model_to_load.load_weights(path_to_model)
+        print("Loaded model weights")
     return model_to_load
 
 
