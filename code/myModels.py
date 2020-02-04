@@ -19,7 +19,7 @@ import tensorflow_addons as tfa
 import gc
 
 
-
+from tensorflow.keras.utils import plot_model
 
 
 
@@ -57,8 +57,9 @@ def create_CNN(image_width,image_height):
                 metrics=['accuracy'])
 
     final_model.summary()
-    # quit()
+
     time.sleep(2)
+    #plot_model(final_model, to_file='model.png')
     return final_model
 
 
