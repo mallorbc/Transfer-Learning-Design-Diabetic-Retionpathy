@@ -36,6 +36,7 @@ if __name__ == "__main__":
     parser.add_argument("-compat","--compatibility_mode",default=False,type=str2bool)
     parser.add_argument("-width",default=512,help="What is the width of the image",type=int)
     parser.add_argument("-height",default=512,help="What is the width of the image",type=int)
+    parser.add_argument("-n","--name",default=None,help="names for saves",type=str)
 
 
 
@@ -54,6 +55,12 @@ if __name__ == "__main__":
     compat_mode = args.compatibility_mode
     width = args.width
     height = args.height
+    name = args.name
+
+    if output_folder is not None:
+        output_folder = os.path.realpath(output_folder)
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
 
     if compat_mode is True:
         from tensorflow.compat.v1 import ConfigProto
@@ -76,6 +83,7 @@ if __name__ == "__main__":
         print("Will test on all images in csv")
         data_path = os.path.abspath(args.image)
         image_name = get_full_image_name_no_ext(data_path,image_name)
+        image_name = add_extension(image_name,".jpeg")
         health_dict = make_csv_dict(health_level,image_name)
         image_to_test = image_name
 
@@ -85,7 +93,7 @@ if __name__ == "__main__":
     if mode_to_run == 1:
         #loads the model
         model_to_load = os.path.realpath(args.model)
-        model = load_model(model_to_load)
+        model = load_model(model_to_load,model_num,width,height)
         make_precision_recall_curve(class_to_test,image_to_test,health_dict,model)
     
     #makes ROC curve
@@ -143,29 +151,46 @@ if __name__ == "__main__":
         plt.imshow(image_to_test)
         plt.show()
     elif mode_to_run == 7:
+        # transfer_learning_model_inception_v3_functional(512, 512)
+        # quit()
         #loads the full path
+        # print(class_to_test)
+        if class_to_test is not None:
+            images_of_one_class = get_images_of_one_class(class_to_test,image_to_test,health_dict)
+            images_of_one_class = add_extension(images_of_one_class,".jpeg")
+            image_to_test = images_of_one_class[randint(0,(len(images_of_one_class)-1))]
+        else:
+            image_to_test = image_to_test[0]
+
+
         model_to_load = os.path.realpath(args.model)
         #loads the model with the weights
         model = load_model(model_to_load,model_num,width,height)
         #converts array to string
-        image_to_test = image_to_test[0]
+        
         #reads the image
         img_data = cv2.imread(image_to_test)
         print("image read successful")
         #converts the data into a np array
         img_arr = np.asarray(img_data)
+        print(np.shape(img_arr))
         #reshapes the data 
         img_arr.reshape(width, height,3)
         #expands the dimensions, needed for api
         img_arr = np.expand_dims(img_arr, axis=0)
+        print(np.shape(img_arr))
+        # quit()
         #gets al activations for conv layers
         img_activation = get_activations(model, img_arr, auto_compile=True)
 
         #uncomment this to see keys
         # print(img_activation.keys())
+        # quit()
 
         #key used for simple cnn, may need changed
-        layer_to_use = img_activation["conv2d_14"]
+        # layer_to_use = img_activation["conv2d_14"]
+        #last layer for functional
+        layer_to_use = img_activation["conv2d_93"]
 
 
         #removes first dimension that was needed to get activations
@@ -204,6 +229,20 @@ if __name__ == "__main__":
         layer_act[1] = layer_to_use
         # display_heatmaps(layer_act, img_arr, save=False)
 
+    elif mode_to_run == 8:
+        if test_csv is not None:
+            test_labels,test_images = load_data(test_csv)
+            #gets the full paths of the images
+            test_images = get_full_image_name_no_ext(data_path,test_images)
+
+            # test_images = get_full_image_name_no_ext(data_path,test_images)
+            image_to_test = test_images
+
+        model_to_load = os.path.realpath(args.model)
+        model = load_model(model_to_load,model_num,width,height)
+        # image_to_test = add_extension(image_to_test,".jpeg")
+        create_confusion_matrix_one_input(model,image_to_test,test_labels,name,output_folder)
+        make_roc_precision_recall_graphs(class_to_test,image_to_test,health_dict,model,output_folder)
 
 
     print(mode_to_run)
