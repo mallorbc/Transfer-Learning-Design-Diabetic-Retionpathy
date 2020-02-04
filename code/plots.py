@@ -198,7 +198,7 @@ def show_images(image_name):
         plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
         plt.show()
 
-def create_confusion_matrix_one_input(loaded_model,images,labels,plot_name=None):
+def create_confusion_matrix_one_input(loaded_model,images,labels,plot_name=None,output=None):
     total_labels = []
     total_labels = np.asarray(labels)
 
@@ -211,7 +211,7 @@ def create_confusion_matrix_one_input(loaded_model,images,labels,plot_name=None)
     matrix = make_confusion_matrix_array(total_labels,total_predictions)
     print(classification_report(total_labels, total_predictions))    
     print("Plotting...")
-    plot_confusion_matrix(matrix,plot_name)
+    plot_confusion_matrix(matrix,plot_name,output)
 
 def create_confusion_matrix_two_inputs(model,images_one,images_two,labels):
     total_labels = []
@@ -235,8 +235,11 @@ def make_confusion_matrix_array(actual, predicted):
 
 
 
-def plot_confusion_matrix(matrix, title):
+def plot_confusion_matrix(matrix, title=None,output=None):
     print("matrix")
+    if title is None:
+        title="confusion_matrix"
+
     array = matrix
 
     df_cm = pd.DataFrame(array, index=[i for i in "01234"], columns=[
@@ -247,9 +250,13 @@ def plot_confusion_matrix(matrix, title):
                     annot_kws={"size": 20})  # font size
     ax.set(xlabel='Predicted', ylabel='Actual')
     plt.title(title)
-    plot_name = title + ".png"
-    plt.figsave(plot_name)
-    plt.show()
+    if output is not None:
+        save_name = output + "/"+ "confusion_matrix.png"
+        plt.savefig(save_name)
+        plt.show()
+
+    else:
+        plt.show()
 
 
 #this will conver the data from 5 classes to a boolean, either the class or not and then also the confidence
@@ -293,14 +300,19 @@ def make_precision_recall_curve(class_to_test,images_to_test,class_dict,model_to
     plot_precision_recall_curve(results,probs)
 
 
-def plot_precision_recall_curve(results,probs):
+def plot_precision_recall_curve(results,probs,output=None):
     precision, recall, thresholds = precision_recall_curve(results, probs)
     plt.plot(recall,precision)
     plt.xlabel("Recall")
     plt.ylabel("Precision")
     plt.title("Precision Recall Curve")
-    plt.show()
-    plt.figsave("precision_recall.png")
+    if output is not None:
+        save_path = output + "/precision_recall_curve.png"
+        plt.savefig(save_path)
+        plt.show()
+
+    else:
+        plt.show()
 
 
 
@@ -309,7 +321,7 @@ def make_roc_curve(class_to_test,images_to_test,class_dict,model_to_use):
     results,probs = get_prob_of_correct(model_to_use,class_dict,images_to_test)
     plot_roc_curve(results,probs)
 
-def plot_roc_curve(results,probs):
+def plot_roc_curve(results,probs,output=None):
     fpr, tpr, thresholds = roc_curve(results, probs)
     score = roc_auc_score(results,probs)
     print("ROC AUC score: ",score)
@@ -322,8 +334,24 @@ def plot_roc_curve(results,probs):
     plt.ylabel("True Positive Rate")
     plt.title("Precision Recall Curve")
     plt.legend()
-    plt.show()
-    plt.figsave("ROC.png")
+    if output is not None:
+        save_path = output + "/ROC.png"
+        plt.savefig(save_path)
+        plt.show()
+
+    else:
+        plt.show()
+
+
+def make_roc_precision_recall_graphs(class_to_test,images_to_test,class_dict,model_to_use,output=None):
+    images_to_test = get_images_of_one_class(class_to_test,images_to_test,class_dict)
+    # print(images_to_test)
+    # quit()
+    results,probs = get_prob_of_correct(model_to_use,class_dict,images_to_test)
+    plot_precision_recall_curve(results,probs,output)
+    plot_roc_curve(results,probs,output)
+
+
 
 
 
