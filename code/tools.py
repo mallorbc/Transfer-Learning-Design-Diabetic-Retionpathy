@@ -33,6 +33,10 @@ if __name__ == "__main__":
     parser.add_argument("-o","--output",default=None,help="Where to save outputs",type=str)
     parser.add_argument("-npy",default=None,help="npy file to view",type=str)
     parser.add_argument("-model_num",default=1,help="What model type to load",type=int)
+    parser.add_argument("-compat","--compatibility_mode",default=False,type=str2bool)
+    parser.add_argument("-width",default=512,help="What is the width of the image",type=int)
+    parser.add_argument("-height",default=512,help="What is the width of the image",type=int)
+
 
 
     args = parser.parse_args()
@@ -47,6 +51,16 @@ if __name__ == "__main__":
     output_folder = args.output
     npy_file = args.npy
     model_num = args.model_num
+    compat_mode = args.compatibility_mode
+    width = args.width
+    height = args.height
+
+    if compat_mode is True:
+        from tensorflow.compat.v1 import ConfigProto
+        from tensorflow.compat.v1 import InteractiveSession
+        config = ConfigProto()
+        config.gpu_options.allow_growth = True
+        session = InteractiveSession(config=config)
 
     health_level,image_name = load_data(csv_dir)
     
@@ -67,24 +81,27 @@ if __name__ == "__main__":
 
 
 
-
+    #makes precision recall curve
     if mode_to_run == 1:
         #loads the model
         model_to_load = os.path.realpath(args.model)
         model = load_model(model_to_load)
         make_precision_recall_curve(class_to_test,image_to_test,health_dict,model)
     
+    #makes ROC curve
     elif mode_to_run == 2:
         #loads the model
         model_to_load = os.path.realpath(args.model)
         model = load_model(model_to_load)
         make_roc_curve(class_to_test,image_to_test,health_dict,model)
 
+    #makes numpy files of images for GAN
     elif mode_to_run == 3:
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
         make_npy_of_class(class_to_test,image_to_test,health_dict,output_folder,test_csv)
     
+    #for loading a numpy file and viewing it
     elif mode_to_run ==4:
         npy_file = os.path.realpath(npy_file)
         image = np.load(npy_file)
@@ -93,6 +110,7 @@ if __name__ == "__main__":
             plt.imshow(m)
             plt.show()
 
+    #view the image in PIL
     elif mode_to_run == 5:
         base_path = args.image
         images = os.listdir(args.image)
@@ -110,7 +128,7 @@ if __name__ == "__main__":
         image = Image.fromarray(image_to_test,mode="RGB")
         image.show()
 
-        
+    #views one of the images in matplotlib
     elif mode_to_run == 6:
         if class_to_test is not None:
             image_name = get_images_of_one_class(class_to_test,image_name,health_dict)
@@ -125,16 +143,6 @@ if __name__ == "__main__":
         plt.imshow(image_to_test)
         plt.show()
     elif mode_to_run == 7:
-        compat_mode = True
-        if compat_mode is True:
-            from tensorflow.compat.v1 import ConfigProto
-            from tensorflow.compat.v1 import InteractiveSession
-
-        config = ConfigProto()
-        config.gpu_options.allow_growth = True
-        session = InteractiveSession(config=config)
-        width =512
-        height =512
         #loads the full path
         model_to_load = os.path.realpath(args.model)
         #loads the model with the weights
