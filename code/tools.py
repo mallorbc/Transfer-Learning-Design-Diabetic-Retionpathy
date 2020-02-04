@@ -100,7 +100,7 @@ if __name__ == "__main__":
     elif mode_to_run == 2:
         #loads the model
         model_to_load = os.path.realpath(args.model)
-        model = load_model(model_to_load)
+        model = load_model(model_to_load,model_num,width,height)
         make_roc_curve(class_to_test,image_to_test,health_dict,model)
 
     #makes numpy files of images for GAN
@@ -242,8 +242,13 @@ if __name__ == "__main__":
         model_to_load = os.path.realpath(args.model)
         model = load_model(model_to_load,model_num,width,height)
         # image_to_test = add_extension(image_to_test,".jpeg")
-        create_confusion_matrix_one_input(model,image_to_test,test_labels,name,output_folder)
-        make_roc_precision_recall_graphs(class_to_test,image_to_test,health_dict,model,output_folder)
+        output_file = output_folder + "/confusion_matrix.png"
+        create_confusion_matrix_one_input(model,image_to_test,test_labels,name,output_file)
+        make_roc_precision_recall_graphs(0,image_to_test,health_dict,model,output_folder)
+        make_roc_precision_recall_graphs(1,image_to_test,health_dict,model,output_folder)
+        make_roc_precision_recall_graphs(2,image_to_test,health_dict,model,output_folder)
+        make_roc_precision_recall_graphs(3,image_to_test,health_dict,model,output_folder)
+        make_roc_precision_recall_graphs(4,image_to_test,health_dict,model,output_folder)
 
 
     print(mode_to_run)
