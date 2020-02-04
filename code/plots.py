@@ -251,8 +251,8 @@ def plot_confusion_matrix(matrix, title=None,output=None):
     ax.set(xlabel='Predicted', ylabel='Actual')
     plt.title(title)
     if output is not None:
-        save_name = output + "/"+ "confusion_matrix.png"
-        plt.savefig(save_name)
+        # save_name = output + "/"+ "confusion_matrix.png"
+        plt.savefig(output)
         plt.show()
 
     else:
@@ -307,8 +307,8 @@ def plot_precision_recall_curve(results,probs,output=None):
     plt.ylabel("Precision")
     plt.title("Precision Recall Curve")
     if output is not None:
-        save_path = output + "/precision_recall_curve.png"
-        plt.savefig(save_path)
+        # save_path = output + "/precision_recall_curve.png"
+        plt.savefig(output)
         plt.show()
 
     else:
@@ -335,8 +335,8 @@ def plot_roc_curve(results,probs,output=None):
     plt.title("ROC Curve")
     plt.legend()
     if output is not None:
-        save_path = output + "/ROC.png"
-        plt.savefig(save_path)
+        # save_path = output + "/ROC.png"
+        plt.savefig(output)
         plt.show()
 
     else:
@@ -348,8 +348,11 @@ def make_roc_precision_recall_graphs(class_to_test,images_to_test,class_dict,mod
     # print(images_to_test)
     # quit()
     results,probs = get_prob_of_correct(model_to_use,class_dict,images_to_test)
-    plot_precision_recall_curve(results,probs,output)
-    plot_roc_curve(results,probs,output)
+    if output is not None:
+        output_file_precision = output + "/precision_recall_class_" + str(class_to_test) + ".png"
+    plot_precision_recall_curve(results,probs,output_file_precision)
+    output_file_roc = output + "/ROC_class_" + str(class_to_test) + ".png"
+    plot_roc_curve(results,probs,output_file_roc)
 
 
 
