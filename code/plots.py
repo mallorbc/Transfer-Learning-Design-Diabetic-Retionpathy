@@ -332,7 +332,7 @@ def plot_roc_curve(results,probs,output=None):
     plt.plot(base_line_x,base_line_y,"r--",label="Base Line")
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
-    plt.title("Precision Recall Curve")
+    plt.title("ROC Curve")
     plt.legend()
     if output is not None:
         save_path = output + "/ROC.png"
