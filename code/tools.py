@@ -157,10 +157,11 @@ if __name__ == "__main__":
         # print(class_to_test)
         if class_to_test is not None:
             images_of_one_class = get_images_of_one_class(class_to_test,image_to_test,health_dict)
-            images_of_one_class = add_extension(images_of_one_class,".jpeg")
+            # images_of_one_class = add_extension(images_of_one_class,".jpeg")
             image_to_test = images_of_one_class[randint(0,(len(images_of_one_class)-1))]
         else:
             image_to_test = image_to_test[0]
+
 
 
         model_to_load = os.path.realpath(args.model)
