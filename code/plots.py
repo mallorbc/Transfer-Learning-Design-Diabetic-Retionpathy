@@ -198,7 +198,7 @@ def show_images(image_name):
         plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
         plt.show()
 
-def create_confusion_matrix_one_input(loaded_model,images,labels):
+def create_confusion_matrix_one_input(loaded_model,images,labels,plot_name=None):
     total_labels = []
     total_labels = np.asarray(labels)
 
@@ -211,7 +211,7 @@ def create_confusion_matrix_one_input(loaded_model,images,labels):
     matrix = make_confusion_matrix_array(total_labels,total_predictions)
     print(classification_report(total_labels, total_predictions))    
     print("Plotting...")
-    plot_confusion_matrix(matrix,"test")
+    plot_confusion_matrix(matrix,plot_name)
 
 def create_confusion_matrix_two_inputs(model,images_one,images_two,labels):
     total_labels = []
@@ -247,8 +247,10 @@ def plot_confusion_matrix(matrix, title):
                     annot_kws={"size": 20})  # font size
     ax.set(xlabel='Predicted', ylabel='Actual')
     plt.title(title)
+    plot_name = title + ".png"
+    plt.figsave(plot_name)
     plt.show()
-    plt.figsave("confusion_matrix.png")
+
 
 #this will conver the data from 5 classes to a boolean, either the class or not and then also the confidence
 def get_prob_of_correct(model,pickle_dict,list_of_images):
