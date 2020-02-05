@@ -253,7 +253,9 @@ def plot_confusion_matrix(matrix, title=None,output=None):
     if output is not None:
         # save_name = output + "/"+ "confusion_matrix.png"
         plt.savefig(output)
-        plt.show()
+        plt.close("all")
+
+        # plt.show()
 
     else:
         plt.show()
@@ -309,7 +311,9 @@ def plot_precision_recall_curve(results,probs,output=None):
     if output is not None:
         # save_path = output + "/precision_recall_curve.png"
         plt.savefig(output)
-        plt.show()
+        # plt.show()
+        plt.close("all")
+
 
     else:
         plt.show()
@@ -337,7 +341,8 @@ def plot_roc_curve(results,probs,output=None):
     if output is not None:
         # save_path = output + "/ROC.png"
         plt.savefig(output)
-        plt.show()
+        plt.close("all")
+        # plt.show()
 
     else:
         plt.show()
