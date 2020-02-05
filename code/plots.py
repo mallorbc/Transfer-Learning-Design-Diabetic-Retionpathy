@@ -10,6 +10,7 @@ import cv2
 import pandas as pd
 from sklearn.metrics import classification_report, confusion_matrix, precision_recall_curve, roc_curve, roc_auc_score
 import seaborn as sn
+import pickle
 
 
 import math
@@ -210,7 +211,12 @@ def create_confusion_matrix_one_input(loaded_model,images,labels,plot_name=None,
 
     print("Converting into matrix...")
     matrix = make_confusion_matrix_array(total_labels,total_predictions)
-    print(classification_report(total_labels, total_predictions))    
+    report = classification_report(total_labels, total_predictions)
+    print(report)
+    if output is not None:
+        dir_path = os.path.dirname(os.path.realpath(output))
+        report_save_loc = dir_path + "/confusion_matrix.p"
+        pickle.dump( report, open( report_save_loc, "wb" ) )
     print("Plotting...")
     plot_confusion_matrix(matrix,plot_name,output)
 
@@ -224,7 +230,10 @@ def create_confusion_matrix_two_inputs(model,images_one,images_two,labels):
 
     print("Converting into matrix...")
     matrix = make_confusion_matrix_array(total_labels,total_predictions)
-    print(classification_report(total_labels, total_predictions))    
+    report = classification_report(total_labels, total_predictions)
+    print(report)
+    # report_save_location =     
+    # pickle.dump( report, open( "save.p", "wb" ) )
     print("Plotting...")
     plot_confusion_matrix(matrix,"test")
 
