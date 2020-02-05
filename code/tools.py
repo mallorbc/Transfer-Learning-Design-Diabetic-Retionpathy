@@ -189,9 +189,9 @@ if __name__ == "__main__":
         # quit()
 
         #key used for simple cnn, may need changed
-        # layer_to_use = img_activation["conv2d_14"]
+        layer_to_use = img_activation["conv2d_14"]
         #last layer for functional
-        layer_to_use = img_activation["conv2d_93"]
+        # layer_to_use = img_activation["conv2d_93"]
 
 
         #removes first dimension that was needed to get activations
