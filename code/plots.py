@@ -13,6 +13,7 @@ import seaborn as sn
 
 
 import math
+import time
 
 from preprocessData import *
 from myModels import *
@@ -327,8 +328,13 @@ def make_roc_curve(class_to_test,images_to_test,class_dict,model_to_use):
 
 def plot_roc_curve(results,probs,output=None):
     fpr, tpr, thresholds = roc_curve(results, probs)
-    score = roc_auc_score(results,probs)
-    print("ROC AUC score: ",score)
+    try:
+        score = roc_auc_score(results,probs)
+        print("ROC AUC score: ",score)
+
+    except:
+        print("Can't give ROC score(its really bad)")
+        time.sleep(3)
 
     base_line_x = np.arange(0.0,1.0,0.01)
     base_line_y = np.arange(0.0,1.0,0.01)
