@@ -64,7 +64,7 @@ def create_CNN(image_width,image_height):
 
 
 
-def load_model(path_to_model,model_number=None,width=None,height=None):
+def load_model(path_to_model,model_number=None,width=None,height=None,frozen=None):
     print("Loading Model...")
     if model_number is None:
         model_to_load = models.load_model(path_to_model)
@@ -85,7 +85,7 @@ def load_model(path_to_model,model_number=None,width=None,height=None):
         model_to_load.load_weights(path_to_model)
         print("Loaded model weights")
     elif model_number == 4:
-        model_to_load = transfer_learning_model_inception_v3(width,height)
+        model_to_load = transfer_learning_model_inception_v3(width,height,frozen)
         model_to_load.load_weights(path_to_model)
         print("Loaded model weights")
     return model_to_load
@@ -118,6 +118,8 @@ def save_model(model_to_save,run_dir,whole_model=None):
     print("Saved Checkpoint!")
 
 def transfer_learning_model_inception_v3(new_image_width, new_image_height,is_trainable=True):
+    if is_trainable is None:
+        is_trainable = True
     #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
     base_model = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_shape=(new_image_width, new_image_height, 3))
     # base_model = EfficientNetB5(weights='imagenet',include_top=False,input_shape=(new_image_width, new_image_height, 3))

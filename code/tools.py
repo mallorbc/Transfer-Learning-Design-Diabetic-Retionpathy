@@ -37,6 +37,7 @@ if __name__ == "__main__":
     parser.add_argument("-width",default=512,help="What is the width of the image",type=int)
     parser.add_argument("-height",default=512,help="What is the width of the image",type=int)
     parser.add_argument("-n","--name",default=None,help="names for saves",type=str)
+    parser.add_argument("-trainable",default=None,help="freeze the weights or not",type=str2bool)
 
 
 
@@ -56,6 +57,7 @@ if __name__ == "__main__":
     width = args.width
     height = args.height
     name = args.name
+    unfrozen_weights = args.trainable
 
     if output_folder is not None:
         output_folder = os.path.realpath(output_folder)
@@ -240,7 +242,7 @@ if __name__ == "__main__":
             image_to_test = test_images
 
         model_to_load = os.path.realpath(args.model)
-        model = load_model(model_to_load,model_num,width,height)
+        model = load_model(model_to_load,model_num,width,height,unfrozen_weights)
         # image_to_test = add_extension(image_to_test,".jpeg")
         output_file = output_folder + "/confusion_matrix.png"
         create_confusion_matrix_one_input(model,image_to_test,test_labels,name,output_file)
