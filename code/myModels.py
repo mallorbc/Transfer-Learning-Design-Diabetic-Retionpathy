@@ -300,7 +300,7 @@ def get_model_predictions_one_input(loaded_model,images):
         # total_predictions = np.append(total_predictions,loaded_model.predict_classes(image_batch))
         total_predictions = np.append(total_predictions,custom_predict_class(loaded_model,image_batch))
         print("total predictions:",np.shape(total_predictions))
-        if counter>=12500:
+        if (counter*test_size)>=12500:
             return total_predictions
 
         # print("total labels: ",np.shape(total_labels))
