@@ -76,7 +76,7 @@ def load_model(path_to_model,model_number=None,width=None,height=None,frozen=Non
         print("Loaded model weights")
 
     elif model_number == 2:
-        model_to_load = transfer_learning_model_inception_v3_functional(width,height)
+        model_to_load = transfer_learning_model_inception_v3_functional(width,height,frozen)
         model_to_load.load_weights(path_to_model)
         print("Loaded model weights")
 
@@ -378,6 +378,8 @@ def simple_layer(filters,number_of_layers,input_layer = None,prelu=None):
 
 def transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,is_trainable=True):
     #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
+    if is_trainable is None:
+        is_trainable = True
     base_model = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_shape=(new_image_width, new_image_height, 3))
     # base_model = EfficientNetB5(weights='imagenet',include_top=False,input_shape=(new_image_width, new_image_height, 3))
 
