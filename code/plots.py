@@ -302,6 +302,8 @@ def get_prob_of_correct(model,pickle_dict,list_of_images):
             prediction_value = 0
         return_values.append(prediction_value)
         return_probs.append(prediction_prob)
+        if counter >=12500:
+            break
         print("Predicted "+str(counter) + " images")
         counter = counter + 1 
     return return_values,return_probs
