@@ -4,9 +4,14 @@ from PIL import Image
 import os
 import numpy as np
 
+import math
 import preprocessData
 import time
 import argparse
+
+from myModels import *
+#from myModels.py import get_model_predictions_one_input
+
 
 def get_info_on_data(list_of_data):
     counter = [0,0,0,0,0]
@@ -166,4 +171,28 @@ def make_npy_of_class(class_to_get,list_of_images,class_dict,output_folder,csv_f
             np.save(save_location,pixels)
             counter = counter + 1
             print("Made "+str(counter)+" npy files")
+
+
+#make list of correctly & incorrectly predicted class 
+def create_listcreate_list(predicted_class_level, true_class_level, image_of_class):
+
+    correct_index = []
+    incorrect_index = []
+    incorrect_prediction = []
+    counter = 0
+    for item in predicted_class_level:
+        if item != true_class_level[counter]:
+                incorrect_index.append(counter)
+                incorrect_prediction.append(str(item))
+        else:
+                correct_index.append(counter)
+        counter = counter + 1
+
+    
+    # print(correct_list)
+    # print(incorrect_list)
+    # correct_list = image_of_class[correct_list]
+    # incorrect_list = image_of_class[incorrect_list]
+    
+    return correct_index, incorrect_index, incorrect_prediction
 

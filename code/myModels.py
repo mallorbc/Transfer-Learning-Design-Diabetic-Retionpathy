@@ -9,7 +9,7 @@ import numpy as np
 import time
 
 from preprocessData import *
-
+from utils import *
 # import efficientnet.keras as efn 
 # from keras_efficientnets import EfficientNetB5
 #import efficientnet.keras as efn 
@@ -292,6 +292,8 @@ def get_model_predictions_one_input(loaded_model,images):
     for i in range(number_of_large_groups):
         image_batch = images[((counter - 1)*test_size):((counter*test_size))]
         image_batch = normalize_images(image_batch)
+        # print(image_batch)
+        # quit()
         image_batch = np.asarray(image_batch)
         print(str(counter*test_size) + " images tested")
         total_predictions = np.append(total_predictions,loaded_model.predict_classes(image_batch))
@@ -366,6 +368,25 @@ def simple_layer(filters,number_of_layers,input_layer = None,prelu=None):
 
 
     return output
+
+def custom_predict_class(model,image_to_test):
+    return_values = []
+    count = 0
+    for image in image_to_test:
+        # image = cv2.imread(image)
+        # image = np.asarray(image)
+        # image.reshape(512,512,3)
+        image = np.expand_dims(image,axis=0)
+        # image = image.astype("float32")
+        prediction_array = model.predict(image)
+        prediction_array = np.squeeze(prediction_array,axis=0)
+        prediction_class = np.where(prediction_array == np.amax(prediction_array))
+        # prediction_class = int(prediction_class)
+        prediction_class = np.asarray(prediction_class)
+        prediction_class = np.squeeze(prediction_class,axis=0)
+        print(prediction_class)
+        return_values.append(prediction_class)
+    return return_values
 
 
 
