@@ -202,10 +202,11 @@ def show_images(image_name):
 
 def create_confusion_matrix_one_input(loaded_model,images,labels,plot_name=None,output=None):
     total_labels = []
-    total_labels = np.asarray(labels)
 
     total_predictions = get_model_predictions_one_input(loaded_model,images)
     labels = labels[:len(total_predictions)]
+    total_labels = np.asarray(labels)
+
 
     print(np.shape(total_predictions))
     print(np.shape(total_labels))
