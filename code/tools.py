@@ -33,6 +33,12 @@ if __name__ == "__main__":
     parser.add_argument("-o","--output",default=None,help="Where to save outputs",type=str)
     parser.add_argument("-npy",default=None,help="npy file to view",type=str)
     parser.add_argument("-model_num",default=1,help="What model type to load",type=int)
+    parser.add_argument("-compat","--compatibility_mode",default=False,type=str2bool)
+    parser.add_argument("-width",default=512,help="What is the width of the image",type=int)
+    parser.add_argument("-height",default=512,help="What is the width of the image",type=int)
+    parser.add_argument("-n","--name",default=None,help="names for saves",type=str)
+    parser.add_argument("-trainable",default=None,help="freeze the weights or not",type=str2bool)
+
 
 
     args = parser.parse_args()
@@ -47,6 +53,23 @@ if __name__ == "__main__":
     output_folder = args.output
     npy_file = args.npy
     model_num = args.model_num
+    compat_mode = args.compatibility_mode
+    width = args.width
+    height = args.height
+    name = args.name
+    unfrozen_weights = args.trainable
+
+    if output_folder is not None:
+        output_folder = os.path.realpath(output_folder)
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+    if compat_mode is True:
+        from tensorflow.compat.v1 import ConfigProto
+        from tensorflow.compat.v1 import InteractiveSession
+        config = ConfigProto()
+        config.gpu_options.allow_growth = True
+        session = InteractiveSession(config=config)
 
     health_level,image_name = load_data(csv_dir)
 
@@ -62,30 +85,34 @@ if __name__ == "__main__":
         print("Will test on all images in csv")
         data_path = os.path.abspath(args.image)
         image_name = get_full_image_name_no_ext(data_path,image_name)
+        image_name = add_extension(image_name,".jpeg")
         health_dict = make_csv_dict(health_level,image_name)
         image_to_test = image_name
     print(health_dict)
 
 
 
-
+    #makes precision recall curve
     if mode_to_run == 1:
         #loads the model
         model_to_load = os.path.realpath(args.model)
-        model = load_model(model_to_load)
+        model = load_model(model_to_load,model_num,width,height)
         make_precision_recall_curve(class_to_test,image_to_test,health_dict,model)
     
+    #makes ROC curve
     elif mode_to_run == 2:
         #loads the model
         model_to_load = os.path.realpath(args.model)
-        model = load_model(model_to_load)
+        model = load_model(model_to_load,model_num,width,height)
         make_roc_curve(class_to_test,image_to_test,health_dict,model)
 
+    #makes numpy files of images for GAN
     elif mode_to_run == 3:
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
         make_npy_of_class(class_to_test,image_to_test,health_dict,output_folder,test_csv)
     
+    #for loading a numpy file and viewing it
     elif mode_to_run ==4:
         npy_file = os.path.realpath(npy_file)
         image = np.load(npy_file)
@@ -94,6 +121,7 @@ if __name__ == "__main__":
             plt.imshow(m)
             plt.show()
 
+    #view the image in PIL
     elif mode_to_run == 5:
         base_path = args.image
         images = os.listdir(args.image)
@@ -111,7 +139,7 @@ if __name__ == "__main__":
         image = Image.fromarray(image_to_test,mode="RGB")
         image.show()
 
-        
+    #views one of the images in matplotlib
     elif mode_to_run == 6:
         if class_to_test is not None:
             image_name = get_images_of_one_class(class_to_test,image_name,health_dict)
@@ -126,6 +154,7 @@ if __name__ == "__main__":
         plt.imshow(image_to_test)
         plt.show()
     elif mode_to_run == 7:
+
         compat_mode = True
         if compat_mode is True:
             from tensorflow.compat.v1 import ConfigProto
@@ -141,6 +170,7 @@ if __name__ == "__main__":
         #loads the full path
         if args.model is not None:
             model_to_load = os.path.realpath(args.model)
+
         #loads the model with the weights
         if args.model is not None:
             model = load_model(model_to_load,model_num,width,height)
@@ -196,6 +226,7 @@ if __name__ == "__main__":
         
         # quit()    
         #converts array to string
+
         image_to_test = image_to_test[0]
         
         correct_list_basename = []
@@ -387,12 +418,32 @@ if __name__ == "__main__":
         print(count_incorrect_list)
         print(count_correct_list)
 
+
         #dictionary that will be passed back to api
         layer_act = {}
         #puts the layer we want in the dictionary
         layer_act[1] = layer_to_use
         # display_heatmaps(layer_act, img_arr, save=False)
 
+    elif mode_to_run == 8:
+        if test_csv is not None:
+            test_labels,test_images = load_data(test_csv)
+            #gets the full paths of the images
+            test_images = get_full_image_name_no_ext(data_path,test_images)
+
+            # test_images = get_full_image_name_no_ext(data_path,test_images)
+            image_to_test = test_images
+
+        model_to_load = os.path.realpath(args.model)
+        model = load_model(model_to_load,model_num,width,height,unfrozen_weights)
+        # image_to_test = add_extension(image_to_test,".jpeg")
+        output_file = output_folder + "/confusion_matrix.png"
+        create_confusion_matrix_one_input(model,image_to_test,test_labels,name,output_file)
+        make_roc_precision_recall_graphs(0,image_to_test,health_dict,model,output_folder)
+        make_roc_precision_recall_graphs(1,image_to_test,health_dict,model,output_folder)
+        make_roc_precision_recall_graphs(2,image_to_test,health_dict,model,output_folder)
+        make_roc_precision_recall_graphs(3,image_to_test,health_dict,model,output_folder)
+        make_roc_precision_recall_graphs(4,image_to_test,health_dict,model,output_folder)
 
 
     # print(mode_to_run)

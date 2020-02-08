@@ -53,7 +53,9 @@ RUN conda init \
 RUN conda init bash \
 && source ~/.bashrc \
 && conda activate diabetic \ 
-&& pip install -U efficientnet
+&& pip install -U efficientnet \
+&& pip install keract
+
 
 RUN conda init \
 && conda create -n diabetic2 python \
@@ -65,13 +67,14 @@ RUN conda init \
 && conda install -n diabetic2 Pillow  \
 && conda install -n diabetic2 pydot \ 
 && conda install -n diabetic2 seaborn \
-&& conda install -n diabetic2 h5py
+&& conda install -n diabetic2 h5py 
 
 RUN conda init bash \
 && source ~/.bashrc \
 && conda activate diabetic2 \ 
 && pip install -U efficientnet \
-&& pip install tensorflow-addons==0.6.0
+&& pip install tensorflow-addons==0.6.0 \
+&& pip install keract
 
 
 RUN conda init \
@@ -83,10 +86,11 @@ RUN conda init \
 && conda install -n no_gpu tensorflow=2.0.0 \
 && conda install -n no_gpu Pillow  \
 && conda install -n no_gpu pydot \ 
-&& conda install -n no_gpu seaborn
+&& conda install -n no_gpu seaborn 
 
 RUN conda init bash \
 && source ~/.bashrc \
 && conda activate no_gpu \ 
 && pip install -U efficientnet \
-&& pip install tensorflow-addons==0.6.0
+&& pip install tensorflow-addons==0.6.0 \ 
+&& pip install keract

@@ -64,7 +64,7 @@ def create_CNN(image_width,image_height):
 
 
 
-def load_model(path_to_model,model_number=None,width=None,height=None):
+def load_model(path_to_model,model_number=None,width=None,height=None,frozen=None):
     print("Loading Model...")
     if model_number is None:
         model_to_load = models.load_model(path_to_model)
@@ -76,7 +76,7 @@ def load_model(path_to_model,model_number=None,width=None,height=None):
         print("Loaded model weights")
 
     elif model_number == 2:
-        model_to_load = transfer_learning_model_inception_v3(width,height)
+        model_to_load = transfer_learning_model_inception_v3_functional(width,height,frozen)
         model_to_load.load_weights(path_to_model)
         print("Loaded model weights")
 
@@ -84,7 +84,10 @@ def load_model(path_to_model,model_number=None,width=None,height=None):
         model_to_load = inception_v3_multiple_inputs(width,height)
         model_to_load.load_weights(path_to_model)
         print("Loaded model weights")
-
+    elif model_number == 4:
+        model_to_load = transfer_learning_model_inception_v3(width,height,frozen)
+        model_to_load.load_weights(path_to_model)
+        print("Loaded model weights")
     return model_to_load
 
 
@@ -115,6 +118,8 @@ def save_model(model_to_save,run_dir,whole_model=None):
     print("Saved Checkpoint!")
 
 def transfer_learning_model_inception_v3(new_image_width, new_image_height,is_trainable=True):
+    if is_trainable is None:
+        is_trainable = True
     #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
     base_model = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_shape=(new_image_width, new_image_height, 3))
     # base_model = EfficientNetB5(weights='imagenet',include_top=False,input_shape=(new_image_width, new_image_height, 3))
@@ -296,8 +301,11 @@ def get_model_predictions_one_input(loaded_model,images):
         # quit()
         image_batch = np.asarray(image_batch)
         print(str(counter*test_size) + " images tested")
-        total_predictions = np.append(total_predictions,loaded_model.predict_classes(image_batch))
+        # total_predictions = np.append(total_predictions,loaded_model.predict_classes(image_batch))
+        total_predictions = np.append(total_predictions,custom_predict_class(loaded_model,image_batch))
         print("total predictions:",np.shape(total_predictions))
+        if (counter*test_size)>=12500:
+            return total_predictions
 
         # print("total labels: ",np.shape(total_labels))
         counter = counter + 1
@@ -307,7 +315,7 @@ def get_model_predictions_one_input(loaded_model,images):
     image_batch = normalize_images(image_batch)
     image_batch = np.asarray(image_batch)
 
-    total_predictions = np.append(total_predictions,loaded_model.predict_classes(image_batch))
+    total_predictions = np.append(total_predictions,custom_predict_class(loaded_model,image_batch))
 
     return total_predictions
 
@@ -389,7 +397,58 @@ def custom_predict_class(model,image_to_test):
     return return_values
 
 
+def transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,is_trainable=True):
+    #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
+    if is_trainable is None:
+        is_trainable = True
+    base_model = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_shape=(new_image_width, new_image_height, 3))
+    # base_model = EfficientNetB5(weights='imagenet',include_top=False,input_shape=(new_image_width, new_image_height, 3))
 
+    #sets the inception_v3 model to not update its weights
+    base_model.trainable = is_trainable
+    #layer to convert the features to a single n-elemnt vector per image
+    global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
+    model = global_average_layer(base_model.output)
+    model = layers.Dense(1024)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    model =  layers.Dense(512)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    model = layers.Dense(256)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    output = layers.Dense(5, activation='softmax')(model)
+    final_model = models.Model(inputs=[base_model.input], outputs=output)
+
+
+
+    radam = tfa.optimizers.RectifiedAdam(lr=0.00001)
+    ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
+
+    # model.compile(optimizer=Adam(lr=0.00001),
+    #             loss='sparse_categorical_crossentropy',
+    #             metrics=['accuracy'])
+    # return model
+    final_model.compile(optimizer=ranger,
+                loss='sparse_categorical_crossentropy',
+                metrics=['accuracy'])
+    final_model.summary()
+    # quit()
+    return final_model
+
+def custom_predict_class(model,image_to_test):
+    return_values = []
+    for image in image_to_test:
+        image = np.expand_dims(image,axis=0)
+        prediction_array = model.predict(image)
+        prediction_array = np.squeeze(prediction_array,axis=0)
+        prediction_class = np.where(prediction_array == np.amax(prediction_array))
+        # prediction_class = int(prediction_class)
+        prediction_class = np.asarray(prediction_class)
+        prediction_class = np.squeeze(prediction_class,axis=0)
+        return_values.append(prediction_class)
+    return return_values
 
 
 

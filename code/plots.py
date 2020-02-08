@@ -10,9 +10,11 @@ import cv2
 import pandas as pd
 from sklearn.metrics import classification_report, confusion_matrix, precision_recall_curve, roc_curve, roc_auc_score
 import seaborn as sn
+import pickle
 
 
 import math
+import time
 
 from preprocessData import *
 from myModels import *
@@ -198,20 +200,27 @@ def show_images(image_name):
         plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
         plt.show()
 
-def create_confusion_matrix_one_input(loaded_model,images,labels):
+def create_confusion_matrix_one_input(loaded_model,images,labels,plot_name=None,output=None):
     total_labels = []
-    total_labels = np.asarray(labels)
 
     total_predictions = get_model_predictions_one_input(loaded_model,images)
+    labels = labels[:len(total_predictions)]
+    total_labels = np.asarray(labels)
+
 
     print(np.shape(total_predictions))
     print(np.shape(total_labels))
 
     print("Converting into matrix...")
     matrix = make_confusion_matrix_array(total_labels,total_predictions)
-    print(classification_report(total_labels, total_predictions))    
+    report = classification_report(total_labels, total_predictions)
+    print(report)
+    if output is not None:
+        dir_path = os.path.dirname(os.path.realpath(output))
+        report_save_loc = dir_path + "/confusion_matrix.p"
+        pickle.dump( report, open( report_save_loc, "wb" ) )
     print("Plotting...")
-    plot_confusion_matrix(matrix,"test")
+    plot_confusion_matrix(matrix,plot_name,output)
 
 def create_confusion_matrix_two_inputs(model,images_one,images_two,labels):
     total_labels = []
@@ -223,7 +232,10 @@ def create_confusion_matrix_two_inputs(model,images_one,images_two,labels):
 
     print("Converting into matrix...")
     matrix = make_confusion_matrix_array(total_labels,total_predictions)
-    print(classification_report(total_labels, total_predictions))    
+    report = classification_report(total_labels, total_predictions)
+    print(report)
+    # report_save_location =     
+    # pickle.dump( report, open( "save.p", "wb" ) )
     print("Plotting...")
     plot_confusion_matrix(matrix,"test")
 
@@ -235,8 +247,11 @@ def make_confusion_matrix_array(actual, predicted):
 
 
 
-def plot_confusion_matrix(matrix, title):
+def plot_confusion_matrix(matrix, title=None,output=None):
     print("matrix")
+    if title is None:
+        title="confusion_matrix"
+
     array = matrix
 
     df_cm = pd.DataFrame(array, index=[i for i in "01234"], columns=[
@@ -247,8 +262,16 @@ def plot_confusion_matrix(matrix, title):
                     annot_kws={"size": 20})  # font size
     ax.set(xlabel='Predicted', ylabel='Actual')
     plt.title(title)
-    plt.show()
-    plt.figsave("confusion_matrix.png")
+    if output is not None:
+        # save_name = output + "/"+ "confusion_matrix.png"
+        plt.savefig(output)
+        plt.close("all")
+
+        # plt.show()
+
+    else:
+        plt.show()
+
 
 #this will conver the data from 5 classes to a boolean, either the class or not and then also the confidence
 def get_prob_of_correct(model,pickle_dict,list_of_images):
@@ -281,6 +304,8 @@ def get_prob_of_correct(model,pickle_dict,list_of_images):
             prediction_value = 0
         return_values.append(prediction_value)
         return_probs.append(prediction_prob)
+        if counter >=12500:
+            break
         print("Predicted "+str(counter) + " images")
         counter = counter + 1 
     return return_values,return_probs
@@ -291,14 +316,21 @@ def make_precision_recall_curve(class_to_test,images_to_test,class_dict,model_to
     plot_precision_recall_curve(results,probs)
 
 
-def plot_precision_recall_curve(results,probs):
+def plot_precision_recall_curve(results,probs,output=None):
     precision, recall, thresholds = precision_recall_curve(results, probs)
     plt.plot(recall,precision)
     plt.xlabel("Recall")
     plt.ylabel("Precision")
     plt.title("Precision Recall Curve")
-    plt.show()
-    plt.figsave("precision_recall.png")
+    if output is not None:
+        # save_path = output + "/precision_recall_curve.png"
+        plt.savefig(output)
+        # plt.show()
+        plt.close("all")
+
+
+    else:
+        plt.show()
 
 
 
@@ -307,10 +339,15 @@ def make_roc_curve(class_to_test,images_to_test,class_dict,model_to_use):
     results,probs = get_prob_of_correct(model_to_use,class_dict,images_to_test)
     plot_roc_curve(results,probs)
 
-def plot_roc_curve(results,probs):
+def plot_roc_curve(results,probs,output=None):
     fpr, tpr, thresholds = roc_curve(results, probs)
-    score = roc_auc_score(results,probs)
-    print("ROC AUC score: ",score)
+    try:
+        score = roc_auc_score(results,probs)
+        print("ROC AUC score: ",score)
+
+    except:
+        print("Can't give ROC score(its really bad)")
+        time.sleep(3)
 
     base_line_x = np.arange(0.0,1.0,0.01)
     base_line_y = np.arange(0.0,1.0,0.01)
@@ -318,10 +355,30 @@ def plot_roc_curve(results,probs):
     plt.plot(base_line_x,base_line_y,"r--",label="Base Line")
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
-    plt.title("Precision Recall Curve")
+    plt.title("ROC Curve")
     plt.legend()
-    plt.show()
-    plt.figsave("ROC.png")
+    if output is not None:
+        # save_path = output + "/ROC.png"
+        plt.savefig(output)
+        plt.close("all")
+        # plt.show()
+
+    else:
+        plt.show()
+
+
+def make_roc_precision_recall_graphs(class_to_test,images_to_test,class_dict,model_to_use,output=None):
+    images_to_test = get_images_of_one_class(class_to_test,images_to_test,class_dict)
+    # print(images_to_test)
+    # quit()
+    results,probs = get_prob_of_correct(model_to_use,class_dict,images_to_test)
+    if output is not None:
+        output_file_precision = output + "/precision_recall_class_" + str(class_to_test) + ".png"
+    plot_precision_recall_curve(results,probs,output_file_precision)
+    output_file_roc = output + "/ROC_class_" + str(class_to_test) + ".png"
+    plot_roc_curve(results,probs,output_file_roc)
+
+
 
 
 

@@ -77,7 +77,9 @@ if __name__ == "__main__":
     parser.add_argument("-test_size",default=75,help="what batch size to use for testing the performance of the models",type=int)
     parser.add_argument('-saver',"--saver_mode",default=None,help="Whether or not to save the whole model or just the weights",type=int)
     parser.add_argument('-class_size',default=708,help="how big each class should be; Can't be larger than 700",type=int)
+    parser.add_argument("-plot_name",default=None,help="what to name the plots",type=str)
     parser.add_argument('-compat',"--compatibility",default=False,help="whether or not to use compat mode",type=str2bool)
+
 
 
     
@@ -121,14 +123,7 @@ if __name__ == "__main__":
 
     size_of_each_class = args.class_size
 
-    compat_mode = args.compatibility
-    if compat_mode is True:
-        from tensorflow.compat.v1 import ConfigProto
-        from tensorflow.compat.v1 import InteractiveSession
-
-        config = ConfigProto()
-        config.gpu_options.allow_growth = True
-        session = InteractiveSession(config=config)
+    plot_name = args.plot_name
     
 
     if folder_name is not None:
@@ -257,9 +252,9 @@ if __name__ == "__main__":
                 model_name = "CNN"
             elif model_to_use == 2:
                 if transfer_trainable:
-                    model = transfer_learning_model_inception_v3(new_image_width, new_image_height,True)
+                    model = transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,True)
                 else:
-                    model = transfer_learning_model_inception_v3(new_image_width, new_image_height,False)
+                    model = transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,False)
 
                 model_name = "inception_transfer"
             elif model_to_use == 3:
