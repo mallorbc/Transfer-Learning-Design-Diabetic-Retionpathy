@@ -290,7 +290,7 @@ def get_model_predictions_one_input(loaded_model,images):
     total_predictions = []
     total_predictions = np.asarray(total_predictions)
 
-    test_size = 50
+    test_size = 200
     number_of_large_groups = math.floor(len(images)/test_size)
 
     counter = 1
