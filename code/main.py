@@ -186,7 +186,7 @@ if __name__ == "__main__":
         #way to many zeros in the data
         # health_level,image_name = trim_data(run_dir,health_level,image_name)
         #shuffles the data to randomize starting train and test data
-        health_level,image_name = trim_data_even(run_dir,health_level,image_name,size_of_each_class)
+        # health_level,image_name = trim_data_even(run_dir,health_level,image_name,size_of_each_class)
         health_level,image_name = shuffle_data(health_level,image_name)
         #splits the data into train and test
         train_images,train_labels,test_images,test_labels = split_data_train_test_val(run_dir,health_level,image_name,test_data_percentage,validation_data_percent)
@@ -217,11 +217,11 @@ if __name__ == "__main__":
                 #shuffles the data to randomize starting train and test data
                 health_level,image_name = shuffle_data(health_level,image_name)
                 #way to many zeros in the data
-                health_level,image_name = trim_data_even(run_dir,health_level,image_name,size_of_each_class)
+                # health_level,image_name = trim_data_even(run_dir,health_level,image_name,size_of_each_class)
                 #shuffles the data to randomize starting train and test data
                 health_level,image_name = shuffle_data(health_level,image_name)
                 #splits the data into train and test
-                train_images,train_labels,test_images,test_labels = split_data_train_test(run_dir,health_level,image_name,test_data_percentage)
+                train_images,train_labels,test_images,test_labels = split_data_train_test_val(run_dir,health_level,image_name,test_data_percentage,validation_data_percent)
                 #loads the trimmed data
                 # trimmed_csv_file = run_dir + "/csv_files/trimmed.csv"
                 # trimmed_labels,trimmed_images = load_data(trimmed_csv_file)
@@ -382,6 +382,19 @@ if __name__ == "__main__":
             # df = pd.DataFrame(data_frame_data,columns=["image","label"])
             df = pd.DataFrame({"image": train_images,
                                 "label": train_labels})
+        
+        total_images = len(train_images)
+        cat0_images,cat1_images,cat2_images,cat3_images,cat4_images = get_info_on_data(train_labels)
+
+        cat0_weight = 1.0/5.0
+        cat1_weight = (1.0/(cat1_images/cat0_images))/5.0
+        cat2_weight = (1.0/(cat2_images/cat0_images))/5.0
+        cat3_weight = (1.0/(cat3_images/cat0_images))/5.0
+        cat4_weight = (1.0/(cat4_images/cat0_images))/5.0
+
+        class_weights = {0: cat0_weight, 1: cat1_weight, 2: cat2_weight, 3: cat3_weight, 4: cat4_weight}
+        print(class_weights)
+        # quit()
 
 
         start_time = time.time()
@@ -396,7 +409,7 @@ if __name__ == "__main__":
                     #gets images and labels ready for model input
                     np_image_batch,label_batch = prepare_data_for_model(batch_size,train_labels,train_images,new_image_width,new_image_height)
                     #trains on the input
-                    model.train_on_batch(np_image_batch, label_batch)
+                    model.train_on_batch(np_image_batch, label_batch,class_weight=class_weights)
                     images_trained_on = images_trained_on + batch_size
                     if next_print <= current_epoch:
                         print("epoch: % .2f , train loss: % .4f , % 0.2f, train acc: % .4f , % .2f, test loss: % .4f , % .2f, test acc: % .4f, % .2f " % (current_epoch, lowest_train_loss,lowest_train_loss_epoch,highest_train_accuracy,highest_train_accuracy_epoch,lowest_test_loss,lowest_test_loss_epoch,highest_test_accuracy,highest_test_accuracy_epoch))
@@ -404,7 +417,7 @@ if __name__ == "__main__":
                         next_print = next_print + 0.01
                 else:
                     for x_batch, y_batch in datagen_train.flow_from_dataframe(dataframe=df,x_col="image",y_col="label",target_size=(new_image_width, new_image_height),class_mode="raw", batch_size=args.batch_size):
-                        model.train_on_batch(x_batch,y_batch)
+                        model.train_on_batch(x_batch,y_batch,class_weight=class_weights)
                         images_trained_on = images_trained_on + batch_size
                         current_epoch = current_epoch + batch_size/total_images
                         if next_print <= current_epoch:
