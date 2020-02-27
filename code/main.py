@@ -29,6 +29,8 @@ import shutil
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import matplotlib.pyplot as plt
 
+from sklearn.utils.class_weight import compute_class_weight
+
 
 
 
@@ -384,17 +386,12 @@ if __name__ == "__main__":
                                 "label": train_labels})
         
         total_images = len(train_images)
-        cat0_images,cat1_images,cat2_images,cat3_images,cat4_images = get_info_on_data(train_labels)
 
-        cat0_weight = 1.0/5.0
-        cat1_weight = (1.0/(cat1_images/cat0_images))/5.0
-        cat2_weight = (1.0/(cat2_images/cat0_images))/5.0
-        cat3_weight = (1.0/(cat3_images/cat0_images))/5.0
-        cat4_weight = (1.0/(cat4_images/cat0_images))/5.0
+        class_weights_dict = compute_class_weight("balanced",np.unique(train_labels),train_labels)
+        class_weights_list = list(class_weights_dict)
+        class_weights = {0: class_weights_list[0], 1: class_weights_list[1], 2: class_weights_list[2], 3: class_weights_list[3], 4: class_weights_list[4]}
 
-        class_weights = {0: cat0_weight, 1: cat1_weight, 2: cat2_weight, 3: cat3_weight, 4: cat4_weight}
         print(class_weights)
-        # quit()
 
 
         start_time = time.time()
