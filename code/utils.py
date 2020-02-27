@@ -17,7 +17,6 @@ def get_info_on_data(list_of_data):
     counter = [0,0,0,0,0]
     for item in list_of_data:
         counter[item] = counter[item] +1
-    print(counter)
     cat0 = counter[0]
     cat1 = counter[1]
     cat2 =  counter[2]
