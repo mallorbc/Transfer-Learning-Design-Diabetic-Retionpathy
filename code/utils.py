@@ -195,3 +195,43 @@ def create_listcreate_list(predicted_class_level, true_class_level, image_of_cla
     
     return correct_index, incorrect_index, incorrect_prediction
 
+#This will create a dict of classification numbers, with the stored values being a list of images of that class
+def make_diagnose_class_dict(health_level,image_name):
+    #the four lists that will be created that will go inside of the dict
+    class0 = []
+    class1 = []
+    class2 = []
+    class3 = []
+    class4 = []
+
+    for i in range(len(image_name)):
+        image_class = health_level[i]
+        if image_class ==0:
+            class0.append(image_name[i])
+        
+        elif image_class == 1:
+            class1.append(image_name[i])
+
+        elif image_class == 2:
+            class2.append(image_name[i])
+
+        elif image_class == 3:
+            class3.append(image_name[i])
+
+        elif image_class == 4:
+            class4.append(image_name[i])
+
+        else:
+            #this should never happend
+            print("Unknown image class detect making dict")
+            quit()
+    #creates the dict and saves the created lists with their keys
+    health_dict = {}
+    health_dict[0] = class0
+    health_dict[1] = class1
+    health_dict[2] = class2
+    health_dict[3] = class3
+    health_dict[4] = class4
+
+    return health_dict
+
