@@ -27,7 +27,7 @@ from tensorflow.keras.utils import plot_model
 
 # from tensorflow.keras.applications import inception_v3
 
-def create_CNN(image_width,image_height):
+def create_CNN(image_width,image_height,learning_rate=0.000025):
     input_shape = (image_width,image_height,3)
     image_input = Input(shape = input_shape)
     output = simple_layer(32,3,image_input)
@@ -49,7 +49,7 @@ def create_CNN(image_width,image_height):
 
 
     final_model = models.Model(inputs=[image_input], outputs=output)
-    radam = tfa.optimizers.RectifiedAdam(lr=0.000025)
+    radam = tfa.optimizers.RectifiedAdam(lr=learning_rate)
     ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
 
     final_model.compile(optimizer=ranger,
@@ -57,6 +57,8 @@ def create_CNN(image_width,image_height):
                 metrics=['accuracy'])
 
     final_model.summary()
+    print("Learning rate is: " + str(learning_rate))
+
 
     time.sleep(2)
     #plot_model(final_model, to_file='model.png')
@@ -397,7 +399,7 @@ def custom_predict_class(model,image_to_test):
     return return_values
 
 
-def transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,is_trainable=True):
+def transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,is_trainable=True,learning_rate=0.00001):
     #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
     if is_trainable is None:
         is_trainable = True
@@ -423,7 +425,7 @@ def transfer_learning_model_inception_v3_functional(new_image_width, new_image_h
 
 
 
-    radam = tfa.optimizers.RectifiedAdam(lr=0.00001)
+    radam = tfa.optimizers.RectifiedAdam(lr=learning_rate)
     ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
 
     # model.compile(optimizer=Adam(lr=0.00001),
@@ -434,6 +436,8 @@ def transfer_learning_model_inception_v3_functional(new_image_width, new_image_h
                 loss='sparse_categorical_crossentropy',
                 metrics=['accuracy'])
     final_model.summary()
+    print("Learning rate is: " + str(learning_rate))
+    time.sleep(2)
     # quit()
     return final_model
 
