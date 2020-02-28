@@ -389,11 +389,10 @@ if __name__ == "__main__":
         if data_aug is True:
             print("Using data augmenation")
             datagen_train = ImageDataGenerator(
-            rotation_range=20,
+            rotation_range=360,
             zoom_range=0.1,
             rescale = 1.0/255.0,
-            shear_range=0.1,
-            horizontal_flip=True)
+            shear_range=0.2)
             train_images = np.asarray(train_images)
             train_labels = np.asarray(train_labels)
             # train_labels = pd.DataFrame(train_images)
