@@ -81,6 +81,7 @@ if __name__ == "__main__":
     parser.add_argument('-class_size',default=708,help="how big each class should be; Can't be larger than 700",type=int)
     parser.add_argument("-plot_name",default=None,help="what to name the plots",type=str)
     parser.add_argument('-compat',"--compatibility",default=False,help="whether or not to use compat mode",type=str2bool)
+    parser.add_argument("-lr","--learning_rate",default=None,help="optional flag to manually set learning rate",type=float)
 
 
 
@@ -126,6 +127,9 @@ if __name__ == "__main__":
     size_of_each_class = args.class_size
 
     plot_name = args.plot_name
+
+    manual_lr = args.learning_rate
+
     
 
     if folder_name is not None:
@@ -250,13 +254,24 @@ if __name__ == "__main__":
                 model_to_use = 1
             #creates a new model
             if model_to_use == 1:
-                model = create_CNN(new_image_width, new_image_height)
-                model_name = "CNN"
+                if manual_lr is None:
+                    model = create_CNN(new_image_width, new_image_height)
+                    model_name = "CNN"
+                else:
+                    model = create_CNN(new_image_width, new_image_height,manual_lr)
+                    model_name = "CNN"
             elif model_to_use == 2:
                 if transfer_trainable:
-                    model = transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,True)
+                    if manual_lr is None:
+                        model = transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,is_trainable=True)
+                    else:
+                        model = transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,is_trainable=True,learning_rate=manual_lr)
+
                 else:
-                    model = transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,False)
+                    if manual_lr is None:
+                        model = transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,is_trainable=False)
+                    else:
+                        model = transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,is_trainable=False,learning_rate=manual_lr)
 
                 model_name = "inception_transfer"
             elif model_to_use == 3:
@@ -374,9 +389,11 @@ if __name__ == "__main__":
         if data_aug is True:
             print("Using data augmenation")
             datagen_train = ImageDataGenerator(
-            rotation_range=360,
+            rotation_range=20,
             zoom_range=0.1,
-            rescale = 1./255)
+            rescale = 1.0/255.0,
+            shear_range=0.1,
+            horizontal_flip=True)
             train_images = np.asarray(train_images)
             train_labels = np.asarray(train_labels)
             # train_labels = pd.DataFrame(train_images)
@@ -387,11 +404,38 @@ if __name__ == "__main__":
         
         total_images = len(train_images)
 
+        cat0_images,cat1_images,cat2_images,cat3_images,cat4_images = get_info_on_data(train_labels)	
+
+
+        cat0_weight = 1.0/5.0
+        cat1_weight = (1.0/(cat1_images/cat0_images))/5.0
+        cat2_weight = (1.0/(cat2_images/cat0_images))/5.0
+        cat3_weight = (1.0/(cat3_images/cat0_images))/5.0	
+        cat4_weight = (1.0/(cat4_images/cat0_images))/5.0	
+
+
+        class_weights_old = {0: cat0_weight, 1: cat1_weight, 2: cat2_weight, 3: cat3_weight, 4: cat4_weight}
+
+        
+
         class_weights_dict = compute_class_weight("balanced",np.unique(train_labels),train_labels)
         class_weights_list = list(class_weights_dict)
+        class_weights_adjust = np.asarray(class_weights_list)
+        # print(class_weights_adjust)
+        class_weights_adjust = np.add(class_weights_adjust,1.0)
+        # print(class_weights_adjust)
+        class_weights_adjust = np.divide(class_weights_adjust,2.0)
+        class_weights_list = class_weights_adjust
+        print(class_weights_adjust)
+
+        # base_weights = np.ones(5)
+        # class_wegights_adjust = np.mean()
         class_weights = {0: class_weights_list[0], 1: class_weights_list[1], 2: class_weights_list[2], 3: class_weights_list[3], 4: class_weights_list[4]}
 
         print(class_weights)
+        print(class_weights_old)
+        time.sleep(2)
+        # quit()
 
 
         start_time = time.time()
