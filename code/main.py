@@ -187,13 +187,18 @@ if __name__ == "__main__":
     if run_mode == 1:
         #there are 30ish missing files, should make a new csv later
         health_level,image_name = remove_nonexistent_data(health_level,image_name)
+        #used for cutting the classes
+        health_dict = make_diagnose_class_dict(health_level,image_name)
+        #cuts class 0 in half
+        health_level,image_name = cut_data_class(health_dict,0,0.5)
+
         #shuffles the data to randomize starting train and test data
         health_level,image_name = shuffle_data(health_level,image_name)
         #way to many zeros in the data
         # health_level,image_name = trim_data(run_dir,health_level,image_name)
         #shuffles the data to randomize starting train and test data
         # health_level,image_name = trim_data_even(run_dir,health_level,image_name,size_of_each_class)
-        health_level,image_name = shuffle_data(health_level,image_name)
+        # health_level,image_name = shuffle_data(health_level,image_name)
         #splits the data into train and test
         train_images,train_labels,test_images,test_labels = split_data_train_test_val(run_dir,health_level,image_name,test_data_percentage,validation_data_percent)
     #cirlce crops the images
@@ -220,17 +225,20 @@ if __name__ == "__main__":
             if loaded_train_test_csv is False:
                 #there are 30ish missing files, should make a new csv later
                 health_level,image_name = remove_nonexistent_data(health_level,image_name)
+                #used for cutting the classes
+                health_dict = make_diagnose_class_dict(health_level,image_name)
+                #cuts class 0 in half
+                health_level,image_name = cut_data_class(health_dict,0,0.5)
+
                 #shuffles the data to randomize starting train and test data
                 health_level,image_name = shuffle_data(health_level,image_name)
                 #way to many zeros in the data
-                # health_level,image_name = trim_data_even(run_dir,health_level,image_name,size_of_each_class)
+                # health_level,image_name = trim_data(run_dir,health_level,image_name)
                 #shuffles the data to randomize starting train and test data
-                health_level,image_name = shuffle_data(health_level,image_name)
+                # health_level,image_name = trim_data_even(run_dir,health_level,image_name,size_of_each_class)
+                # health_level,image_name = shuffle_data(health_level,image_name)
                 #splits the data into train and test
                 train_images,train_labels,test_images,test_labels = split_data_train_test_val(run_dir,health_level,image_name,test_data_percentage,validation_data_percent)
-                #loads the trimmed data
-                # trimmed_csv_file = run_dir + "/csv_files/trimmed.csv"
-                # trimmed_labels,trimmed_images = load_data(trimmed_csv_file)
             #else we are loading data from other csv files
             else:
                 train_labels,train_images = load_data(loaded_train_csv)

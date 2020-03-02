@@ -574,7 +574,48 @@ def make_csv_dict(health_level,image_name):
     
     return pickle_dict
 
-#This will create a dict of classification numbers, with the stored values being a list of images of that class
-def make_diagnose_class_dict(health_level,image_name):
-    print("test")
-# def get_data_for_prediction(images,labels):
+
+
+def cut_data_class(health_dict,class_to_cut,percent_to_cut):
+    #these are the values that will be returned
+    all_images = []
+    all_images = np.asarray(all_images)
+    all_labels = []
+    all_labels = np.asarray(all_labels)
+    #grabs the proper list to cut
+    images_to_cut = health_dict[class_to_cut]
+    #gets the number to slice the list by
+    number_to_cut = int(len(images_to_cut)*percent_to_cut)
+    #shuffles the list before cutting it
+    images_to_cut = shuffle(images_to_cut)
+    #cuts the list
+    images_to_cut = images_to_cut[:number_to_cut]
+    cut_labels_number = len(images_to_cut)
+    #labels of the cut class to add
+    cut_labels = np.ones(cut_labels_number)
+    cut_labels = np.multiply(cut_labels,class_to_cut)
+    # quit()
+    all_labels = np.append(all_labels,cut_labels)
+    #converts the list into a np array
+    images_to_cut = np.asarray(images_to_cut)
+    #creates a list of all images starting with the ones cut
+    all_images = np.append(all_images,images_to_cut)
+    #gets all the keys
+    all_keys = list(health_dict.keys())
+    #loops through all the keys
+    for key in all_keys:
+        #if the key is  equal to the class we already cut, we have nothing to do
+        if key == class_to_cut:
+            continue
+
+        images_of_class = health_dict[key]
+        number_of_images = len(images_of_class)
+        labels = np.ones(number_of_images)
+        labels = np.multiply(labels,key)
+        all_images = np.append(all_images,images_of_class)
+        all_labels = np.append(all_labels,labels)
+    #converts labels to int
+    all_labels = all_labels.astype(int)
+
+    return all_labels,all_images
+        
