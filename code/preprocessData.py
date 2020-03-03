@@ -618,4 +618,57 @@ def cut_data_class(health_dict,class_to_cut,percent_to_cut):
     all_labels = all_labels.astype(int)
 
     return all_labels,all_images
+
+def generate_dataframe(images,labels,health_dict):
+    cat0,cat1,cat2,cat3,cat4 = utils.get_info_on_data(labels)
+    categories = [cat0,cat1,cat2,cat3,cat4]
+    categories = np.asarray(categories)
+    lowest_index = np.argmin(categories)
+    lowest_value = categories[lowest_index]
+    print(lowest_value)
+    class_0 = health_dict[0]
+    class_1 = health_dict[1]
+    class_2 = health_dict[2]
+    class_3 = health_dict[3]
+    class_4 = health_dict[4]
+
+    class_0 = shuffle(class_0)
+    class_1 = shuffle(class_1)
+    class_2 = shuffle(class_2)
+    class_3 = shuffle(class_3)
+    class_4 = shuffle(class_4)
+
+    class_0 = class_0[:lowest_value]
+    class_1 = class_1[:lowest_value]
+    class_2 = class_2[:lowest_value]
+    class_3 = class_3[:lowest_value]
+    class_4 = class_4[:lowest_value]
+
+    all_images = []
+    all_images = np.asarray(all_images)
+    all_labels = []
+    all_labels = np.asarray(all_labels)
+
+    all_images = np.append(all_images,class_0)
+    all_labels = np.append(all_labels,(np.ones(len(all_images))))
+
+    all_images = np.append(all_images,class_1)
+    all_labels = np.append(all_labels,1)
+
+    all_images = np.append(all_images,class_2)
+    all_labels = np.append(all_labels,2)
+
+    all_images = np.append(all_images,class_3)
+    all_labels = np.append(all_labels,3)
+
+    all_images = np.append(all_images,class_4)
+    all_labels = np.append(all_labels,4)
+
+    print(all_labels)
+    print(len(all_labels))
+
+
+
+
+    quit()
         
