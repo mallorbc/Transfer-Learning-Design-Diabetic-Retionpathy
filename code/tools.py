@@ -34,8 +34,8 @@ if __name__ == "__main__":
     parser.add_argument("-npy",default=None,help="npy file to view",type=str)
     parser.add_argument("-model_num",default=1,help="What model type to load",type=int)
     parser.add_argument("-compat","--compatibility_mode",default=False,type=str2bool)
-    parser.add_argument("-width",default=512,help="What is the width of the image",type=int)
-    parser.add_argument("-height",default=512,help="What is the width of the image",type=int)
+    parser.add_argument("-width",default=256,help="What is the width of the image",type=int)
+    parser.add_argument("-height",default=256,help="What is the width of the image",type=int)
     parser.add_argument("-n","--name",default=None,help="names for saves",type=str)
     parser.add_argument("-trainable",default=None,help="freeze the weights or not",type=str2bool)
 
@@ -89,7 +89,7 @@ if __name__ == "__main__":
         health_dict = make_csv_dict(health_level,image_name)
         image_to_test = image_name
     print(health_dict)
-
+    
 
 
     #makes precision recall curve
@@ -164,8 +164,8 @@ if __name__ == "__main__":
             config.gpu_options.allow_growth = True
             session = InteractiveSession(config=config)
         
-        width =512
-        height =512
+        width =256
+        height =256
         
         #loads the full path
         if args.model is not None:
