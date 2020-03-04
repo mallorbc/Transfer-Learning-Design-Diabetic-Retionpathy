@@ -181,8 +181,18 @@ if __name__ == "__main__":
                 model = transfer_learning_model_inception_v3_functional(width,height)
 
         #get image of one class, image_of_class uses full path
-        image_of_class = get_images_of_one_class(class_to_test, image_name, health_dict)
-        # print(image_of_class)
+        image_of_class_join = get_images_of_one_class(class_to_test, image_name, health_dict)
+        print(image_of_class_join)
+        image_of_class = []
+        # quit()
+        counter = 0
+        for i in range(len(image_of_class_join)):
+            image_name_stripped = os.path.splitext(image_of_class_join[i])[0]
+            # print(image_name_stripped)
+            image_of_class.append(image_name_stripped) 
+            counter = counter + 1
+        print(image_of_class)    
+        # print(counter)
         # quit()
         image_of_class_normalized = normalize_images(image_of_class)
         #predicting classes from one class image
@@ -193,6 +203,7 @@ if __name__ == "__main__":
         for i in range(len(image_of_class)):
             # print(image_name[i])
             data_path = os.path.basename(image_of_class[i])
+            data_path = data_path + '.jpeg'
             # print(data_path)
             
             correct_label = health_dict[data_path]
