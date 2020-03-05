@@ -190,14 +190,14 @@ if __name__ == "__main__":
         #used for cutting the classes
         health_dict = make_diagnose_class_dict(health_level,image_name)
         #cuts class 0 in half
-        #health_level,image_name = cut_data_class(health_dict,0,0.5)
+        health_level,image_name = cut_data_class(health_dict,0,0.5)
 
         #shuffles the data to randomize starting train and test data
         health_level,image_name = shuffle_data(health_level,image_name)
         #way to many zeros in the data
         # health_level,image_name = trim_data(run_dir,health_level,image_name)
         #shuffles the data to randomize starting train and test data
-        health_level,image_name = trim_data_even(run_dir,health_level,image_name,size_of_each_class)
+        # health_level,image_name = trim_data_even(run_dir,health_level,image_name,size_of_each_class)
         # health_level,image_name = shuffle_data(health_level,image_name)
         #splits the data into train and test
         train_images,train_labels,test_images,test_labels = split_data_train_test_val(run_dir,health_level,image_name,test_data_percentage,validation_data_percent)
@@ -251,6 +251,8 @@ if __name__ == "__main__":
                 #saves the csv files into the new run directory
                 save_csv(run_dir,"train.csv",train_labels,train_images)
                 save_csv(run_dir,"test.csv",test_labels,test_images)
+
+
 
 
 
@@ -367,6 +369,8 @@ if __name__ == "__main__":
             #loads the saved model if needed
             # print(model_to_use)
             model = load_model(model_to_load,model_to_use,new_image_width,new_image_height)
+        health_dict = make_diagnose_class_dict(train_labels,train_images)
+
 
 
             
@@ -406,8 +410,8 @@ if __name__ == "__main__":
             # train_labels = pd.DataFrame(train_images)
             # data_frame_data = [train_images,train_labels]
             # df = pd.DataFrame(data_frame_data,columns=["image","label"])
-            df = pd.DataFrame({"image": train_images,
-                                "label": train_labels})
+            # df = pd.DataFrame({"image": train_images,
+            #                     "label": train_labels})
         
         total_images = len(train_images)
 
@@ -453,6 +457,10 @@ if __name__ == "__main__":
         if len(test_images)<test_size:
             test_size = len(test_images)
         if model_to_use!=3 and run_mode == 6:
+            if data_aug:
+                    df = generate_dataframe(train_images,train_labels,health_dict)
+                    df_length = df.shape[0]
+                    df_images = 0
             np_image_batch_test,test_labels_batch = prepare_data_for_model(test_size,test_labels,test_images,new_image_width,new_image_height)
             while current_epoch<total_epochs:
                 if not data_aug:
@@ -467,11 +475,11 @@ if __name__ == "__main__":
                         # tracker.print_diff()
                         next_print = next_print + 0.01
                 else:
-                    # test_df = generate_dataframe(train_images,train_labels,health_dict)
                     for x_batch, y_batch in datagen_train.flow_from_dataframe(dataframe=df,x_col="image",y_col="label",target_size=(new_image_width, new_image_height),class_mode="raw", batch_size=args.batch_size):
                         # model.train_on_batch(x_batch,y_batch,class_weight=class_weights)
                         model.train_on_batch(x_batch,y_batch)
                         images_trained_on = images_trained_on + batch_size
+                        df_images = df_images + batch_size
                         current_epoch = current_epoch + batch_size/total_images
                         if next_print <= current_epoch:
                             print("epoch: % .2f , train loss: % .4f , % 0.2f, train acc: % .4f , % .2f, test loss: % .4f , % .2f, test acc: % .4f, % .2f " % (current_epoch, lowest_train_loss,lowest_train_loss_epoch,highest_train_accuracy,highest_train_accuracy_epoch,lowest_test_loss,lowest_test_loss_epoch,highest_test_accuracy,highest_test_accuracy_epoch))
@@ -479,6 +487,12 @@ if __name__ == "__main__":
                         if ((current_epoch - previous_test_epoch)>= test_interval) or ((current_epoch - save_interval)>=previous_save):
                             # tracker.print_diff()
                             break
+                        if df_images>df_length:
+                            df = generate_dataframe(train_images,train_labels,health_dict)
+                            df_length = df.shape[0]
+                            df_images = 0
+                            break
+
 
                 #adds the number of images to the total count
                 #outputs stats after every test interval passes

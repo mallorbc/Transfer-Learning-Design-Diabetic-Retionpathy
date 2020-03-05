@@ -17,6 +17,7 @@ from plots import *
 import copy
 from random import randint
 from keract import get_activations, display_heatmaps
+from sklearn.utils import shuffle
 
 
 
@@ -435,9 +436,10 @@ if __name__ == "__main__":
 
             # test_images = get_full_image_name_no_ext(data_path,test_images)
             image_to_test = test_images
-            # if len(image_to_test)>600:
-            #     image_to_test = image_to_test[:505]
-            #     test_labels = test_labels[:505]
+            if len(image_to_test)>600:
+                image_to_test = shuffle(image_to_test)
+                image_to_test = image_to_test[:505]
+                test_labels = test_labels[:505]
 
         model_to_load = os.path.realpath(args.model)
         model = load_model(model_to_load,model_num,width,height,unfrozen_weights)
