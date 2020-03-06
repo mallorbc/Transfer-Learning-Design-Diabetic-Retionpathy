@@ -208,6 +208,7 @@ def normalize_images(list_of_image_name,save_numpy=False):
             normalized_image = image
         else:
             normalized_image = cv2.imread(image)
+            normalized_image = cv2.cvtColor(normalized_image,cv2.COLOR_BGR2RGB)
         normalized_image = normalized_image/255.0
         list_of_normalized_images.append(normalized_image)
         counter = counter + 1
