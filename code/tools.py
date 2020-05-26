@@ -34,8 +34,8 @@ if __name__ == "__main__":
     parser.add_argument("-npy",default=None,help="npy file to view",type=str)
     parser.add_argument("-model_num",default=1,help="What model type to load",type=int)
     parser.add_argument("-compat","--compatibility_mode",default=False,type=str2bool)
-    parser.add_argument("-width",default=512,help="What is the width of the image",type=int)
-    parser.add_argument("-height",default=512,help="What is the width of the image",type=int)
+    parser.add_argument("-width",default=256,help="What is the width of the image",type=int)
+    parser.add_argument("-height",default=256,help="What is the width of the image",type=int)
     parser.add_argument("-n","--name",default=None,help="names for saves",type=str)
     parser.add_argument("-trainable",default=None,help="freeze the weights or not",type=str2bool)
 
@@ -89,7 +89,7 @@ if __name__ == "__main__":
         health_dict = make_csv_dict(health_level,image_name)
         image_to_test = image_name
     print(health_dict)
-
+    
 
 
     #makes precision recall curve
@@ -164,8 +164,8 @@ if __name__ == "__main__":
             config.gpu_options.allow_growth = True
             session = InteractiveSession(config=config)
         
-        width =512
-        height =512
+        width =256
+        height =256
         
         #loads the full path
         if args.model is not None:
@@ -181,8 +181,18 @@ if __name__ == "__main__":
                 model = transfer_learning_model_inception_v3_functional(width,height)
 
         #get image of one class, image_of_class uses full path
-        image_of_class = get_images_of_one_class(class_to_test, image_name, health_dict)
-        # print(image_of_class)
+        image_of_class_join = get_images_of_one_class(class_to_test, image_name, health_dict)
+        print(image_of_class_join)
+        image_of_class = []
+        # quit()
+        counter = 0
+        for i in range(len(image_of_class_join)):
+            image_name_stripped = os.path.splitext(image_of_class_join[i])[0]
+            # print(image_name_stripped)
+            image_of_class.append(image_name_stripped) 
+            counter = counter + 1
+        print(image_of_class)    
+        # print(counter)
         # quit()
         image_of_class_normalized = normalize_images(image_of_class)
         #predicting classes from one class image
@@ -193,6 +203,7 @@ if __name__ == "__main__":
         for i in range(len(image_of_class)):
             # print(image_name[i])
             data_path = os.path.basename(image_of_class[i])
+            data_path = data_path + '.jpeg'
             # print(data_path)
             
             correct_label = health_dict[data_path]
