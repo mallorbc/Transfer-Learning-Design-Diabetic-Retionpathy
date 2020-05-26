@@ -27,6 +27,49 @@ from tensorflow.keras.utils import plot_model
 
 # from tensorflow.keras.applications import inception_v3
 
+def create_DenseNet(image_width,image_height,learning_rate=0.0001):
+    #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
+    # if is_trainable is None:
+    #     is_trainable = True
+    base_model = tf.keras.applications.densenet.DenseNet121(weights="imagenet",include_top=False,input_shape=(image_width, image_height, 3))
+    # base_model = EfficientNetB5(weights='imagenet',include_top=False,input_shape=(new_image_width, new_image_height, 3))
+
+    #sets the inception_v3 model to not update its weights
+    base_model.trainable = True
+    #layer to convert the features to a single n-elemnt vector per image
+    global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
+    model = global_average_layer(base_model.output)
+    model = layers.Dense(1024)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    model =  layers.Dense(512)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    model = layers.Dense(256)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    output = layers.Dense(5, activation='softmax')(model)
+    final_model = models.Model(inputs=[base_model.input], outputs=output)
+
+
+
+    radam = tfa.optimizers.RectifiedAdam(lr=learning_rate)
+    ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
+
+    # model.compile(optimizer=Adam(lr=0.00001),
+    #             loss='sparse_categorical_crossentropy',
+    #             metrics=['accuracy'])
+    # return model
+    final_model.compile(optimizer=ranger,
+                loss='sparse_categorical_crossentropy',
+                metrics=['accuracy'])
+    final_model.summary()
+    print("Learning rate is: " + str(learning_rate))
+    time.sleep(2)
+    # quit()
+    return final_model
+
+
 def create_CNN(image_width,image_height,learning_rate=0.000025):
     input_shape = (image_width,image_height,3)
     image_input = Input(shape = input_shape)
@@ -88,6 +131,10 @@ def load_model(path_to_model,model_number=None,width=None,height=None,frozen=Non
         print("Loaded model weights")
     elif model_number == 4:
         model_to_load = transfer_learning_model_inception_v3(width,height,frozen)
+        model_to_load.load_weights(path_to_model)
+        print("Loaded model weights")
+    elif model_number == 5:
+        model_to_load = efficientnet(width, height)
         model_to_load.load_weights(path_to_model)
         print("Loaded model weights")
     return model_to_load
@@ -210,30 +257,42 @@ def inception_v3_multiple_inputs(image_width,image_height):
     final_model.summary()
     return final_model
 
-def efficientnet(new_image_width, new_image_height):
+def efficientnet(new_image_width, new_image_height,learning_rate=0.0001):
     base_model = Net(weights='imagenet',include_top=False,input_shape=(new_image_width, new_image_height, 3))
     base_model.trainable = True
+    # base_model.trainable = is_trainable
+    #layer to convert the features to a single n-elemnt vector per image
     global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
-    model = models.Sequential([base_model,global_average_layer])
-    model.add(layers.Dense(1024,activation='relu'))
-    model.add(Dropout(0.5))
-    model.add(layers.Dense(512,activation='relu'))
-    model.add(Dropout(0.5))
-    model.add(layers.Dense(256,activation='relu'))
-    model.add(Dropout(0.5))
-    model.add(layers.Dense(128,activation='relu'))
-    model.add(Dropout(0.5))
-    model.add(layers.Dense(5,activation='softmax'))
-    model.summary()
-    print("EfficientNetB7")
-    model.compile(optimizer=Adam(lr=0.000001),
-                loss='sparse_categorical_crossentropy',
-                metrics=['accuracy'])
-    # model.compile(optimizer=Adam(lr=0.0000015),
+    model = global_average_layer(base_model.output)
+    model = layers.Dense(1024)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    model =  layers.Dense(512)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    model = layers.Dense(256)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    output = layers.Dense(5, activation='softmax')(model)
+    final_model = models.Model(inputs=[base_model.input], outputs=output)
+
+
+
+    radam = tfa.optimizers.RectifiedAdam(lr=learning_rate)
+    ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
+
+    # model.compile(optimizer=Adam(lr=0.00001),
     #             loss='sparse_categorical_crossentropy',
     #             metrics=['accuracy'])
-
-    return model
+    # return model
+    final_model.compile(optimizer=ranger,
+                loss='sparse_categorical_crossentropy',
+                metrics=['accuracy'])
+    final_model.summary()
+    print("Learning rate is: " + str(learning_rate))
+    time.sleep(2)
+    # quit()
+    return final_model
 
 
 def inception_v3_resnet(image_width,image_height):
@@ -292,7 +351,7 @@ def get_model_predictions_one_input(loaded_model,images):
     total_predictions = []
     total_predictions = np.asarray(total_predictions)
 
-    test_size = 200
+    test_size = 100
     number_of_large_groups = math.floor(len(images)/test_size)
 
     counter = 1

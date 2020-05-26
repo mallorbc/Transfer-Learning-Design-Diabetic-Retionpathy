@@ -208,6 +208,7 @@ def normalize_images(list_of_image_name,save_numpy=False):
             normalized_image = image
         else:
             normalized_image = cv2.imread(image)
+            normalized_image = cv2.cvtColor(normalized_image,cv2.COLOR_BGR2RGB)
         normalized_image = normalized_image/255.0
         list_of_normalized_images.append(normalized_image)
         counter = counter + 1
@@ -541,6 +542,27 @@ def prepare_data_for_model(size_of_data,labels,images,image_width,image_height):
 
     return np_image_batch,labels_batch
 
+def prepare_data_for_model_even(size_of_data,labels,images,image_width,image_height,health_dict):
+    gc.collect()
+    total_labels = []
+    images,labels = generate_even_classes(images,labels,health_dict)
+    labels,images = shuffle_data(labels,images)
+    total_labels = labels
+    if len(images)>size_of_data:
+        image_batch = images[:size_of_data]
+        labels_batch = total_labels[:size_of_data]
+    else:
+        image_batch = images
+        labels_batch = total_labels
+    # shuffle_data(labels_batch,image_batch)
+    image_batch = normalize_images(image_batch)
+    np_image_batch = np.asarray(image_batch)
+    np_image_batch.reshape(len(image_batch),image_width,image_height,3)
+    labels_batch = np.asarray(labels_batch)
+
+
+    return np_image_batch,labels_batch
+
 def prepare_data_for_model_two(size_of_data,labels,images,second_images,image_width,image_height):
     gc.collect()
     total_labels = []
@@ -619,7 +641,7 @@ def cut_data_class(health_dict,class_to_cut,percent_to_cut):
 
     return all_labels,all_images
 
-def generate_dataframe(images,labels,health_dict):
+def generate_even_classes(images,labels,health_dict):
     cat0,cat1,cat2,cat3,cat4 = utils.get_info_on_data(labels)
     categories = [cat0,cat1,cat2,cat3,cat4]
     categories = np.asarray(categories)
@@ -650,25 +672,31 @@ def generate_dataframe(images,labels,health_dict):
     all_labels = np.asarray(all_labels)
 
     all_images = np.append(all_images,class_0)
-    all_labels = np.append(all_labels,(np.ones(len(all_images))))
+    all_labels = np.append(all_labels,np.multiply(np.ones(len(class_0)),0))
 
     all_images = np.append(all_images,class_1)
-    all_labels = np.append(all_labels,1)
+    all_labels = np.append(all_labels,np.multiply(np.ones(len(class_1)),1))
 
     all_images = np.append(all_images,class_2)
-    all_labels = np.append(all_labels,2)
+    all_labels = np.append(all_labels,np.multiply(np.ones(len(class_2)),2))
 
     all_images = np.append(all_images,class_3)
-    all_labels = np.append(all_labels,3)
+    all_labels = np.append(all_labels,np.multiply(np.ones(len(class_3)),3))
 
     all_images = np.append(all_images,class_4)
-    all_labels = np.append(all_labels,4)
+    all_labels = np.append(all_labels,np.multiply(np.ones(len(class_4)),4))
 
-    print(all_labels)
-    print(len(all_labels))
+    # print(all_labels)
+    # print(len(all_labels))
+    # print(len(all_images))
 
 
 
 
-    quit()
-        
+    return all_images,all_labels 
+
+
+def generate_dataframe(images,labels,health_dict):
+    images,labels = generate_even_classes(images,labels,health_dict)
+    df = pd.DataFrame({"image": images,"label": labels})
+    return df
