@@ -288,6 +288,8 @@ if __name__ == "__main__":
                 model = inception_v3_multiple_inputs(new_image_width, new_image_height)
             elif model_to_use == 4:
                 model = efficientnet(new_image_width, new_image_height)
+            elif model_to_use == 5:
+                model = create_DenseNet(new_image_width, new_image_height)
             else:
                 raise SyntaxError('Not an implemented model')
 
@@ -369,7 +371,8 @@ if __name__ == "__main__":
             #loads the saved model if needed
             # print(model_to_use)
             model = load_model(model_to_load,model_to_use,new_image_width,new_image_height)
-        health_dict = make_diagnose_class_dict(train_labels,train_images)
+        health_dict_train = make_diagnose_class_dict(train_labels,train_images)
+        health_dict_test = make_diagnose_class_dict(test_labels,test_images)
 
 
 
@@ -404,7 +407,10 @@ if __name__ == "__main__":
             rotation_range=360,
             zoom_range=0.1,
             rescale = 1.0/255.0,
-            shear_range=0.2)
+            shear_range=0.2,
+            brightness_range=[0.8,1.2],
+            height_shift_range=0.1,
+            width_shift_range=0.1)
             train_images = np.asarray(train_images)
             train_labels = np.asarray(train_labels)
             # train_labels = pd.DataFrame(train_images)
@@ -458,14 +464,18 @@ if __name__ == "__main__":
             test_size = len(test_images)
         if model_to_use!=3 and run_mode == 6:
             if data_aug:
-                    df = generate_dataframe(train_images,train_labels,health_dict)
+                    df = generate_dataframe(train_images,train_labels,health_dict_train)
                     df_length = df.shape[0]
                     df_images = 0
-            np_image_batch_test,test_labels_batch = prepare_data_for_model(test_size,test_labels,test_images,new_image_width,new_image_height)
+            # np_image_batch_test,test_labels_batch = prepare_data_for_model(test_size,test_labels,test_images,new_image_width,new_image_height)
+            np_image_batch_test,test_labels_batch = prepare_data_for_model_even(test_size,test_labels,test_images,new_image_width,new_image_height,health_dict_test)
+
             while current_epoch<total_epochs:
                 if not data_aug:
                     #gets images and labels ready for model input
-                    np_image_batch,label_batch = prepare_data_for_model(batch_size,train_labels,train_images,new_image_width,new_image_height)
+                    # np_image_batch,label_batch = prepare_data_for_model(batch_size,train_labels,train_images,new_image_width,new_image_height)
+                    np_image_batch,label_batch = prepare_data_for_model_even(batch_size,train_labels,train_images,new_image_width,new_image_height,health_dict_train)
+
                     #trains on the input
                     # model.train_on_batch(np_image_batch, label_batch,class_weight=class_weights)
                     model.train_on_batch(np_image_batch, label_batch)
@@ -488,7 +498,7 @@ if __name__ == "__main__":
                             # tracker.print_diff()
                             break
                         if df_images>df_length:
-                            df = generate_dataframe(train_images,train_labels,health_dict)
+                            df = generate_dataframe(train_images,train_labels,health_dict_train)
                             df_length = df.shape[0]
                             df_images = 0
                             break
@@ -507,7 +517,9 @@ if __name__ == "__main__":
                     print("New test loss: ",loss_test," New test acc: ",accuracy_test)
                     #gets the metrics for the training data
                     print("Evaluating on training data...")
-                    np_image_batch,label_batch = prepare_data_for_model(test_size,train_labels,train_images,new_image_width,new_image_height)
+                    # np_image_batch,label_batch = prepare_data_for_model(test_size,train_labels,train_images,new_image_width,new_image_height)
+                    np_image_batch,label_batch = prepare_data_for_model_even(test_size,train_labels,train_images,new_image_width,new_image_height,health_dict_train)
+
                     metrics = model.evaluate(np_image_batch,label_batch,verbose=0)
                     np_image_batch = None
                     label_batch = None
@@ -532,7 +544,9 @@ if __name__ == "__main__":
                     #adds data to numpy files
                     add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,current_epoch,run_dir)
                     #gets new dataset for testing
-                    np_image_batch_test,test_labels_batch = prepare_data_for_model(test_size,test_labels,test_images,new_image_width,new_image_height)
+                    # np_image_batch_test,test_labels_batch = prepare_data_for_model(test_size,test_labels,test_images,new_image_width,new_image_height)
+                    np_image_batch_test,test_labels_batch = prepare_data_for_model_even(test_size,test_labels,test_images,new_image_width,new_image_height,health_dict_test)
+
                     #updates the test interval
                     previous_test_epoch = previous_test_epoch + test_interval
                     # if previous_test_epoch
