@@ -35,8 +35,8 @@ if __name__ == "__main__":
     parser.add_argument("-npy",default=None,help="npy file to view",type=str)
     parser.add_argument("-model_num",default=1,help="What model type to load",type=int)
     parser.add_argument("-compat","--compatibility_mode",default=False,type=str2bool)
-    parser.add_argument("-width",default=512,help="What is the width of the image",type=int)
-    parser.add_argument("-height",default=512,help="What is the width of the image",type=int)
+    parser.add_argument("-width",default=256,help="What is the width of the image",type=int)
+    parser.add_argument("-height",default=256,help="What is the width of the image",type=int)
     parser.add_argument("-n","--name",default=None,help="names for saves",type=str)
     parser.add_argument("-trainable",default=None,help="freeze the weights or not",type=str2bool)
 
@@ -436,10 +436,11 @@ if __name__ == "__main__":
 
             # test_images = get_full_image_name_no_ext(data_path,test_images)
             image_to_test = test_images
-            # if len(image_to_test)>600:
-            #     image_to_test = shuffle(image_to_test)
-            #     image_to_test = image_to_test[:505]
-            #     test_labels = test_labels[:505]
+            if len(image_to_test)>600:
+                image_to_test = shuffle(image_to_test)
+                image_to_test = image_to_test[:2000]
+                test_labels = test_labels[:2000]
+                image_to_test,test_labels = shuffle(image_to_test,test_labels)
 
         model_to_load = os.path.realpath(args.model)
         model = load_model(model_to_load,model_num,width,height,unfrozen_weights)
