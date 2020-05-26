@@ -542,6 +542,27 @@ def prepare_data_for_model(size_of_data,labels,images,image_width,image_height):
 
     return np_image_batch,labels_batch
 
+def prepare_data_for_model_even(size_of_data,labels,images,image_width,image_height,health_dict):
+    gc.collect()
+    total_labels = []
+    images,labels = generate_even_classes(images,labels,health_dict)
+    labels,images = shuffle_data(labels,images)
+    total_labels = labels
+    if len(images)>size_of_data:
+        image_batch = images[:size_of_data]
+        labels_batch = total_labels[:size_of_data]
+    else:
+        image_batch = images
+        labels_batch = total_labels
+    # shuffle_data(labels_batch,image_batch)
+    image_batch = normalize_images(image_batch)
+    np_image_batch = np.asarray(image_batch)
+    np_image_batch.reshape(len(image_batch),image_width,image_height,3)
+    labels_batch = np.asarray(labels_batch)
+
+
+    return np_image_batch,labels_batch
+
 def prepare_data_for_model_two(size_of_data,labels,images,second_images,image_width,image_height):
     gc.collect()
     total_labels = []
