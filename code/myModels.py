@@ -458,7 +458,7 @@ def custom_predict_class(model,image_to_test):
     return return_values
 
 
-def transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,is_trainable=True,learning_rate=0.00001):
+def transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,is_trainable=True,learning_rate=0.0001):
     #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
     if is_trainable is None:
         is_trainable = True
