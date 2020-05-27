@@ -76,7 +76,7 @@ if __name__ == "__main__":
     parser.add_argument("-blur","--blur",default=False,help="applies Gaussian blur prior to ZCA preprocessing",type=str2bool)
     parser.add_argument("-test_csv",default=None,help="This allows us to specifiy what photos to use for testing",type=str)
     parser.add_argument("-aug","--augment_data",default=False,help="flag on whether to use image data augmentation",type=str2bool)
-    parser.add_argument("-test_size",default=75,help="what batch size to use for testing the performance of the models",type=int)
+    parser.add_argument("-test_size",default=250,help="what batch size to use for testing the performance of the models",type=int)
     parser.add_argument('-saver',"--saver_mode",default=None,help="Whether or not to save the whole model or just the weights",type=int)
     parser.add_argument('-class_size',default=708,help="how big each class should be; Can't be larger than 700",type=int)
     parser.add_argument("-plot_name",default=None,help="what to name the plots",type=str)
