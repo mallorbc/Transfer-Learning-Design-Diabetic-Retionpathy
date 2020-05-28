@@ -513,8 +513,53 @@ def custom_predict_class(model,image_to_test):
         return_values.append(prediction_class)
     return return_values
 
+def get_loss_of_each_class(model,images,width,height,test_size,health_dict):
+    images = get_num_images_of_one_class(0,images,health_dict,test_size)
+    image_batch = normalize_images(images)
+    np_image_batch = np.asarray(image_batch)
+    np_image_batch.reshape(len(image_batch),width,height,3)
+    labels = np.zeros(len(images))
+    labels = np.multiply(labels,0)
+    metrics = model.evaluate(np_image_batch,labels,verbose=0)
+    loss_0 = metrics[0]
+
+    images = get_num_images_of_one_class(1,images,health_dict,test_size)
+    image_batch = normalize_images(images)
+    np_image_batch = np.asarray(image_batch)
+    np_image_batch.reshape(len(image_batch),width,height,3)
+    labels = np.zeros(len(images))
+    labels = np.multiply(labels,1)
+    metrics = model.evaluate(np_image_batch,labels,verbose=0)
+    loss_1 = metrics[0]
+
+    images = get_num_images_of_one_class(2,images,health_dict,test_size)
+    image_batch = normalize_images(images)
+    np_image_batch = np.asarray(image_batch)
+    np_image_batch.reshape(len(image_batch),width,height,3)
+    labels = np.zeros(len(images))
+    labels = np.multiply(labels,2)
+    metrics = model.evaluate(np_image_batch,labels,verbose=0)
+    loss_2 = metrics[0]
+
+    images = get_num_images_of_one_class(3,images,health_dict,test_size)
+    image_batch = normalize_images(images)
+    np_image_batch = np.asarray(image_batch)
+    np_image_batch.reshape(len(image_batch),width,height,3)
+    labels = np.zeros(len(images))
+    labels = np.multiply(labels,3)
+    metrics = model.evaluate(np_image_batch,labels,verbose=0)
+    loss_3 = metrics[0]
+
+    images = get_num_images_of_one_class(4,images,health_dict,test_size)
+    image_batch = normalize_images(images)
+    np_image_batch = np.asarray(image_batch)
+    np_image_batch.reshape(len(image_batch),width,height,3)
+    labels = np.zeros(len(images))
+    labels = np.multiply(labels,4)
+    metrics = model.evaluate(np_image_batch,labels,verbose=0)
+    loss_4 = metrics[0]
 
 
-
+    return loss_0,loss_1,loss_2,loss_3,loss_4
 
 
