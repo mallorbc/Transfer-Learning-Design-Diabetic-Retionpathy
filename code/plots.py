@@ -378,6 +378,64 @@ def make_roc_precision_recall_graphs(class_to_test,images_to_test,class_dict,mod
     output_file_roc = output + "/ROC_class_" + str(class_to_test) + ".png"
     plot_roc_curve(results,probs,output_file_roc)
 
+def add_class_loss_data(loss0,loss1,loss2,loss3,loss4,run_dir):
+    #creates the directory if it does not exist
+    current_dir = run_dir
+    output_dir = current_dir + "/plots"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    loss0_file_path = output_dir + "/" + "loss0.npy"
+    loss1_file_path = output_dir + "/" + "loss1.npy"
+    loss2_file_path = output_dir + "/" + "loss2.npy"
+    loss3_file_path = output_dir + "/" + "loss3.npy"
+    loss4_file_path = output_dir + "/" + "loss4.npy"
+
+    if os.path.isfile(loss0_file_path) and os.path.isfile(loss1_file_path) and os.path.isfile(loss2_file_path) and os.path.isfile(loss3_file_path) and os.path.isfile(loss4_file_path):
+        #loads the existing files
+        loss0_file = np.load(loss0_file_path)
+        loss1_file = np.load(loss1_file_path)
+        loss2_file = np.load(loss2_file_path)
+        loss3_file = np.load(loss3_file_path)
+        loss4_file = np.load(loss4_file_path)
+        #appends the new data to the array
+        loss0_file = np.append(loss0_file,loss0)
+        loss1_file = np.append(loss1_file,loss1)
+        loss2_file = np.append(loss2_file,loss2)
+        loss3_file = np.append(loss3_file,loss3)
+        loss4_file = np.append(loss4_file,loss4)
+        #saves the arrays
+        np.save(loss0_file_path,loss0_file)
+        np.save(loss1_file_path,loss1_file)
+        np.save(loss2_file_path,loss2_file)
+        np.save(loss3_file_path,loss3_file)
+        np.save(loss4_file_path,loss4_file)
+        print("Added data to numpy file")
+    #if the file does not exist we create it
+    else:
+        loss0_file = []
+        loss1_file = []
+        loss2_file = []
+        loss3_file = []
+        loss4_file = []
+        #adds the data to the lists
+        loss0_file = np.append(loss0_file,loss0)
+        loss0_file = np.append(loss0_file,loss0)
+        loss0_file = np.append(loss0_file,loss0)
+        loss0_file = np.append(loss0_file,loss0)
+        loss0_file = np.append(loss0_file,loss0)
+        #converts these lists to numpy arrays
+        loss0_file = np.asarray(loss0_file)
+        loss1_file = np.asarray(loss1_file)
+        loss2_file = np.asarray(loss2_file)
+        loss3_file = np.asarray(loss3_file)
+        loss4_file = np.asarray(loss4_file)
+        #saves the arrays
+        np.save(loss0_file_path,loss0_file)
+        np.save(loss1_file_path,loss1_file)
+        np.save(loss2_file_path,loss2_file)
+        np.save(loss3_file_path,loss3_file)
+        np.save(loss4_file_path,loss4_file)
+
 
 
 
