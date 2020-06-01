@@ -527,7 +527,7 @@ def zca_nocirc(image_path,output_dir, batch_size, blur):
         
         print("Function completed.")
 
-def prepare_data_for_model(size_of_data,labels,images,image_width,image_height):
+def prepare_data_for_model_rand(size_of_data,labels,images,image_width,image_height):
     gc.collect()
     total_labels = []
     labels,images = shuffle_data(labels,images)
@@ -541,6 +541,15 @@ def prepare_data_for_model(size_of_data,labels,images,image_width,image_height):
 
 
     return np_image_batch,labels_batch
+
+def prepare_data_for_model(size_of_data,labels,images,image_width,image_height,health_dict,method=1):
+    if method == 1:
+        np_image_batch,labels_batch = prepare_data_for_model_rand(size_of_data,labels,images,image_width,image_height)
+    elif method == 2:
+        np_image_batch,labels_batch = prepare_data_for_model_even(size_of_data,labels,images,image_width,image_height,health_dict)
+
+    return np_image_batch,labels_batch
+    print("test")
 
 def prepare_data_for_model_even(size_of_data,labels,images,image_width,image_height,health_dict):
     gc.collect()
@@ -696,7 +705,13 @@ def generate_even_classes(images,labels,health_dict):
     return all_images,all_labels 
 
 
-def generate_dataframe(images,labels,health_dict):
-    images,labels = generate_even_classes(images,labels,health_dict)
-    df = pd.DataFrame({"image": images,"label": labels})
+def generate_dataframe(images,labels,health_dict,method):
+    if method == 1:
+        # data_frame_data = [images,labels]
+        # df = pd.DataFrame(data_frame_data,columns=["image","label"])
+        df = pd.DataFrame({"image": images,
+                            "label": labels})
+    elif method == 2:
+        images,labels = generate_even_classes(images,labels,health_dict)
+        df = pd.DataFrame({"image": images,"label": labels})
     return df
