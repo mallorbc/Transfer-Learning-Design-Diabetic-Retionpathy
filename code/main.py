@@ -82,6 +82,7 @@ if __name__ == "__main__":
     parser.add_argument("-plot_name",default=None,help="what to name the plots",type=str)
     parser.add_argument('-compat',"--compatibility",default=False,help="whether or not to use compat mode",type=str2bool)
     parser.add_argument("-lr","--learning_rate",default=None,help="optional flag to manually set learning rate",type=float)
+    parser.add_argument("-train_method",default=1,help="How to train the model",type=int)
 
 
 
@@ -129,6 +130,8 @@ if __name__ == "__main__":
     plot_name = args.plot_name
 
     manual_lr = args.learning_rate
+
+    training_method = args.train_method
 
     
 
@@ -289,7 +292,7 @@ if __name__ == "__main__":
             elif model_to_use == 4:
                 model = efficientnet(new_image_width, new_image_height)
             elif model_to_use == 5:
-                model = create_DenseNet(new_image_width, new_image_height)
+                model = efficientnet(new_image_width, new_image_height)
             else:
                 raise SyntaxError('Not an implemented model')
 
@@ -420,40 +423,60 @@ if __name__ == "__main__":
             #                     "label": train_labels})
         
         total_images = len(train_images)
+        print()
+        print("Using " + str(total_images) + " images for training")
+        print()
+        print("Using " + str(len(health_dict_train[0])) + " images from class 0")
+        print()
+        print("Using " + str(len(health_dict_train[1])) + " images from class 1")
+        print()
+        print("Using " + str(len(health_dict_train[2])) + " images from class 2")
+        print()
+        print("Using " + str(len(health_dict_train[3])) + " images from class 3")
+        print()
+        print("Using " + str(len(health_dict_train[4])) + " images from class 4")
+        time.sleep(3)
 
         cat0_images,cat1_images,cat2_images,cat3_images,cat4_images = get_info_on_data(train_labels)	
 
 
-        cat0_weight = 1.0/5.0
-        cat1_weight = (1.0/(cat1_images/cat0_images))/5.0
-        cat2_weight = (1.0/(cat2_images/cat0_images))/5.0
-        cat3_weight = (1.0/(cat3_images/cat0_images))/5.0	
-        cat4_weight = (1.0/(cat4_images/cat0_images))/5.0	
-
-
-        class_weights_old = {0: cat0_weight, 1: cat1_weight, 2: cat2_weight, 3: cat3_weight, 4: cat4_weight}
-
-        
+	
 
         class_weights_dict = compute_class_weight("balanced",np.unique(train_labels),train_labels)
         class_weights_list = list(class_weights_dict)
-        class_weights_adjust = np.asarray(class_weights_list)
+
+        #for testing
+        # highest_weight = max(class_weights_list)
+        # class_weights_list = np.asarray(class_weights_list)
+        # class_weights_list = np.divide(class_weights_list,highest_weight)
+        # class_weights_list = np.divide(class_weights_list,2)
+
+        # class_weights_adjust = np.asarray(class_weights_list)
+        # # print(class_weights_adjust)
+        # smudge_factor = 5.0
+        # class_weights_adjust = np.add(class_weights_adjust,smudge_factor)
+        # # print(class_weights_adjust)
+        # class_weights_adjust = np.divide(class_weights_adjust,smudge_factor+1.0)
+        # # class_weights_list = class_weights_adjust
         # print(class_weights_adjust)
-        smudge_factor = 5.0
-        class_weights_adjust = np.add(class_weights_adjust,smudge_factor)
-        # print(class_weights_adjust)
-        class_weights_adjust = np.divide(class_weights_adjust,smudge_factor+1.0)
-        class_weights_list = class_weights_adjust
-        print(class_weights_adjust)
 
 
         # base_weights = np.ones(5)
         # class_wegights_adjust = np.mean()
         class_weights = {0: class_weights_list[0], 1: class_weights_list[1], 2: class_weights_list[2], 3: class_weights_list[3], 4: class_weights_list[4]}
+        base_weight0 = class_weights_list[0]/2
+        base_weight1 = class_weights_list[1]/2
+        base_weight2 = class_weights_list[2]/2
+        base_weight3 = class_weights_list[3]/2
+        base_weight4 = class_weights_list[4]/2
 
         print(class_weights)
-        print(class_weights_old)
         time.sleep(2)
+        print()
+        if training_method == 1:
+            print("Using imbalenced data batches")
+        else:
+            print("Using balenced classes")
         # quit()
 
 
@@ -462,23 +485,27 @@ if __name__ == "__main__":
         time_array = np.asarray(time_array)
         if len(test_images)<test_size:
             test_size = len(test_images)
+            
         if model_to_use!=3 and run_mode == 6:
             if data_aug:
-                    df = generate_dataframe(train_images,train_labels,health_dict_train)
-                    df_length = df.shape[0]
-                    df_images = 0
-            # np_image_batch_test,test_labels_batch = prepare_data_for_model(test_size,test_labels,test_images,new_image_width,new_image_height)
+                if training_method == 2:
+                    df = generate_dataframe(train_images,train_labels,health_dict_train,training_method)
+                else:
+                    df = generate_dataframe(train_images,train_labels,health_dict_train,training_method)
+                df_length = df.shape[0]
+                df_images = 0
             np_image_batch_test,test_labels_batch = prepare_data_for_model_even(test_size,test_labels,test_images,new_image_width,new_image_height,health_dict_test)
 
             while current_epoch<total_epochs:
                 if not data_aug:
                     #gets images and labels ready for model input
-                    # np_image_batch,label_batch = prepare_data_for_model(batch_size,train_labels,train_images,new_image_width,new_image_height)
-                    np_image_batch,label_batch = prepare_data_for_model_even(batch_size,train_labels,train_images,new_image_width,new_image_height,health_dict_train)
+                    np_image_batch,label_batch = prepare_data_for_model(batch_size,train_labels,train_images,new_image_width,new_image_height,health_dict_train,training_method)
 
                     #trains on the input
-                    # model.train_on_batch(np_image_batch, label_batch,class_weight=class_weights)
-                    model.train_on_batch(np_image_batch, label_batch)
+                    if training_method == 1:
+                        model.train_on_batch(np_image_batch, label_batch,class_weight=class_weights)
+                    else:
+                        model.train_on_batch(np_image_batch, label_batch)
                     images_trained_on = images_trained_on + batch_size
                     if next_print <= current_epoch:
                         print("epoch: % .2f , train loss: % .4f , % 0.2f, train acc: % .4f , % .2f, test loss: % .4f , % .2f, test acc: % .4f, % .2f " % (current_epoch, lowest_train_loss,lowest_train_loss_epoch,highest_train_accuracy,highest_train_accuracy_epoch,lowest_test_loss,lowest_test_loss_epoch,highest_test_accuracy,highest_test_accuracy_epoch))
@@ -498,7 +525,7 @@ if __name__ == "__main__":
                             # tracker.print_diff()
                             break
                         if df_images>df_length:
-                            df = generate_dataframe(train_images,train_labels,health_dict_train)
+                            df = generate_dataframe(train_images,train_labels,health_dict_train,training_method)
                             df_length = df.shape[0]
                             df_images = 0
                             break
@@ -513,11 +540,17 @@ if __name__ == "__main__":
                     np_image_batch_test = None
                     test_labels_batch = None
                     loss_test = metrics[0]
+                    test_loss0,test_loss1,test_loss2,test_loss3,test_loss4 = get_loss_of_each_class(model,test_images,new_image_width,new_image_height,test_size,health_dict_test)
+                    print("Class losses: ",test_loss0,test_loss1,test_loss2,test_loss3,test_loss4)
+                    # class_weights = adjust_class_weights(test_loss0,test_loss1,test_loss2,test_loss3,test_loss4)
+                    class_weights = adjust_base_weights2(test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,base_weight0,base_weight1,base_weight2,base_weight3,base_weight4,run_dir)
+
+                    # time.sleep(2)
                     accuracy_test = metrics[-1]
                     print("New test loss: ",loss_test," New test acc: ",accuracy_test)
                     #gets the metrics for the training data
                     print("Evaluating on training data...")
-                    # np_image_batch,label_batch = prepare_data_for_model(test_size,train_labels,train_images,new_image_width,new_image_height)
+                    # np_image_batch,label_batch = prepare_data_for_model_rand(test_size,train_labels,train_images,new_image_width,new_image_height)
                     np_image_batch,label_batch = prepare_data_for_model_even(test_size,train_labels,train_images,new_image_width,new_image_height,health_dict_train)
 
                     metrics = model.evaluate(np_image_batch,label_batch,verbose=0)
@@ -544,7 +577,7 @@ if __name__ == "__main__":
                     #adds data to numpy files
                     add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,current_epoch,run_dir)
                     #gets new dataset for testing
-                    # np_image_batch_test,test_labels_batch = prepare_data_for_model(test_size,test_labels,test_images,new_image_width,new_image_height)
+                    # np_image_batch_test,test_labels_batch = prepare_data_for_model_rand(test_size,test_labels,test_images,new_image_width,new_image_height)
                     np_image_batch_test,test_labels_batch = prepare_data_for_model_even(test_size,test_labels,test_images,new_image_width,new_image_height,health_dict_test)
 
                     #updates the test interval
@@ -641,6 +674,7 @@ if __name__ == "__main__":
         plot_accuracy(plot_directory,plot_epoch)
     if run_mode == 8:
         plot_loss(plot_directory,plot_epoch)
+        plot_class_losses(plot_directory,plot_epoch)
     
     if run_mode == 9:
         print("make matrix")
