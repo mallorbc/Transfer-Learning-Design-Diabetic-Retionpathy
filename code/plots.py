@@ -16,9 +16,9 @@ import pickle
 import math
 import time
 
+from utils import *
 from preprocessData import *
 from myModels import *
-from utils import *
 
 def add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,epoch,run_dir):
     #creates the directory if it does not exist
@@ -419,10 +419,10 @@ def add_class_loss_data(loss0,loss1,loss2,loss3,loss4,run_dir):
         loss4_file = []
         #adds the data to the lists
         loss0_file = np.append(loss0_file,loss0)
-        loss0_file = np.append(loss0_file,loss0)
-        loss0_file = np.append(loss0_file,loss0)
-        loss0_file = np.append(loss0_file,loss0)
-        loss0_file = np.append(loss0_file,loss0)
+        loss1_file = np.append(loss1_file,loss1)
+        loss2_file = np.append(loss2_file,loss2)
+        loss3_file = np.append(loss3_file,loss3)
+        loss4_file = np.append(loss4_file,loss4)
         #converts these lists to numpy arrays
         loss0_file = np.asarray(loss0_file)
         loss1_file = np.asarray(loss1_file)
@@ -437,6 +437,64 @@ def add_class_loss_data(loss0,loss1,loss2,loss3,loss4,run_dir):
         np.save(loss4_file_path,loss4_file)
 
 
+def plot_class_losses(data_directory,stop_epoch=None):
+    #allows one to shorten the plots easily
+    early_stop = -1
+    #builds file paths to load files
+    current_dir = data_directory
+    plot_dir = current_dir + "/" + "plots"
+    loss0_file = plot_dir + "/" + "loss0.npy"
+    loss1_file = plot_dir + "/" + "loss1.npy"
+    loss2_file = plot_dir + "/" + "loss2.npy"
+    loss3_file = plot_dir + "/" + "loss3.npy"
+    loss4_file = plot_dir + "/" + "loss4.npy"
+    epochs_file = plot_dir + "/" + "epochs.npy"
+
+
+    #loads the arrays
+    epochs_array = np.load(epochs_file)
+    loss0_array = np.load(loss0_file)
+    loss1_array = np.load(loss1_file)
+    loss2_array = np.load(loss2_file)
+    loss3_array = np.load(loss3_file)
+    loss4_array = np.load(loss4_file)
+
+    if stop_epoch is not None:
+        early_stop = np.where(epochs_array > stop_epoch)
+        early_stop = early_stop[0][0]
+    if early_stop!=-1:
+        epochs_array = epochs_array[0:early_stop]
+        loss0_array = loss0_array[0:early_stop]
+        loss1_array = loss1_array[0:early_stop]
+        loss2_array = loss2_array[0:early_stop]
+        loss3_array = loss3_array[0:early_stop]
+        loss4_array = loss4_array[0:early_stop]
+
+    # #finds the highest accuracy and the epoch for both test and train
+    # high_accuracy_test_index = np.where(accuracy_array_test == np.amax(accuracy_array_test))
+    # high_accuracy_train_index = np.where(accuracy_array_train == np.amax(accuracy_array_train))
+    # high_accuracy_test = accuracy_array_test[high_accuracy_test_index]
+    # high_accuracy_train = accuracy_array_train[high_accuracy_train_index]
+    # high_accuracy_test_epoch = epochs_array[high_accuracy_test_index]
+    # high_accuracy_train_epoch = epochs_array[high_accuracy_train_index]
+    # #prints out the stats of the low loss values
+    # print("Highest test accuracy:",high_accuracy_test," at epoch:",high_accuracy_test_epoch)
+    # print("Highest train accuracy:",high_accuracy_train," at epoch:",high_accuracy_train_epoch)
+
+
+    plt.plot(epochs_array,loss0_array,label="Loss 0")
+    plt.plot(epochs_array,loss1_array,label="Loss 1")
+    plt.plot(epochs_array,loss2_array,label="Loss 2")
+    plt.plot(epochs_array,loss3_array,label="Loss 3")
+    plt.plot(epochs_array,loss4_array,label="Loss 4")
+
+
+    #plt.plot(epochs_array,error_array_train,label="Error Train")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.title("Loss vs Epoch")
+    plt.legend()
+    plt.show()
 
 
 
