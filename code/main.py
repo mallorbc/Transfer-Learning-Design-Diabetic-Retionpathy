@@ -83,6 +83,7 @@ if __name__ == "__main__":
     parser.add_argument('-compat',"--compatibility",default=False,help="whether or not to use compat mode",type=str2bool)
     parser.add_argument("-lr","--learning_rate",default=None,help="optional flag to manually set learning rate",type=float)
     parser.add_argument("-train_method",default=1,help="How to train the model",type=int)
+    parser.add_argument("-smudge_weights",default=False,help="Should the weights be not completely balanced",type=str2bool)
 
 
 
@@ -132,6 +133,8 @@ if __name__ == "__main__":
     manual_lr = args.learning_rate
 
     training_method = args.train_method
+
+    should_smudge_weights = args.smudge_weights
 
     
 
@@ -448,6 +451,12 @@ if __name__ == "__main__":
 
             class_weights_dict = compute_class_weight("balanced",np.unique(train_labels),train_labels)
             class_weights_list = list(class_weights_dict)
+            if should_smudge_weights is True:
+                class_weights_adjust = np.asarray(class_weights_list)	
+                smudge_factor = 2.0	
+                class_weights_adjust = np.add(class_weights_adjust,smudge_factor)	
+                class_weights_adjust = np.divide(class_weights_adjust,smudge_factor+1.0)	
+                class_weights_list = class_weights_adjust
 
             class_weights = {0: class_weights_list[0], 1: class_weights_list[1], 2: class_weights_list[2], 3: class_weights_list[3], 4: class_weights_list[4]}
             base_weight0 = class_weights_list[0]
@@ -458,6 +467,7 @@ if __name__ == "__main__":
 
         print(class_weights)
         time.sleep(2)
+        # quit()
         print()
         if training_method == 1:
             print("Using imbalenced data batches")
