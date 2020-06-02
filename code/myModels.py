@@ -461,6 +461,49 @@ def transfer_learning_model_inception_v3_functional(new_image_width, new_image_h
     # quit()
     return final_model
 
+
+def inception_v3_functional_binary(new_image_width, new_image_height,is_trainable=True,learning_rate=0.0001):
+    #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
+    if is_trainable is None:
+        is_trainable = True
+    base_model = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_shape=(new_image_width, new_image_height, 3))
+    # base_model = EfficientNetB5(weights='imagenet',include_top=False,input_shape=(new_image_width, new_image_height, 3))
+
+    #sets the inception_v3 model to not update its weights
+    base_model.trainable = is_trainable
+    #layer to convert the features to a single n-elemnt vector per image
+    global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
+    model = global_average_layer(base_model.output)
+    model = layers.Dense(1024)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    model =  layers.Dense(512)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    model = layers.Dense(256)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    output = layers.Dense(2, activation='sigmoid')(model)
+    final_model = models.Model(inputs=[base_model.input], outputs=output)
+
+
+
+    radam = tfa.optimizers.RectifiedAdam(lr=learning_rate)
+    ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
+
+    # model.compile(optimizer=Adam(lr=0.00001),
+    #             loss='sparse_categorical_crossentropy',
+    #             metrics=['accuracy'])
+    # return model
+    final_model.compile(optimizer=ranger,
+                loss='sparse_categorical_crossentropy',
+                metrics=['accuracy'])
+    final_model.summary()
+    print("Learning rate is: " + str(learning_rate))
+    time.sleep(2)
+    # quit()
+    return final_model
+
 def custom_predict_class(model,image_to_test):
     return_values = []
     for image in image_to_test:
