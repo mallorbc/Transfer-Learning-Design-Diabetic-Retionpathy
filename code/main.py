@@ -464,11 +464,11 @@ if __name__ == "__main__":
         # base_weights = np.ones(5)
         # class_wegights_adjust = np.mean()
         class_weights = {0: class_weights_list[0], 1: class_weights_list[1], 2: class_weights_list[2], 3: class_weights_list[3], 4: class_weights_list[4]}
-        base_weight0 = class_weights_list[0]/2
-        base_weight1 = class_weights_list[1]/2
-        base_weight2 = class_weights_list[2]/2
-        base_weight3 = class_weights_list[3]/2
-        base_weight4 = class_weights_list[4]/2
+        base_weight0 = class_weights_list[0]/5
+        base_weight1 = class_weights_list[1]/5
+        base_weight2 = class_weights_list[2]/5
+        base_weight3 = class_weights_list[3]/5
+        base_weight4 = class_weights_list[4]/5
 
         print(class_weights)
         time.sleep(2)
