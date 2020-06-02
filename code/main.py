@@ -464,11 +464,11 @@ if __name__ == "__main__":
         # base_weights = np.ones(5)
         # class_wegights_adjust = np.mean()
         class_weights = {0: class_weights_list[0], 1: class_weights_list[1], 2: class_weights_list[2], 3: class_weights_list[3], 4: class_weights_list[4]}
-        base_weight0 = class_weights_list[0]/5
-        base_weight1 = class_weights_list[1]/5
-        base_weight2 = class_weights_list[2]/5
-        base_weight3 = class_weights_list[3]/5
-        base_weight4 = class_weights_list[4]/5
+        base_weight0 = class_weights_list[0]
+        base_weight1 = class_weights_list[1]
+        base_weight2 = class_weights_list[2]
+        base_weight3 = class_weights_list[3]
+        base_weight4 = class_weights_list[4]
 
         print(class_weights)
         time.sleep(2)
@@ -513,8 +513,10 @@ if __name__ == "__main__":
                         next_print = next_print + 0.01
                 else:
                     for x_batch, y_batch in datagen_train.flow_from_dataframe(dataframe=df,x_col="image",y_col="label",target_size=(new_image_width, new_image_height),class_mode="raw", batch_size=args.batch_size):
-                        # model.train_on_batch(x_batch,y_batch,class_weight=class_weights)
-                        model.train_on_batch(x_batch,y_batch)
+                        if training_method == 1:
+                            model.train_on_batch(x_batch,y_batch,class_weight=class_weights)
+                        else:
+                            model.train_on_batch(x_batch,y_batch)
                         images_trained_on = images_trained_on + batch_size
                         df_images = df_images + batch_size
                         current_epoch = current_epoch + batch_size/total_images
@@ -539,15 +541,19 @@ if __name__ == "__main__":
                     metrics = model.evaluate(np_image_batch_test, test_labels_batch,verbose=0)
                     np_image_batch_test = None
                     test_labels_batch = None
+                    # loss_test,accuracy_test = evaluate_all_images(model,test_images,test_labels,test_size)
                     loss_test = metrics[0]
-                    test_loss0,test_loss1,test_loss2,test_loss3,test_loss4 = get_loss_of_each_class(model,test_images,new_image_width,new_image_height,test_size,health_dict_test)
-                    print("Class losses: ",test_loss0,test_loss1,test_loss2,test_loss3,test_loss4)
-                    # class_weights = adjust_class_weights(test_loss0,test_loss1,test_loss2,test_loss3,test_loss4)
-                    class_weights = adjust_base_weights2(test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,base_weight0,base_weight1,base_weight2,base_weight3,base_weight4,run_dir)
-
-                    # time.sleep(2)
                     accuracy_test = metrics[-1]
                     print("New test loss: ",loss_test," New test acc: ",accuracy_test)
+                    # test_loss0,test_loss1,test_loss2,test_loss3,test_loss4 = get_loss_of_each_class(model,test_images,new_image_width,new_image_height,test_size,health_dict_test)
+                    # test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,test_acc0,test_acc1,test_acc2,test_acc3,test_acc4 = get_loss_acc_of_each_class(model,test_images,new_image_width,new_image_height,test_size,health_dict_test)
+                    # add_class_acc_data(test_acc0,test_acc1,test_acc2,test_acc3,test_acc4,run_dir)
+                    # print("Class losses: ",test_loss0,test_loss1,test_loss2,test_loss3,test_loss4)
+                    # print("Class accuracy: ",test_acc0,test_acc1,test_acc2,test_acc3,test_acc4)
+
+                    # class_weights = adjust_base_weights(test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,base_weight0,base_weight1,base_weight2,base_weight3,base_weight4,run_dir)
+
+                    # time.sleep(2)
                     #gets the metrics for the training data
                     print("Evaluating on training data...")
                     # np_image_batch,label_batch = prepare_data_for_model_rand(test_size,train_labels,train_images,new_image_width,new_image_height)
@@ -556,6 +562,15 @@ if __name__ == "__main__":
                     metrics = model.evaluate(np_image_batch,label_batch,verbose=0)
                     np_image_batch = None
                     label_batch = None
+                    test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,test_acc0,test_acc1,test_acc2,test_acc3,test_acc4 = get_loss_acc_of_each_class(model,train_images,new_image_width,new_image_height,test_size,health_dict_train)
+                    add_class_acc_data(test_acc0,test_acc1,test_acc2,test_acc3,test_acc4,run_dir)
+                    print("Class losses: ",test_loss0,test_loss1,test_loss2,test_loss3,test_loss4)
+                    print("Class accuracy: ",test_acc0,test_acc1,test_acc2,test_acc3,test_acc4)
+
+                    class_weights = adjust_base_weights(test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,base_weight0,base_weight1,base_weight2,base_weight3,base_weight4,run_dir)
+                    # loss_train,accuracy_train = evaluate_all_images(model,train_images,train_labels,test_size)
+
+
                     loss_train = metrics[0]
                     accuracy_train = metrics[-1]
                     print("New train loss: ",loss_train," New train acc: ",accuracy_train)
@@ -672,6 +687,7 @@ if __name__ == "__main__":
 
     if run_mode == 7:
         plot_accuracy(plot_directory,plot_epoch)
+        plot_class_acc(plot_directory,plot_epoch)
     if run_mode == 8:
         plot_loss(plot_directory,plot_epoch)
         plot_class_losses(plot_directory,plot_epoch)
