@@ -1,0 +1,1 @@
+python main.py -n fixed_weight_incept_test2 -b 48 -e 100 -model 2 -aug t -d ../data/current_data/256_data_paper/blur10/images/ -csv ../csv_files_for_tests/trainLabels_cropped.csv -m 6 -test_size 500 -train_method 1 -ti 0.5 -si 0.5
