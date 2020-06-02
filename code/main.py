@@ -543,6 +543,7 @@ if __name__ == "__main__":
                     label_batch = None
                     test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,test_acc0,test_acc1,test_acc2,test_acc3,test_acc4 = get_loss_acc_of_each_class(model,train_images,new_image_width,new_image_height,test_size,health_dict_train)
                     add_class_acc_data(test_acc0,test_acc1,test_acc2,test_acc3,test_acc4,run_dir)
+                    add_class_loss_data(test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,run_dir)
                     print("Class losses: ",test_loss0,test_loss1,test_loss2,test_loss3,test_loss4)
                     print("Class accuracy: ",test_acc0,test_acc1,test_acc2,test_acc3,test_acc4)
 

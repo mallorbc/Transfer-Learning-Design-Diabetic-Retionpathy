@@ -10,7 +10,7 @@ import time
 
 from preprocessData import *
 from utils import *
-from plots import *
+# from plots import *
 # import efficientnet.keras as efn 
 # from keras_efficientnets import EfficientNetB5
 #import efficientnet.keras as efn 
@@ -654,7 +654,6 @@ def adjust_class_weights(loss0,loss1,loss2,loss3,loss4):
     return class_weights
 
 def adjust_base_weights(loss0,loss1,loss2,loss3,loss4,base0,base1,base2,base3,base4,run_dir):
-    add_class_loss_data(loss0,loss1,loss2,loss3,loss4,run_dir)
     classes = [0,1,2,3,4]
     losses = [] 
     adjusted_base_weights = []
@@ -683,19 +682,16 @@ def adjust_base_weights(loss0,loss1,loss2,loss3,loss4,base0,base1,base2,base3,ba
     print("New class weights: ",class_weights)
     return class_weights
 
-def adjust_base_weights_binary(loss0,loss1,run_dir):
-    add_class_loss_data(loss0,loss1,run_dir)
-    classes = [0,1,2,3,4]
+def adjust_base_weights_binary(loss0,loss1,base0,base1,run_dir):
+    add_class_loss_data_binary(loss0,loss1,run_dir)
+    classes = [0,1]
     losses = [] 
     adjusted_base_weights = []
     #adds the losses to a np array to allow easy math
     losses.append(loss0)
     losses.append(loss1)
-    losses.append(loss2)
-    losses.append(loss3)
-    losses.append(loss4)
     losses = np.asarray(losses)
-    losses = np.multiply(losses,5)
+    losses = np.multiply(losses,2)
     zipped_list = zip(losses,classes)
     zipped_list = sorted(zipped_list)
     highest_loss = zipped_list[-1][0]
@@ -704,12 +700,10 @@ def adjust_base_weights_binary(loss0,loss1,run_dir):
     print(losses)
     adjusted_base_weights.append(losses[0]*base0)
     adjusted_base_weights.append(losses[1]*base1)
-    adjusted_base_weights.append(losses[2]*base2)
-    adjusted_base_weights.append(losses[3]*base3)
-    adjusted_base_weights.append(losses[4]*base4)
+
 
     class_weights_list = adjusted_base_weights
-    class_weights = {0: class_weights_list[0], 1: class_weights_list[1], 2: class_weights_list[2], 3: class_weights_list[3], 4: class_weights_list[4]}
+    class_weights = {0: class_weights_list[0], 1: class_weights_list[1]}
     print("New class weights: ",class_weights)
     return class_weights
 
