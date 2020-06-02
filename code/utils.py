@@ -10,7 +10,6 @@ import time
 import argparse
 
 from myModels import *
-#from myModels.py import get_model_predictions_one_input
 
 
 def get_info_on_data(list_of_data):
