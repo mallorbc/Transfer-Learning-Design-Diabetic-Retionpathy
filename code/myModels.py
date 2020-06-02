@@ -10,6 +10,7 @@ import time
 
 from preprocessData import *
 from utils import *
+from plots import *
 # import efficientnet.keras as efn 
 # from keras_efficientnets import EfficientNetB5
 #import efficientnet.keras as efn 
@@ -514,51 +515,74 @@ def custom_predict_class(model,image_to_test):
     return return_values
 
 def get_loss_of_each_class(model,images,width,height,test_size,health_dict):
-    images = get_num_images_of_one_class(0,images,health_dict,test_size)
-    image_batch = normalize_images(images)
-    np_image_batch = np.asarray(image_batch)
-    np_image_batch.reshape(len(image_batch),width,height,3)
+    # images = get_num_images_of_one_class(0,images,health_dict,test_size)
+    # image_batch = normalize_images(images)
+    # np_image_batch = np.asarray(image_batch)
+    # np_image_batch.reshape(len(image_batch),width,height,3)
+    # labels = np.zeros(len(images))
+    # labels = np.multiply(labels,0)
+    # metrics = model.evaluate(np_image_batch,labels,verbose=0)
+    # loss_0 = metrics[0]
+
+    # images = get_num_images_of_one_class(1,images,health_dict,test_size)
+    # image_batch = normalize_images(images)
+    # np_image_batch = np.asarray(image_batch)
+    # np_image_batch.reshape(len(image_batch),width,height,3)
+    # labels = np.zeros(len(images))
+    # labels = np.multiply(labels,1)
+    # metrics = model.evaluate(np_image_batch,labels,verbose=0)
+    # loss_1 = metrics[0]
+
+    # images = get_num_images_of_one_class(2,images,health_dict,test_size)
+    # image_batch = normalize_images(images)
+    # np_image_batch = np.asarray(image_batch)
+    # np_image_batch.reshape(len(image_batch),width,height,3)
+    # labels = np.zeros(len(images))
+    # labels = np.multiply(labels,2)
+    # metrics = model.evaluate(np_image_batch,labels,verbose=0)
+    # loss_2 = metrics[0]
+
+    # images = get_num_images_of_one_class(3,images,health_dict,test_size)
+    # image_batch = normalize_images(images)
+    # np_image_batch = np.asarray(image_batch)
+    # np_image_batch.reshape(len(image_batch),width,height,3)
+    # labels = np.zeros(len(images))
+    # labels = np.multiply(labels,3)
+    # metrics = model.evaluate(np_image_batch,labels,verbose=0)
+    # loss_3 = metrics[0]
+
+    # images = get_num_images_of_one_class(4,images,health_dict,test_size)
+    # image_batch = normalize_images(images)
+    # np_image_batch = np.asarray(image_batch)
+    # np_image_batch.reshape(len(image_batch),width,height,3)
+    # labels = np.zeros(len(images))
+    # labels = np.multiply(labels,4)
+    # metrics = model.evaluate(np_image_batch,labels,verbose=0)
+    # loss_4 = metrics[0]
+    images = get_images_of_one_class(0,images,health_dict)
     labels = np.zeros(len(images))
     labels = np.multiply(labels,0)
-    metrics = model.evaluate(np_image_batch,labels,verbose=0)
-    loss_0 = metrics[0]
+    loss_0,_ = evaluate_all_images(model,images,labels,test_size)
 
-    images = get_num_images_of_one_class(1,images,health_dict,test_size)
-    image_batch = normalize_images(images)
-    np_image_batch = np.asarray(image_batch)
-    np_image_batch.reshape(len(image_batch),width,height,3)
+    images = get_images_of_one_class(1,images,health_dict)
     labels = np.zeros(len(images))
     labels = np.multiply(labels,1)
-    metrics = model.evaluate(np_image_batch,labels,verbose=0)
-    loss_1 = metrics[0]
+    loss_1,_ = evaluate_all_images(model,images,labels,test_size)
 
-    images = get_num_images_of_one_class(2,images,health_dict,test_size)
-    image_batch = normalize_images(images)
-    np_image_batch = np.asarray(image_batch)
-    np_image_batch.reshape(len(image_batch),width,height,3)
+    images = get_images_of_one_class(2,images,health_dict)
     labels = np.zeros(len(images))
     labels = np.multiply(labels,2)
-    metrics = model.evaluate(np_image_batch,labels,verbose=0)
-    loss_2 = metrics[0]
+    loss_2,_ = evaluate_all_images(model,images,labels,test_size)
 
-    images = get_num_images_of_one_class(3,images,health_dict,test_size)
-    image_batch = normalize_images(images)
-    np_image_batch = np.asarray(image_batch)
-    np_image_batch.reshape(len(image_batch),width,height,3)
+    images = get_images_of_one_class(3,images,health_dict)
     labels = np.zeros(len(images))
     labels = np.multiply(labels,3)
-    metrics = model.evaluate(np_image_batch,labels,verbose=0)
-    loss_3 = metrics[0]
+    loss_3,_ = evaluate_all_images(model,images,labels,test_size)
 
-    images = get_num_images_of_one_class(4,images,health_dict,test_size)
-    image_batch = normalize_images(images)
-    np_image_batch = np.asarray(image_batch)
-    np_image_batch.reshape(len(image_batch),width,height,3)
+    images = get_images_of_one_class(4,images,health_dict)
     labels = np.zeros(len(images))
     labels = np.multiply(labels,4)
-    metrics = model.evaluate(np_image_batch,labels,verbose=0)
-    loss_4 = metrics[0]
-
+    loss_4,_ = evaluate_all_images(model,images,labels,test_size)
 
     return loss_0,loss_1,loss_2,loss_3,loss_4
 
@@ -651,5 +675,47 @@ def adjust_base_weights2(loss0,loss1,loss2,loss3,loss4,base0,base1,base2,base3,b
     class_weights = {0: class_weights_list[0], 1: class_weights_list[1], 2: class_weights_list[2], 3: class_weights_list[3], 4: class_weights_list[4]}
     print("New class weights: ",class_weights)
     return class_weights
+
+def evaluate_all_images(model,images,labels,test_size):
+    print("Testing all images")
+    total_loss = []
+    total_acc = []
+    total_loss = np.asarray(total_loss)
+    total_acc = np.asarray(total_acc)
+    number_of_large_groups = math.floor(len(images)/test_size)
+    counter = 1
+    #creates the list of losses and accuracy
+    for i in range(number_of_large_groups):
+        image_batch = images[((counter - 1)*test_size):((counter*test_size))]
+        image_batch = normalize_images(image_batch)
+        label_batch = labels[((counter - 1)*test_size):((counter*test_size))]
+        image_batch = np.asarray(image_batch)
+        label_batch = np.asarray(label_batch)
+        metrics = model.evaluate(image_batch,label_batch,verbose=0)
+        total_loss = np.append(total_loss,metrics[0])
+        total_acc = np.append(total_acc,metrics[-1])
+        counter = counter + 1
+    #finds the average loss and accuracy
+    average_loss = np.mean(total_loss)
+    average_acc = np.mean(total_acc)
+    #tests the leftover images
+    leftover_images = images[(test_size*number_of_large_groups):(len(images))]
+    leftover_labels = labels[(test_size*number_of_large_groups):(len(images))]
+    image_batch = normalize_images(leftover_images)
+    image_batch = np.asarray(image_batch)
+    final_metrics = model.evaluate(image_batch,leftover_labels)
+    final_metrics_loss = final_metrics[0]
+    final_metrics_acc = final_metrics[-1]
+    percent_leftover = len(leftover_images)/len(images)
+    percent_large_groups = 1 -percent_leftover
+    #calculates final metrics
+    all_loss = (average_loss * percent_large_groups) + (final_metrics_loss * percent_leftover)
+    all_acc = (average_acc * percent_large_groups) + (final_metrics_acc * percent_leftover)
+
+    return all_loss, all_acc
+
+
+
+
 
 
