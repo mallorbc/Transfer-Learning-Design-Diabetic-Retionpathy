@@ -483,7 +483,7 @@ def inception_v3_functional_binary(new_image_width, new_image_height,is_trainabl
     model = layers.Dense(256)(model)
     model = layers.PReLU()(model)
     model = Dropout(0.5)(model)
-    output = layers.Dense(2, activation='sigmoid')(model)
+    output = layers.Dense(1, activation='sigmoid')(model)
     final_model = models.Model(inputs=[base_model.input], outputs=output)
 
 
@@ -496,7 +496,7 @@ def inception_v3_functional_binary(new_image_width, new_image_height,is_trainabl
     #             metrics=['accuracy'])
     # return model
     final_model.compile(optimizer=ranger,
-                loss='sparse_categorical_crossentropy',
+                loss='binary_crossentropy',
                 metrics=['accuracy'])
     final_model.summary()
     print("Learning rate is: " + str(learning_rate))
