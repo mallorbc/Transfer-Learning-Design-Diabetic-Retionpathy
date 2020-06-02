@@ -436,6 +436,48 @@ def add_class_loss_data(loss0,loss1,loss2,loss3,loss4,run_dir):
         np.save(loss3_file_path,loss3_file)
         np.save(loss4_file_path,loss4_file)
 
+def add_class_loss_data_binary(loss0,loss1,run_dir):
+    #creates the directory if it does not exist
+    current_dir = run_dir
+    output_dir = current_dir + "/plots"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    loss0_file_path = output_dir + "/" + "loss0.npy"
+    loss1_file_path = output_dir + "/" + "loss1.npy"
+
+
+    if os.path.isfile(loss0_file_path) and os.path.isfile(loss1_file_path):
+        #loads the existing files
+        loss0_file = np.load(loss0_file_path)
+        loss1_file = np.load(loss1_file_path)
+
+        #appends the new data to the array
+        loss0_file = np.append(loss0_file,loss0)
+        loss1_file = np.append(loss1_file,loss1)
+
+        #saves the arrays
+        np.save(loss0_file_path,loss0_file)
+        np.save(loss1_file_path,loss1_file)
+
+        print("Added data to numpy file")
+    #if the file does not exist we create it
+    else:
+        loss0_file = []
+        loss1_file = []
+
+        #adds the data to the lists
+        loss0_file = np.append(loss0_file,loss0)
+        loss1_file = np.append(loss1_file,loss1)
+
+        #converts these lists to numpy arrays
+        loss0_file = np.asarray(loss0_file)
+        loss1_file = np.asarray(loss1_file)
+
+        #saves the arrays
+        np.save(loss0_file_path,loss0_file)
+        np.save(loss1_file_path,loss1_file)
+
+
 def add_class_acc_data(acc0,acc1,acc2,acc3,acc4,run_dir):
     #creates the directory if it does not exist
     current_dir = run_dir
@@ -493,6 +535,47 @@ def add_class_acc_data(acc0,acc1,acc2,acc3,acc4,run_dir):
         np.save(loss2_file_path,loss2_file)
         np.save(loss3_file_path,loss3_file)
         np.save(loss4_file_path,loss4_file)
+
+def add_class_acc_data_binary(acc0,acc1,run_dir):
+    #creates the directory if it does not exist
+    current_dir = run_dir
+    output_dir = current_dir + "/plots"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    loss0_file_path = output_dir + "/" + "acc0.npy"
+    loss1_file_path = output_dir + "/" + "acc1.npy"
+
+
+    if os.path.isfile(loss0_file_path) and os.path.isfile(loss1_file_path):
+        #loads the existing files
+        loss0_file = np.load(loss0_file_path)
+        loss1_file = np.load(loss1_file_path)
+
+        #appends the new data to the array
+        loss0_file = np.append(loss0_file,acc0)
+        loss1_file = np.append(loss1_file,acc1)
+
+        #saves the arrays
+        np.save(loss0_file_path,loss0_file)
+        np.save(loss1_file_path,loss1_file)
+        print("Added data to numpy file")
+    #if the file does not exist we create it
+    else:
+        loss0_file = []
+        loss1_file = []
+
+        #adds the data to the lists
+        loss0_file = np.append(loss0_file,acc0)
+        loss1_file = np.append(loss1_file,acc1)
+
+        #converts these lists to numpy arrays
+        loss0_file = np.asarray(loss0_file)
+        loss1_file = np.asarray(loss1_file)
+
+        #saves the arrays
+        np.save(loss0_file_path,loss0_file)
+        np.save(loss1_file_path,loss1_file)
+
 
 
 def plot_class_losses(data_directory,stop_epoch=None):

@@ -14,6 +14,7 @@ import cv2
 from myModels import *
 from utils import *
 from plots import *
+from preprocessData import *
 import copy
 from random import randint
 from keract import get_activations, display_heatmaps
@@ -449,12 +450,37 @@ if __name__ == "__main__":
             image_to_test = test_images
             if len(image_to_test)>600:
                 image_to_test = shuffle(image_to_test)
-                image_to_test = image_to_test[:2000]
-                test_labels = test_labels[:2000]
+                # image_to_test = image_to_test[:1000]
+                # test_labels = test_labels[:1000]
+                image_to_test = image_to_test[:8]
+                test_labels = test_labels[:8]
                 image_to_test,test_labels = shuffle(image_to_test,test_labels)
 
         model_to_load = os.path.realpath(args.model)
         model = load_model(model_to_load,model_num,width,height,unfrozen_weights)
+        # image_to_test = normalize_images(image_to_test)
+        # image_to_test = np.asarray(image_to_test)
+        # test_labels = np.asarray(test_labels)
+        # metrics = model.evaluate(image_to_test,test_labels,verbose=0)
+        # print(metrics)
+        # label = test_labels[:4]
+        # image = image_to_test[:4]
+        # # image_list = [image]
+        # # label_list = [label]
+        # # label = np.asarray(label_list)
+        # # image = np.asarray(image_list)
+        # metrics1 = model.evaluate(image,label,verbose=0)
+        # print(metrics1)
+        # label = test_labels[4:]
+        # image = image_to_test[4:]
+        # # image_list = [image]
+        # # label_list = [label]
+        # # label = np.asarray(label_list)
+        # # image = np.asarray(image_list)
+        # metrics2 = model.evaluate(image,label,verbose=0)
+        # print(metrics2)
+        # quit()
+
         # image_to_test = add_extension(image_to_test,".jpeg")
         output_file = output_folder + "/confusion_matrix.png"
         create_confusion_matrix_one_input(model,image_to_test,test_labels,name,output_file)

@@ -598,6 +598,30 @@ def get_loss_acc_of_each_class(model,images,width,height,test_size,health_dict):
 
     return loss_0,loss_1,loss_2,loss_3,loss_4,acc_0,acc_1,acc_2,acc_3,acc_4
 
+def get_loss_acc_of_each_class_binary(model,images,width,height,test_size,health_dict):
+    images = get_num_images_of_one_class(0,images,health_dict,test_size)
+    image_batch = normalize_images(images)
+    np_image_batch = np.asarray(image_batch)
+    np_image_batch.reshape(len(image_batch),width,height,3)
+    labels = np.ones(len(images))
+    labels = np.multiply(labels,0)
+    metrics = model.evaluate(np_image_batch,labels,verbose=0)
+    loss_0 = metrics[0]
+    acc_0 = metrics[-1]
+
+    images = get_num_images_of_one_class(1,images,health_dict,test_size)
+    image_batch = normalize_images(images)
+    np_image_batch = np.asarray(image_batch)
+    np_image_batch.reshape(len(image_batch),width,height,3)
+    labels = np.ones(len(images))
+    labels = np.multiply(labels,1)
+    metrics = model.evaluate(np_image_batch,labels,verbose=0)
+    loss_1 = metrics[0]
+    acc_1 = metrics[-1]
+
+
+    return loss_0,loss_1,acc_0,acc_1
+
 def adjust_class_weights(loss0,loss1,loss2,loss3,loss4):
     classes = [0,1,2,3,4]
     losses = [] 
@@ -631,6 +655,36 @@ def adjust_class_weights(loss0,loss1,loss2,loss3,loss4):
 
 def adjust_base_weights(loss0,loss1,loss2,loss3,loss4,base0,base1,base2,base3,base4,run_dir):
     add_class_loss_data(loss0,loss1,loss2,loss3,loss4,run_dir)
+    classes = [0,1,2,3,4]
+    losses = [] 
+    adjusted_base_weights = []
+    #adds the losses to a np array to allow easy math
+    losses.append(loss0)
+    losses.append(loss1)
+    losses.append(loss2)
+    losses.append(loss3)
+    losses.append(loss4)
+    losses = np.asarray(losses)
+    losses = np.multiply(losses,5)
+    zipped_list = zip(losses,classes)
+    zipped_list = sorted(zipped_list)
+    highest_loss = zipped_list[-1][0]
+    lowest_loss = zipped_list[0][0]
+    losses = np.divide(losses,highest_loss)
+    print(losses)
+    adjusted_base_weights.append(losses[0]*base0)
+    adjusted_base_weights.append(losses[1]*base1)
+    adjusted_base_weights.append(losses[2]*base2)
+    adjusted_base_weights.append(losses[3]*base3)
+    adjusted_base_weights.append(losses[4]*base4)
+
+    class_weights_list = adjusted_base_weights
+    class_weights = {0: class_weights_list[0], 1: class_weights_list[1], 2: class_weights_list[2], 3: class_weights_list[3], 4: class_weights_list[4]}
+    print("New class weights: ",class_weights)
+    return class_weights
+
+def adjust_base_weights_binary(loss0,loss1,run_dir):
+    add_class_loss_data(loss0,loss1,run_dir)
     classes = [0,1,2,3,4]
     losses = [] 
     adjusted_base_weights = []

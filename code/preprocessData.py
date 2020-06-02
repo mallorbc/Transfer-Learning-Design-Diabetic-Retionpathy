@@ -572,6 +572,27 @@ def prepare_data_for_model_even(size_of_data,labels,images,image_width,image_hei
 
     return np_image_batch,labels_batch
 
+def prepare_data_for_model_even_binary(size_of_data,labels,images,image_width,image_height,health_dict):
+    gc.collect()
+    total_labels = []
+    images,labels = generate_even_classes(images,labels,health_dict)
+    labels,images = shuffle_data(labels,images)
+    total_labels = labels
+    if len(images)>size_of_data:
+        image_batch = images[:size_of_data]
+        labels_batch = total_labels[:size_of_data]
+    else:
+        image_batch = images
+        labels_batch = total_labels
+    # shuffle_data(labels_batch,image_batch)
+    image_batch = normalize_images(image_batch)
+    np_image_batch = np.asarray(image_batch)
+    np_image_batch.reshape(len(image_batch),image_width,image_height,3)
+    labels_batch = np.asarray(labels_batch)
+
+
+    return np_image_batch,labels_batch
+
 def prepare_data_for_model_two(size_of_data,labels,images,second_images,image_width,image_height):
     gc.collect()
     total_labels = []
@@ -700,6 +721,39 @@ def generate_even_classes(images,labels,health_dict):
     # print(len(all_images))
 
 
+
+
+    return all_images,all_labels 
+
+def generate_even_classes_binary(images,labels,health_dict):
+    cat0,cat1,cat2,cat3,cat4 = utils.get_info_on_data(labels)
+    categories = [cat0,cat1]
+    categories = np.asarray(categories)
+    lowest_index = np.argmin(categories)
+    lowest_value = categories[lowest_index]
+    print(lowest_value)
+    class_0 = health_dict[0]
+    class_1 = health_dict[1]
+
+
+    class_0 = shuffle(class_0)
+    class_1 = shuffle(class_1)
+
+
+    class_0 = class_0[:lowest_value]
+    class_1 = class_1[:lowest_value]
+
+
+    all_images = []
+    all_images = np.asarray(all_images)
+    all_labels = []
+    all_labels = np.asarray(all_labels)
+
+    all_images = np.append(all_images,class_0)
+    all_labels = np.append(all_labels,np.multiply(np.ones(len(class_0)),0))
+
+    all_images = np.append(all_images,class_1)
+    all_labels = np.append(all_labels,np.multiply(np.ones(len(class_1)),1))
 
 
     return all_images,all_labels 
