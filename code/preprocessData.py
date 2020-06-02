@@ -715,3 +715,12 @@ def generate_dataframe(images,labels,health_dict,method):
         images,labels = generate_even_classes(images,labels,health_dict)
         df = pd.DataFrame({"image": images,"label": labels})
     return df
+
+def convert_labels_to_binary(labels):
+    new_labels = []
+    for label in labels:
+        if label>0:
+            new_labels.append(1)
+        else:
+            new_labels.append(0)
+    return new_labels
