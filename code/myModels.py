@@ -167,46 +167,6 @@ def save_model(model_to_save,run_dir,whole_model=None):
 
     print("Saved Checkpoint!")
 
-def transfer_learning_model_inception_v3(new_image_width, new_image_height,is_trainable=True):
-    if is_trainable is None:
-        is_trainable = True
-    #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
-    base_model = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_shape=(new_image_width, new_image_height, 3))
-    # base_model = EfficientNetB5(weights='imagenet',include_top=False,input_shape=(new_image_width, new_image_height, 3))
-
-    #sets the inception_v3 model to not update its weights
-    base_model.trainable = is_trainable
-    #layer to convert the features to a single n-elemnt vector per image
-    global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
-    #base_model.summary()
-    #adds the two layers for transfer learning
-    model = models.Sequential([base_model,global_average_layer])
-    #adds dense and dropout layers for final output
-    model.add(layers.Dense(1024))
-    model.add(layers.PReLU())
-    model.add(Dropout(0.5))
-    model.add(layers.Dense(512))
-    model.add(layers.PReLU())
-    model.add(Dropout(0.5))
-    model.add(layers.Dense(256))
-    model.add(layers.PReLU())
-    model.add(Dropout(0.5))
-
-    model.add(layers.Dense(5, activation='softmax'))
-
-    radam = tfa.optimizers.RectifiedAdam(lr=0.00001)
-    ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
-
-    # model.compile(optimizer=Adam(lr=0.00001),
-    #             loss='sparse_categorical_crossentropy',
-    #             metrics=['accuracy'])
-    # return model
-    model.compile(optimizer=ranger,
-                loss='sparse_categorical_crossentropy',
-                metrics=['accuracy'])
-    model.summary()
-    
-    return model
 
 def inception_v3_multiple_inputs(image_width,image_height):
     input_shape = (image_width,image_height,3)
