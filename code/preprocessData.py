@@ -575,7 +575,7 @@ def prepare_data_for_model_even(size_of_data,labels,images,image_width,image_hei
 def prepare_data_for_model_even_binary(size_of_data,labels,images,image_width,image_height,health_dict):
     gc.collect()
     total_labels = []
-    images,labels = generate_even_classes(images,labels,health_dict)
+    images,labels = generate_even_classes_binary(images,labels,health_dict)
     labels,images = shuffle_data(labels,images)
     total_labels = labels
     if len(images)>size_of_data:
