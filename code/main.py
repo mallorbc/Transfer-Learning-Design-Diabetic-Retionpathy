@@ -84,6 +84,9 @@ if __name__ == "__main__":
     parser.add_argument("-lr","--learning_rate",default=None,help="optional flag to manually set learning rate",type=float)
     parser.add_argument("-train_method",default=1,help="How to train the model",type=int)
     parser.add_argument("-smudge_weights",default=False,help="Should the weights be not completely balanced",type=str2bool)
+    parser.add_argument("-binary",default=False,help="flag for when doing things that only deal with binary classifier",type=str2bool)
+    parser.add_argument("-model_binary",default=None,help="weights for binary classifier",type=str)
+
 
 
 
@@ -135,6 +138,10 @@ if __name__ == "__main__":
     training_method = args.train_method
 
     should_smudge_weights = args.smudge_weights
+
+    binary_mode = args.binary
+
+    binary_model_weights = args.model_binary
 
     
 
@@ -298,6 +305,10 @@ if __name__ == "__main__":
                 model = efficientnet(new_image_width, new_image_height)
             elif model_to_use == 6:
                 model = inception_v3_functional_binary(new_image_width, new_image_height)
+            elif model_to_use == 7:
+                binary_model = inception_v3_functional_binary_no_act(new_image_width,new_image_height)
+                binary_model = load_model(binary_model_weights,7)
+                model = dual_inception_v3_functional_binary_based(new_image_width,new_image_height,binary_model)
             else:
                 raise SyntaxError('Not an implemented model')
 
@@ -465,7 +476,15 @@ if __name__ == "__main__":
             base_weight3 = class_weights_list[3]
             base_weight4 = class_weights_list[4]
 
-        print(class_weights)
+            print(class_weights)
+            if model_to_use == 7 or model_to_load is not None:
+                test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,test_acc0,test_acc1,test_acc2,test_acc3,test_acc4 = get_loss_acc_of_each_class(model,train_images,new_image_width,new_image_height,test_size,health_dict_train)
+                class_weights = adjust_base_weights(test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,base_weight0,base_weight1,base_weight2,base_weight3,base_weight4,run_dir)
+                print(class_weights)
+                print("intial loss: ",test_loss0,test_loss1,test_loss2,test_loss3,test_loss4)
+                time.sleep(2)
+
+
         time.sleep(2)
         # quit()
         print()
@@ -615,6 +634,9 @@ if __name__ == "__main__":
             class_weights = {0: class_weights_list[0], 1: class_weights_list[1]}
             base_weight0 = class_weights_list[0]
             base_weight1 = class_weights_list[1]
+            print(class_weights)
+            np_image_batch_test,test_labels_batch = prepare_data_for_model_even_binary(test_size,test_labels,test_images,new_image_width,new_image_height,health_dict_test)
+
 
             if data_aug:
                 if training_method == 2:
@@ -684,12 +706,14 @@ if __name__ == "__main__":
                     metrics = model.evaluate(np_image_batch,label_batch,verbose=0)
                     np_image_batch = None
                     label_batch = None
-                    test_loss0,test_loss1,test_acc0,test_acc1 = get_loss_acc_of_each_class(model,train_images,new_image_width,new_image_height,test_size,health_dict_train)
+                    test_loss0,test_loss1,test_acc0,test_acc1 = get_loss_acc_of_each_class_binary(model,train_images,new_image_width,new_image_height,test_size,health_dict_train)
                     add_class_acc_data_binary(test_acc0,test_acc1,run_dir)
                     print("Class losses: ",test_loss0,test_loss1)
                     print("Class accuracy: ",test_acc0,test_acc1)
 
-                    class_weights = adjust_base_weights_binary(test_loss0,test_loss1,run_dir)
+                    class_weights = adjust_base_weights_binary(test_loss0,test_loss1,base_weight0,base_weight1,run_dir)
+                    add_class_loss_data_binary(test_loss0,test_loss1,run_dir)
+
                     # loss_train,accuracy_train = evaluate_all_images(model,train_images,train_labels,test_size)
 
                     loss_train = metrics[0]
@@ -714,7 +738,7 @@ if __name__ == "__main__":
                     add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,current_epoch,run_dir)
                     #gets new dataset for testing
                     # np_image_batch_test,test_labels_batch = prepare_data_for_model_rand(test_size,test_labels,test_images,new_image_width,new_image_height)
-                    np_image_batch_test,test_labels_batch = prepare_data_for_model_even(test_size,test_labels,test_images,new_image_width,new_image_height,health_dict_test)
+                    np_image_batch_test,test_labels_batch = prepare_data_for_model_even_binary(test_size,test_labels,test_images,new_image_width,new_image_height,health_dict_test)
 
                     #updates the test interval
                     previous_test_epoch = previous_test_epoch + test_interval
@@ -808,10 +832,20 @@ if __name__ == "__main__":
 
     if run_mode == 7:
         plot_accuracy(plot_directory,plot_epoch)
-        plot_class_acc(plot_directory,plot_epoch)
+        if not binary_mode:
+            plot_class_acc(plot_directory,plot_epoch)
+        else:
+            plot_class_acc_binary(plot_directory,plot_epoch)
+
+
+
     if run_mode == 8:
         plot_loss(plot_directory,plot_epoch)
-        plot_class_losses(plot_directory,plot_epoch)
+        if not binary_mode:
+            plot_class_losses(plot_directory,plot_epoch)
+        else:
+            plot_class_losses_binary(plot_directory,plot_epoch)
+
     
     if run_mode == 9:
         print("make matrix")
