@@ -69,6 +69,7 @@ if __name__ == "__main__":
     parser.add_argument("-model","--model_to_use",default=None,help="Selects what model to use",type=int)
     parser.add_argument("-trainable","--trainable_transfer",default=True,help="Can the transfer learning model learn on the new data",type=str2bool)
     parser.add_argument("-pe","--plot_epoch",default=None,help="What eopch to stop early at",type=float)
+    parser.add_argument("-pes","--plot_epoch_start",default=None,help="What eopch to start plotting at",type=float)
     parser.add_argument("-np","--numpy",default=False,help="Whether the data outputed should be numpy, and whether the data loaded is numpy",type=bool)
     parser.add_argument("-mem","--gpu_mem",default=None,help="allows us to not use all the memory, useful for testing a model that is currently training",type=float)
     parser.add_argument("-train_csv",default=None,help="This allows us to specifiy what photos to use for training",type=str)
@@ -142,6 +143,8 @@ if __name__ == "__main__":
     binary_mode = args.binary
 
     binary_model_weights = args.model_binary
+
+    plot_epoch_start = args.plot_epoch_start
 
     
 
@@ -840,7 +843,7 @@ if __name__ == "__main__":
 
 
     if run_mode == 8:
-        plot_loss(plot_directory,plot_epoch)
+        plot_loss(plot_directory,plot_epoch,plot_epoch_start)
         if not binary_mode:
             plot_class_losses(plot_directory,plot_epoch)
         else:

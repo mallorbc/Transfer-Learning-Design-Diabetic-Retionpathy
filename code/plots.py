@@ -141,9 +141,10 @@ def plot_accuracy(data_directory,stop_epoch=None):
     plt.legend()
     plt.show()
 
-def plot_loss(data_directory,stop_epoch=None):
+def plot_loss(data_directory,stop_epoch=None,start_epoch=None):
     #allows one to easily shorten the plots
     early_stop = -1
+    late_start = -1
     #builds file paths to load files
     current_dir = data_directory
     plot_dir = current_dir + "/" + "plots"
@@ -157,12 +158,19 @@ def plot_loss(data_directory,stop_epoch=None):
     if stop_epoch is not None:
         early_stop = np.where(epochs_array > stop_epoch)
         early_stop = early_stop[0][0]
+    if start_epoch is not None:
+        late_start = np.where(epochs_array < start_epoch)
+        late_start = late_start[0][-1]
 
     #shortens the arrays if desired
     if early_stop!=-1:
         loss_array_test = loss_array_test[0:early_stop]
         loss_array_train = loss_array_train[0:early_stop]
         epochs_array = epochs_array[0:early_stop]
+    if late_start!=-1:
+        loss_array_test = loss_array_test[late_start:]
+        loss_array_train = loss_array_train[late_start:]
+        epochs_array = epochs_array[late_start:]
     #gets the epochs and values of the lowest loss values
     low_loss_test_index = np.where(loss_array_test == np.amin(loss_array_test))
     low_loss_train_index = np.where(loss_array_train == np.amin(loss_array_train))
