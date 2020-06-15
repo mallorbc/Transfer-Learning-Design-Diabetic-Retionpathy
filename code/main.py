@@ -244,7 +244,7 @@ if __name__ == "__main__":
                 #used for cutting the classes
                 health_dict = make_diagnose_class_dict(health_level,image_name)
                 #cuts class 0 in half
-                health_level,image_name = cut_data_class(health_dict,0,0.5)
+                # health_level,image_name = cut_data_class(health_dict,0,0.5)
 
                 #shuffles the data to randomize starting train and test data
                 health_level,image_name = shuffle_data(health_level,image_name)
@@ -310,8 +310,10 @@ if __name__ == "__main__":
                 model = inception_v3_functional_binary(new_image_width, new_image_height)
             elif model_to_use == 7:
                 binary_model = inception_v3_functional_binary_no_act(new_image_width,new_image_height)
-                binary_model = load_model(binary_model_weights,7)
-                model = dual_inception_v3_functional_binary_based(new_image_width,new_image_height,binary_model)
+                binary_model = load_model(binary_model_weights,77)
+                model = dual_inception_v3_functional_binary_based2(new_image_width,new_image_height,binary_model)
+            elif model_to_use == 8:
+                model = inception_v3_non_zero(new_image_width, new_image_height)
             else:
                 raise SyntaxError('Not an implemented model')
 
@@ -396,6 +398,10 @@ if __name__ == "__main__":
         if model_to_use == 6:
             train_labels = convert_labels_to_binary(train_labels)
             test_labels = convert_labels_to_binary(test_labels)
+        if model_to_use == 8:
+            train_labels,train_images = convert_labels_to_non_zero(train_labels,train_images)
+            test_labels,test_images = convert_labels_to_non_zero(test_labels,test_images)
+
         health_dict_train = make_diagnose_class_dict(train_labels,train_images)
         health_dict_test = make_diagnose_class_dict(test_labels,test_images)
 
@@ -473,16 +479,21 @@ if __name__ == "__main__":
                 class_weights_list = class_weights_adjust
 
             class_weights = {0: class_weights_list[0], 1: class_weights_list[1], 2: class_weights_list[2], 3: class_weights_list[3], 4: class_weights_list[4]}
-            base_weight0 = class_weights_list[0]
-            base_weight1 = class_weights_list[1]
-            base_weight2 = class_weights_list[2]
-            base_weight3 = class_weights_list[3]
-            base_weight4 = class_weights_list[4]
+            # base_weight0 = class_weights_list[0]
+            # base_weight1 = class_weights_list[1]
+            # base_weight2 = class_weights_list[2]
+            # base_weight3 = class_weights_list[3]
+            # base_weight4 = class_weights_list[4]
+            base_weight0 = class_weights_list[0]/5
+            base_weight1 = class_weights_list[1]/5
+            base_weight2 = class_weights_list[2]/5
+            base_weight3 = class_weights_list[3]/5
+            base_weight4 = class_weights_list[4]/5
 
             print(class_weights)
             if model_to_use == 7 or model_to_load is not None:
                 test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,test_acc0,test_acc1,test_acc2,test_acc3,test_acc4 = get_loss_acc_of_each_class(model,train_images,new_image_width,new_image_height,test_size,health_dict_train)
-                class_weights = adjust_base_weights(test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,base_weight0,base_weight1,base_weight2,base_weight3,base_weight4,run_dir)
+                class_weights = adjust_base_weights2(test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,base_weight0,base_weight1,base_weight2,base_weight3,base_weight4,run_dir)
                 print(class_weights)
                 print("intial loss: ",test_loss0,test_loss1,test_loss2,test_loss3,test_loss4)
                 time.sleep(2)
@@ -579,7 +590,7 @@ if __name__ == "__main__":
                     print("Class losses: ",test_loss0,test_loss1,test_loss2,test_loss3,test_loss4)
                     print("Class accuracy: ",test_acc0,test_acc1,test_acc2,test_acc3,test_acc4)
 
-                    class_weights = adjust_base_weights(test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,base_weight0,base_weight1,base_weight2,base_weight3,base_weight4,run_dir)
+                    class_weights = adjust_base_weights2(test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,base_weight0,base_weight1,base_weight2,base_weight3,base_weight4,run_dir)
                     # loss_train,accuracy_train = evaluate_all_images(model,train_images,train_labels,test_size)
 
                     loss_train = metrics[0]
@@ -633,10 +644,15 @@ if __name__ == "__main__":
             print("Using " + str(len(health_dict_train[1])) + " images from class 1")
             class_weights_dict = compute_class_weight("balanced",np.unique(train_labels),train_labels)
             class_weights_list = list(class_weights_dict)
+            # class_weights_list[0] = class_weights_list[0]/2
+            # class_weights_list[1] = class_weights_list[1]/2
+
 
             class_weights = {0: class_weights_list[0], 1: class_weights_list[1]}
             base_weight0 = class_weights_list[0]
             base_weight1 = class_weights_list[1]
+            base_weight0 = base_weight0/2
+            base_weight1 = base_weight1/2
             print(class_weights)
             np_image_batch_test,test_labels_batch = prepare_data_for_model_even_binary(test_size,test_labels,test_images,new_image_width,new_image_height,health_dict_test)
 
@@ -834,7 +850,7 @@ if __name__ == "__main__":
     
 
     if run_mode == 7:
-        plot_accuracy(plot_directory,plot_epoch)
+        plot_accuracy(plot_directory,plot_epoch,plot_epoch_start)
         if not binary_mode:
             plot_class_acc(plot_directory,plot_epoch)
         else:
