@@ -79,9 +79,10 @@ def add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,epoch,run_di
         np.save(loss_file_path_train,loss_numpy_file_train)
 
 
-def plot_accuracy(data_directory,stop_epoch=None):
+def plot_accuracy(data_directory,stop_epoch=None,start_epoch=None):
     #allows one to shorten the plots easily
     early_stop = -1
+    late_start = -1
     #used to build error plot
     error_array_test = []
     error_array_train = []
@@ -98,10 +99,17 @@ def plot_accuracy(data_directory,stop_epoch=None):
     if stop_epoch is not None:
         early_stop = np.where(epochs_array > stop_epoch)
         early_stop = early_stop[0][0]
+    if start_epoch is not None:
+        late_start = np.where(epochs_array < start_epoch)
+        late_start = late_start[0][-1]
     if early_stop!=-1:
         epochs_array = epochs_array[0:early_stop]
         accuracy_array_test = accuracy_array_test[0:early_stop]
         accuracy_array_train = accuracy_array_train[0:early_stop]
+    if late_start!=-1:
+        accuracy_array_test = accuracy_array_test[late_start:]
+        accuracy_array_train = accuracy_array_train[late_start:]
+        epochs_array = epochs_array[late_start:]
 
     #finds the highest accuracy and the epoch for both test and train
     high_accuracy_test_index = np.where(accuracy_array_test == np.amax(accuracy_array_test))
@@ -586,9 +594,10 @@ def add_class_acc_data_binary(acc0,acc1,run_dir):
 
 
 
-def plot_class_losses(data_directory,stop_epoch=None):
+def plot_class_losses(data_directory,stop_epoch=None,start_epoch=None,binary_mode=False):
     #allows one to shorten the plots easily
     early_stop = -1
+    late_start = -1
     #builds file paths to load files
     current_dir = data_directory
     plot_dir = current_dir + "/" + "plots"
@@ -611,6 +620,9 @@ def plot_class_losses(data_directory,stop_epoch=None):
     if stop_epoch is not None:
         early_stop = np.where(epochs_array > stop_epoch)
         early_stop = early_stop[0][0]
+    if start_epoch is not None:
+        late_start = np.where(epochs_array < start_epoch)
+        late_start = late_start[0][-1]
     if early_stop!=-1:
         epochs_array = epochs_array[0:early_stop]
         loss0_array = loss0_array[0:early_stop]
@@ -618,6 +630,13 @@ def plot_class_losses(data_directory,stop_epoch=None):
         loss2_array = loss2_array[0:early_stop]
         loss3_array = loss3_array[0:early_stop]
         loss4_array = loss4_array[0:early_stop]
+    if late_start!=-1:
+        epochs_array = epochs_array[late_start:]
+        loss0_array = loss0_array[late_start:]
+        loss1_array = loss1_array[late_start:]
+        loss2_array = loss2_array[late_start:]
+        loss3_array = loss3_array[late_start:]
+        loss4_array = loss4_array[late_start:]
 
     # #finds the highest accuracy and the epoch for both test and train
     # high_accuracy_test_index = np.where(accuracy_array_test == np.amax(accuracy_array_test))
