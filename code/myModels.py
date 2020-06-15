@@ -139,6 +139,14 @@ def load_model(path_to_model,model_number=None,width=None,height=None,frozen=Non
         model_to_load.load_weights(path_to_model)
         print("Loaded model weights")
     elif model_number == 7:
+        temp_binary_model = inception_v3_functional_binary_no_act(width,height)
+        model_to_load = dual_inception_v3_functional_binary_based(width,height,temp_binary_model)
+        model_to_load.load_weights(path_to_model)
+        print("Loaded model weights")
+
+
+    #supporting model for model 7
+    elif model_number == 77:
         model_to_load = inception_v3_functional_binary_no_act(width, height)
         model_to_load.load_weights(path_to_model)
     return model_to_load
@@ -464,8 +472,50 @@ def transfer_learning_model_inception_v3_functional(new_image_width, new_image_h
     # quit()
     return final_model
 
+def inception_v3_non_zero(new_image_width, new_image_height,is_trainable=True,learning_rate=0.0001):
+    #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
+    if is_trainable is None:
+        is_trainable = True
+    base_model = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_shape=(new_image_width, new_image_height, 3))
+    # base_model = EfficientNetB5(weights='imagenet',include_top=False,input_shape=(new_image_width, new_image_height, 3))
 
-def inception_v3_functional_binary(new_image_width, new_image_height,is_trainable=True,learning_rate=0.0001):
+    #sets the inception_v3 model to not update its weights
+    base_model.trainable = is_trainable
+    #layer to convert the features to a single n-elemnt vector per image
+    global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
+    model = global_average_layer(base_model.output)
+    model = layers.Dense(1024)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    model =  layers.Dense(512)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    model = layers.Dense(256)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    output = layers.Dense(4, activation='softmax')(model)
+    final_model = models.Model(inputs=[base_model.input], outputs=output)
+
+
+
+    radam = tfa.optimizers.RectifiedAdam(lr=learning_rate)
+    ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
+
+    # model.compile(optimizer=Adam(lr=0.00001),
+    #             loss='sparse_categorical_crossentropy',
+    #             metrics=['accuracy'])
+    # return model
+    final_model.compile(optimizer=ranger,
+                loss='sparse_categorical_crossentropy',
+                metrics=['accuracy'])
+    final_model.summary()
+    print("Learning rate is: " + str(learning_rate))
+    time.sleep(2)
+    # quit()
+    return final_model
+
+
+def inception_v3_functional_binary(new_image_width, new_image_height,is_trainable=True,learning_rate=0.00005):
     if is_trainable is None:
         is_trainable = True
     input_shape = (new_image_width,new_image_height,3)
@@ -488,7 +538,7 @@ def inception_v3_functional_binary(new_image_width, new_image_height,is_trainabl
     model = layers.Dense(256)(model)
     model = layers.PReLU()(model)
     model = Dropout(0.5)(model)
-    output = layers.Dense(1)(model)
+    output = layers.Dense(1,activation="sigmoid")(model)
     final_model = models.Model(inputs=[image_input], outputs=output)
 
 
@@ -520,7 +570,7 @@ def inception_v3_functional_binary_no_act(new_image_width, new_image_height,is_t
     # base_model = EfficientNetB5(weights='imagenet',include_top=False,input_shape=(new_image_width, new_image_height, 3))
 
     #sets the inception_v3 model to not update its weights
-    base_model.trainable = is_trainable
+    base_model.trainable = True
     base_model = base_model(image_input)
     #layer to convert the features to a single n-elemnt vector per image
     global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
@@ -555,7 +605,7 @@ def inception_v3_functional_binary_no_act(new_image_width, new_image_height,is_t
     # quit()
     return final_model
 
-def dual_inception_v3_functional_binary_based(new_image_width, new_image_height,binary_model,is_trainable=True,learning_rate=0.0001):
+def dual_inception_v3_functional_binary_based(new_image_width, new_image_height,binary_model,is_trainable=True,learning_rate=0.00005):
     #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
     input_shape = (new_image_width,new_image_height,3)
     image_input = Input(shape = input_shape)
@@ -570,7 +620,7 @@ def dual_inception_v3_functional_binary_based(new_image_width, new_image_height,
 
     #sets the inception_v3 model to not update its weights
     base_model.trainable = is_trainable
-    # binary_model.trainable = False
+    binary_model.trainable = True
     base_model = base_model(image_input)
     binary_model = binary_model(image_input)
 
@@ -587,10 +637,76 @@ def dual_inception_v3_functional_binary_based(new_image_width, new_image_height,
     model = layers.PReLU()(model)
     model = Dropout(0.5)(model)
     output = layers.Dense(4)(model)
-        # concat_layer = concatenate([layer1_1,layer2_1],axis=-1)
 
     output = concatenate([binary_model,output])
-    # output = layers.Flatten()(output)
+    output = layers.PReLU()(output)
+    output = layers.Dense(5,activation="softmax")(output)
+
+    # output = layers.Activation("softmax")(output)
+
+    # output = layers.Dense(1, activation='sigmoid')(model)
+    final_model = models.Model(inputs=[image_input], outputs=output)
+
+
+
+    radam = tfa.optimizers.RectifiedAdam(lr=learning_rate)
+    ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
+
+    # model.compile(optimizer=Adam(lr=0.00001),
+    #             loss='sparse_categorical_crossentropy',
+    #             metrics=['accuracy'])
+    # return model
+    final_model.compile(optimizer=ranger,
+                loss='sparse_categorical_crossentropy',
+                metrics=['accuracy'])
+    final_model.summary()
+
+    print("Learning rate is: " + str(learning_rate))
+    time.sleep(2)
+    # quit()
+    return final_model
+
+def dual_inception_v3_functional_binary_based2(new_image_width, new_image_height,binary_model,is_trainable=True,learning_rate=0.00005):
+    #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
+    input_shape = (new_image_width,new_image_height,3)
+    image_input = Input(shape = input_shape)
+    if is_trainable is None:
+        is_trainable = True
+    # base_model = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_shape=(new_image_width, new_image_height, 3))
+    base_model = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_shape=(new_image_width, new_image_height, 3))
+
+    for layer in base_model.layers:
+        layer._name = layer.name + str("_2")
+    # base_model = EfficientNetB5(weights='imagenet',include_top=False,input_shape=(new_image_width, new_image_height, 3))
+
+    #sets the inception_v3 model to not update its weights
+    base_model.trainable = is_trainable
+    binary_model.trainable = True
+    base_model = base_model(image_input)
+    binary_model = binary_model(image_input)
+
+    #layer to convert the features to a single n-elemnt vector per image
+    global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
+    model = global_average_layer(base_model)
+    model = layers.Dense(1024)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    model =  layers.Dense(512)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    model = layers.Dense(256)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    output = layers.Dense(4)(model)
+
+    output1 = concatenate([binary_model,output])
+    output1 = layers.Dense(4)(output1)
+    output1 = layers.PReLU()(output1)
+    # output1 = Dropout(0.5)(output1)
+
+    output = concatenate([binary_model,output1])
+
+    # output = layers.PReLU()(output)
     output = layers.Dense(5,activation="softmax")(output)
 
     # output = layers.Activation("softmax")(output)
@@ -810,8 +926,8 @@ def adjust_base_weights_binary(loss0,loss1,base0,base1,run_dir):
     lowest_loss = zipped_list[0][0]
     losses = np.divide(losses,highest_loss)
     print(losses)
-    adjusted_base_weights.append(losses[0]*base0)
-    adjusted_base_weights.append(losses[1]*base1)
+    adjusted_base_weights.append(base0 + losses[0]*base0)
+    adjusted_base_weights.append(base1 + losses[1]*base1)
 
 
     class_weights_list = adjusted_base_weights
@@ -820,7 +936,7 @@ def adjust_base_weights_binary(loss0,loss1,base0,base1,run_dir):
     return class_weights
 
 def adjust_base_weights2(loss0,loss1,loss2,loss3,loss4,base0,base1,base2,base3,base4,run_dir):
-    add_class_loss_data(loss0,loss1,loss2,loss3,loss4,run_dir)
+    # add_class_loss_data(loss0,loss1,loss2,loss3,loss4,run_dir)
     classes = [0,1,2,3,4]
     losses = [] 
     adjusted_base_weights = []
@@ -840,11 +956,11 @@ def adjust_base_weights2(loss0,loss1,loss2,loss3,loss4,base0,base1,base2,base3,b
     losses = np.divide(losses,highest_loss)
     print(losses)
 
-    adjusted_base_weights.append(base0 + losses[0]*base0)
-    adjusted_base_weights.append(base1 + losses[1]*base1)
-    adjusted_base_weights.append(base2 + losses[2]*base2)
-    adjusted_base_weights.append(base3 + losses[3]*base3)
-    adjusted_base_weights.append(base4 + losses[4]*base4)
+    adjusted_base_weights.append(base0 + (4*losses[0]*base0))
+    adjusted_base_weights.append(base1 + (4*losses[1]*base1))
+    adjusted_base_weights.append(base2 + (4*losses[2]*base2))
+    adjusted_base_weights.append(base3 + (4*losses[3]*base3))
+    adjusted_base_weights.append(base4 + (4*losses[4]*base4))
     class_weights_list = adjusted_base_weights
     class_weights = {0: class_weights_list[0], 1: class_weights_list[1], 2: class_weights_list[2], 3: class_weights_list[3], 4: class_weights_list[4]}
     print("New class weights: ",class_weights)
