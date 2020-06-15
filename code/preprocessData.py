@@ -774,7 +774,17 @@ def convert_labels_to_binary(labels):
     new_labels = []
     for label in labels:
         if label>0:
-            new_labels.append(1)
-        else:
             new_labels.append(0)
+        else:
+            new_labels.append(1)
     return new_labels
+
+def convert_labels_to_non_zero(labels,images):
+    new_labels = []
+    new_images = []
+    for i in range(len(labels)):
+        if labels[i]!=0:
+            new_labels.append(labels[i]-1)
+            new_images.append(images[i])
+    return new_labels,new_images
+
