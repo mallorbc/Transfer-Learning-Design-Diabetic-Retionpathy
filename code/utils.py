@@ -8,6 +8,8 @@ import math
 import preprocessData
 import time
 import argparse
+import psutil
+
 
 from myModels import *
 
@@ -140,6 +142,10 @@ def get_num_images_of_one_class(class_to_get,list_of_images,class_dict,total_to_
     images = images[:total_to_get]
     return images
 
+def get_all_images_of_one_class(class_to_get,class_dict):
+    images = class_dict[class_to_get]
+    return images
+
 def make_npy_of_class(class_to_get,list_of_images,class_dict,output_folder,csv_file=None):
     images_of_one_class = get_images_of_one_class(class_to_get,list_of_images,class_dict)
     images_of_one_class = add_extension(images_of_one_class,".jpeg")
@@ -238,6 +244,11 @@ def make_diagnose_class_dict(health_level,image_name):
     health_dict[4] = class4
 
     return health_dict
+
+def get_memory_usage_percentage():
+    process = psutil.Process(os.getpid())
+    mem = process.memory_percent()
+    return mem
 
 
 
