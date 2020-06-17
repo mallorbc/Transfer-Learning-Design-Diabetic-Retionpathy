@@ -515,7 +515,7 @@ def inception_v3_non_zero(new_image_width, new_image_height,is_trainable=True,le
     return final_model
 
 
-def inception_v3_functional_binary(new_image_width, new_image_height,is_trainable=True,learning_rate=0.00005):
+def inception_v3_functional_binary(new_image_width, new_image_height,is_trainable=True,learning_rate=0.00001):
     if is_trainable is None:
         is_trainable = True
     input_shape = (new_image_width,new_image_height,3)
@@ -851,6 +851,23 @@ def get_loss_acc_of_each_class_binary(model,images,width,height,test_size,health
 
     return loss_0,loss_1,acc_0,acc_1
 
+def get_loss_acc_of_each_class_binary2(model,images,width,height,test_size,health_dict):
+    images = get_all_images_of_one_class(0,health_dict)
+    labels = np.ones(len(images))
+    labels = np.multiply(labels,0)
+    print("Testing all images in class 0...")
+    loss_0,acc_0 = evaluate_all_images(model,images,labels,test_size)
+
+
+    images = get_all_images_of_one_class(1,health_dict)
+    labels = np.ones(len(images))
+    labels = np.multiply(labels,1)
+    print("Testing all images in class 1...")
+    loss_1,acc_1 = evaluate_all_images(model,images,labels,test_size)
+
+
+    return loss_0,loss_1,acc_0,acc_1
+
 def adjust_class_weights(loss0,loss1,loss2,loss3,loss4):
     classes = [0,1,2,3,4]
     losses = [] 
@@ -925,7 +942,7 @@ def adjust_base_weights_binary(loss0,loss1,base0,base1,run_dir):
     highest_loss = zipped_list[-1][0]
     lowest_loss = zipped_list[0][0]
     losses = np.divide(losses,highest_loss)
-    print(losses)
+    print("loss ratios: ",losses)
     adjusted_base_weights.append(base0 + losses[0]*base0)
     adjusted_base_weights.append(base1 + losses[1]*base1)
 
@@ -967,13 +984,14 @@ def adjust_base_weights2(loss0,loss1,loss2,loss3,loss4,base0,base1,base2,base3,b
     return class_weights
 
 def evaluate_all_images(model,images,labels,test_size):
-    print("Testing all images")
+    # print("Testing all images")
     total_loss = []
     total_acc = []
     total_loss = np.asarray(total_loss)
     total_acc = np.asarray(total_acc)
     number_of_large_groups = math.floor(len(images)/test_size)
     counter = 1
+    images_tested = len(images)
     #creates the list of losses and accuracy
     for i in range(number_of_large_groups):
         image_batch = images[((counter - 1)*test_size):((counter*test_size))]
@@ -985,22 +1003,41 @@ def evaluate_all_images(model,images,labels,test_size):
         total_loss = np.append(total_loss,metrics[0])
         total_acc = np.append(total_acc,metrics[-1])
         counter = counter + 1
+        memory_used = get_memory_usage_percentage()
+        if memory_used>40:
+            #trys to save some memory
+            gc.collect()
+        if memory_used>50:
+            print("memory used exceeded 50 percent")
+            print("tested "+str(len(total_loss)*test_size) + " images")
+            images_tested = len(total_loss)*test_size
+            break
     #finds the average loss and accuracy
     average_loss = np.mean(total_loss)
     average_acc = np.mean(total_acc)
     #tests the leftover images
     leftover_images = images[(test_size*number_of_large_groups):(len(images))]
     leftover_labels = labels[(test_size*number_of_large_groups):(len(images))]
-    image_batch = normalize_images(leftover_images)
-    image_batch = np.asarray(image_batch)
-    final_metrics = model.evaluate(image_batch,leftover_labels,verbose=0)
-    final_metrics_loss = final_metrics[0]
-    final_metrics_acc = final_metrics[-1]
-    percent_leftover = len(leftover_images)/len(images)
-    percent_large_groups = 1 -percent_leftover
-    #calculates final metrics
-    all_loss = (average_loss * percent_large_groups) + (final_metrics_loss * percent_leftover)
-    all_acc = (average_acc * percent_large_groups) + (final_metrics_acc * percent_leftover)
+    if len(leftover_images) > 0:
+        image_batch = normalize_images(leftover_images)
+        image_batch = np.asarray(image_batch)
+        label_batch = np.asarray(leftover_labels)
+        final_metrics = model.evaluate(image_batch,label_batch,verbose=0)
+        final_metrics_loss = final_metrics[0]
+        final_metrics_acc = final_metrics[-1]
+        percent_leftover = len(leftover_images)/images_tested
+        percent_large_groups = 1 -percent_leftover
+        # print("average loss",average_loss)
+        # print("leftover loss",final_metrics_loss)
+        # time.sleep(2)
+        #calculates final metrics
+        all_loss = (average_loss * percent_large_groups) + (final_metrics_loss * percent_leftover)
+        all_acc = (average_acc * percent_large_groups) + (final_metrics_acc * percent_leftover)
+    else:
+        all_loss = average_loss
+        all_acc = average_acc
+    #clears memory
+    gc.collect()
 
     return all_loss, all_acc
 

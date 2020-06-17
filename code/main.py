@@ -708,36 +708,36 @@ if __name__ == "__main__":
                 if (current_epoch - previous_test_epoch)>= test_interval:
                     print("Evaulating on test data...")
                     #gets the metrics for the test data
-                    metrics = model.evaluate(np_image_batch_test, test_labels_batch,verbose=0)
+                    # metrics = model.evaluate(np_image_batch_test, test_labels_batch,verbose=0)
                     np_image_batch_test = None
                     test_labels_batch = None
-                    # loss_test,accuracy_test = evaluate_all_images(model,test_images,test_labels,test_size)
-                    loss_test = metrics[0]
-                    accuracy_test = metrics[-1]
-                    print("New test loss: ",loss_test," New test acc: ",accuracy_test)
+                    loss_test,accuracy_test = evaluate_all_images(model,test_images,test_labels,test_size)
+                    # loss_test = metrics[0]
+                    # accuracy_test = metrics[-1]
         
                     # time.sleep(2)
                     #gets the metrics for the training data
                     print("Evaluating on training data...")
                     # np_image_batch,label_batch = prepare_data_for_model_rand(test_size,train_labels,train_images,new_image_width,new_image_height)
-                    np_image_batch,label_batch = prepare_data_for_model_even_binary(test_size,train_labels,train_images,new_image_width,new_image_height,health_dict_train)
+                    # np_image_batch,label_batch = prepare_data_for_model_even_binary(test_size,train_labels,train_images,new_image_width,new_image_height,health_dict_train)
 
-                    metrics = model.evaluate(np_image_batch,label_batch,verbose=0)
+                    # metrics = model.evaluate(np_image_batch,label_batch,verbose=0)
+                    loss_train,accuracy_train = evaluate_all_images(model,train_images,train_labels,test_size)
+                    # loss_train = metrics[0]
+                    # accuracy_train = metrics[-1]
                     np_image_batch = None
                     label_batch = None
-                    test_loss0,test_loss1,test_acc0,test_acc1 = get_loss_acc_of_each_class_binary(model,train_images,new_image_width,new_image_height,test_size,health_dict_train)
+                    test_loss0,test_loss1,test_acc0,test_acc1 = get_loss_acc_of_each_class_binary2(model,train_images,new_image_width,new_image_height,test_size,health_dict_train)
                     add_class_acc_data_binary(test_acc0,test_acc1,run_dir)
                     print("Class losses: ",test_loss0,test_loss1)
                     print("Class accuracy: ",test_acc0,test_acc1)
-
                     class_weights = adjust_base_weights_binary(test_loss0,test_loss1,base_weight0,base_weight1,run_dir)
                     add_class_loss_data_binary(test_loss0,test_loss1,run_dir)
-
-                    # loss_train,accuracy_train = evaluate_all_images(model,train_images,train_labels,test_size)
-
-                    loss_train = metrics[0]
-                    accuracy_train = metrics[-1]
                     print("New train loss: ",loss_train," New train acc: ",accuracy_train)
+                    print("New test loss: ",loss_test," New test acc: ",accuracy_test)
+
+                    
+
                     
                     #used to print out best results in terminal
                     if loss_train<lowest_train_loss:
