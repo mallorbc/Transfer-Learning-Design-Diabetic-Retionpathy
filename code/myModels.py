@@ -140,7 +140,8 @@ def load_model(path_to_model,model_number=None,width=None,height=None,frozen=Non
         print("Loaded model weights")
     elif model_number == 7:
         temp_binary_model = inception_v3_functional_binary_no_act(width,height)
-        model_to_load = dual_inception_v3_functional_binary_based(width,height,temp_binary_model)
+        temp_non_zero_model = inception_v3_non_zero_no_act(width,height)
+        model_to_load = dual_inception_v3_ensemble(width,height,temp_binary_model,temp_non_zero_model)
         model_to_load.load_weights(path_to_model)
         print("Loaded model weights")
 
@@ -148,6 +149,9 @@ def load_model(path_to_model,model_number=None,width=None,height=None,frozen=Non
     #supporting model for model 7
     elif model_number == 77:
         model_to_load = inception_v3_functional_binary_no_act(width, height)
+        model_to_load.load_weights(path_to_model)
+    elif model_number == 78:
+        model_to_load = inception_v3_non_zero_no_act(width,height)
         model_to_load.load_weights(path_to_model)
     return model_to_load
 
@@ -323,7 +327,7 @@ def get_model_predictions_one_input(loaded_model,images):
     total_predictions = []
     total_predictions = np.asarray(total_predictions)
 
-    test_size = 100
+    test_size = 200
     number_of_large_groups = math.floor(len(images)/test_size)
 
     counter = 1
@@ -472,7 +476,7 @@ def transfer_learning_model_inception_v3_functional(new_image_width, new_image_h
     # quit()
     return final_model
 
-def inception_v3_non_zero(new_image_width, new_image_height,is_trainable=True,learning_rate=0.0001):
+def inception_v3_non_zero(new_image_width, new_image_height,is_trainable=True,learning_rate=0.00001):
     #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
     if is_trainable is None:
         is_trainable = True
@@ -512,6 +516,33 @@ def inception_v3_non_zero(new_image_width, new_image_height,is_trainable=True,le
     print("Learning rate is: " + str(learning_rate))
     time.sleep(2)
     # quit()
+    return final_model
+
+def inception_v3_non_zero_no_act(new_image_width, new_image_height,is_trainable=True,learning_rate=0.00001):
+    #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
+    if is_trainable is None:
+        is_trainable = True
+    base_model = tf.keras.applications.InceptionV3(weights="imagenet",include_top=False,input_shape=(new_image_width, new_image_height, 3))
+    # base_model = EfficientNetB5(weights='imagenet',include_top=False,input_shape=(new_image_width, new_image_height, 3))
+
+    #sets the inception_v3 model to not update its weights
+    base_model.trainable = is_trainable
+    #layer to convert the features to a single n-elemnt vector per image
+    global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
+    model = global_average_layer(base_model.output)
+    model = layers.Dense(1024)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    model =  layers.Dense(512)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    model = layers.Dense(256)(model)
+    model = layers.PReLU()(model)
+    model = Dropout(0.5)(model)
+    output = layers.Dense(4)(model)
+    final_model = models.Model(inputs=[base_model.input], outputs=output)
+
+
     return final_model
 
 
@@ -587,22 +618,6 @@ def inception_v3_functional_binary_no_act(new_image_width, new_image_height,is_t
     output = layers.Dense(1)(model)
     final_model = models.Model(inputs=[image_input], outputs=output)
 
-
-
-    # radam = tfa.optimizers.RectifiedAdam(lr=learning_rate)
-    # ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
-
-    # model.compile(optimizer=Adam(lr=0.00001),
-    #             loss='sparse_categorical_crossentropy',
-    #             metrics=['accuracy'])
-    # return model
-    # final_model.compile(optimizer=ranger,
-    #             loss='binary_crossentropy',
-    #             metrics=['accuracy'])
-    # final_model.summary()
-    # print("Learning rate is: " + str(learning_rate))
-    # time.sleep(2)
-    # quit()
     return final_model
 
 def dual_inception_v3_functional_binary_based(new_image_width, new_image_height,binary_model,is_trainable=True,learning_rate=0.00005):
@@ -733,6 +748,50 @@ def dual_inception_v3_functional_binary_based2(new_image_width, new_image_height
     # quit()
     return final_model
 
+def dual_inception_v3_ensemble(new_image_width, new_image_height,binary_model,non_zero_model,is_trainable=True,learning_rate=0.001):
+    #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
+    input_shape = (new_image_width,new_image_height,3)
+    image_input = Input(shape = input_shape)
+    #sets the inception_v3 model to not update its weights
+    non_zero_model.trainable = False
+    binary_model.trainable = False
+    # non_zero_model.trainable = True
+    # binary_model.trainable = True
+    non_zero_model = non_zero_model(image_input)
+    binary_model = binary_model(image_input)
+
+    output1 = concatenate([binary_model,non_zero_model])
+    final_output = layers.PReLU()(output1)
+    final_output = layers.Dropout(0.5)(final_output)
+    final_output = layers.Dense(5)(final_output)
+    final_output = layers.PReLU()(final_output)
+    final_output = layers.Dropout(0.5)(final_output)
+    final_output = layers.Dense(5)(final_output)
+    final_output = layers.PReLU()(final_output)
+    final_output = layers.Dropout(0.5)(final_output)
+    final_output = layers.Dense(5,activation="softmax")(final_output)
+
+    final_model = models.Model(inputs=[image_input], outputs=final_output)
+
+
+
+    radam = tfa.optimizers.RectifiedAdam(lr=learning_rate)
+    ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
+
+    # model.compile(optimizer=Adam(lr=0.00001),
+    #             loss='sparse_categorical_crossentropy',
+    #             metrics=['accuracy'])
+    # return model
+    final_model.compile(optimizer=ranger,
+                loss='sparse_categorical_crossentropy',
+                metrics=['accuracy'])
+    final_model.summary()
+
+    print("Learning rate is: " + str(learning_rate))
+    time.sleep(2)
+    # quit()
+    return final_model
+
 def custom_predict_class(model,image_to_test):
     return_values = []
     for image in image_to_test:
@@ -747,85 +806,41 @@ def custom_predict_class(model,image_to_test):
     return return_values
 
 def get_loss_acc_of_each_class(model,images,width,height,test_size,health_dict):
-    images = get_num_images_of_one_class(0,images,health_dict,test_size)
-    image_batch = normalize_images(images)
-    np_image_batch = np.asarray(image_batch)
-    np_image_batch.reshape(len(image_batch),width,height,3)
+    images = get_all_images_of_one_class(0,health_dict)
     labels = np.ones(len(images))
     labels = np.multiply(labels,0)
-    metrics = model.evaluate(np_image_batch,labels,verbose=0)
-    loss_0 = metrics[0]
-    acc_0 = metrics[-1]
+    print("Testing all images in class 0...")
+    loss_0,acc_0 = evaluate_all_images(model,images,labels,test_size)
 
-    images = get_num_images_of_one_class(1,images,health_dict,test_size)
-    image_batch = normalize_images(images)
-    np_image_batch = np.asarray(image_batch)
-    np_image_batch.reshape(len(image_batch),width,height,3)
+
+    images = get_all_images_of_one_class(1,health_dict)
     labels = np.ones(len(images))
     labels = np.multiply(labels,1)
-    metrics = model.evaluate(np_image_batch,labels,verbose=0)
-    loss_1 = metrics[0]
-    acc_1 = metrics[-1]
+    print("Testing all images in class 1...")
+    loss_1,acc_1 = evaluate_all_images(model,images,labels,test_size)
 
 
-    images = get_num_images_of_one_class(2,images,health_dict,test_size)
-    image_batch = normalize_images(images)
-    np_image_batch = np.asarray(image_batch)
-    np_image_batch.reshape(len(image_batch),width,height,3)
+    images = get_all_images_of_one_class(2,health_dict)
     labels = np.ones(len(images))
     labels = np.multiply(labels,2)
-    metrics = model.evaluate(np_image_batch,labels,verbose=0)
-    loss_2 = metrics[0]
-    acc_2 = metrics[-1]
+    print("Testing all images in class 2...")
+    loss_2,acc_2 = evaluate_all_images(model,images,labels,test_size)
 
 
-    images = get_num_images_of_one_class(3,images,health_dict,test_size)
-    image_batch = normalize_images(images)
-    np_image_batch = np.asarray(image_batch)
-    np_image_batch.reshape(len(image_batch),width,height,3)
+    images = get_all_images_of_one_class(3,health_dict)
     labels = np.ones(len(images))
     labels = np.multiply(labels,3)
-    metrics = model.evaluate(np_image_batch,labels,verbose=0)
-    loss_3 = metrics[0]
-    acc_3 = metrics[-1]
+    print("Testing all images in class 3...")
+    loss_3,acc_3 = evaluate_all_images(model,images,labels,test_size)
 
-
-    images = get_num_images_of_one_class(4,images,health_dict,test_size)
-    image_batch = normalize_images(images)
-    np_image_batch = np.asarray(image_batch)
-    np_image_batch.reshape(len(image_batch),width,height,3)
+    images = get_all_images_of_one_class(4,health_dict)
     labels = np.ones(len(images))
     labels = np.multiply(labels,4)
-    metrics = model.evaluate(np_image_batch,labels,verbose=0)
-    loss_4 = metrics[0]
-    acc_4 = metrics[-1]
-
-    # image_batch = health_dict[0]
-    # labels = np.zeros(len(images))
-    # labels = np.multiply(labels,0)
-    # loss_0,acc_0 = evaluate_all_images(model,image_batch,labels,test_size)
-
-    # image_batch = health_dict[1]
-    # labels = np.zeros(len(images))
-    # labels = np.multiply(labels,1)
-    # loss_1,acc_1 = evaluate_all_images(model,image_batch,labels,test_size)
-
-    # image_batch = health_dict[2]
-    # labels = np.zeros(len(images))
-    # labels = np.multiply(labels,2)
-    # loss_2,acc_2 = evaluate_all_images(model,image_batch,labels,test_size)
-
-    # image_batch = health_dict[3]
-    # labels = np.zeros(len(images))
-    # labels = np.multiply(labels,3)
-    # loss_3,acc_3 = evaluate_all_images(model,image_batch,labels,test_size)
-
-    # image_batch = health_dict[4]
-    # labels = np.zeros(len(images))
-    # labels = np.multiply(labels,4)
-    # loss_4,acc_4 = evaluate_all_images(model,image_batch,labels,test_size)
+    print("Testing all images in class 4...")
+    loss_4,acc_4 = evaluate_all_images(model,images,labels,test_size)
 
     return loss_0,loss_1,loss_2,loss_3,loss_4,acc_0,acc_1,acc_2,acc_3,acc_4
+
 
 def get_loss_acc_of_each_class_binary(model,images,width,height,test_size,health_dict):
     images = get_num_images_of_one_class(0,images,health_dict,test_size)
@@ -867,6 +882,37 @@ def get_loss_acc_of_each_class_binary2(model,images,width,height,test_size,healt
 
 
     return loss_0,loss_1,acc_0,acc_1
+
+def get_loss_acc_of_each_class_non_zero(model,images,width,height,test_size,health_dict):
+    images = get_all_images_of_one_class(0,health_dict)
+    labels = np.ones(len(images))
+    labels = np.multiply(labels,0)
+    print("Testing all images in class 0...")
+    loss_0,acc_0 = evaluate_all_images(model,images,labels,test_size)
+
+
+    images = get_all_images_of_one_class(1,health_dict)
+    labels = np.ones(len(images))
+    labels = np.multiply(labels,1)
+    print("Testing all images in class 1...")
+    loss_1,acc_1 = evaluate_all_images(model,images,labels,test_size)
+
+
+    images = get_all_images_of_one_class(2,health_dict)
+    labels = np.ones(len(images))
+    labels = np.multiply(labels,2)
+    print("Testing all images in class 2...")
+    loss_2,acc_2 = evaluate_all_images(model,images,labels,test_size)
+
+
+    images = get_all_images_of_one_class(3,health_dict)
+    labels = np.ones(len(images))
+    labels = np.multiply(labels,3)
+    print("Testing all images in class 3...")
+    loss_3,acc_3 = evaluate_all_images(model,images,labels,test_size)
+
+
+    return loss_0,loss_1,loss_2,loss_3,acc_0,acc_1,acc_2,acc_3
 
 def adjust_class_weights(loss0,loss1,loss2,loss3,loss4):
     classes = [0,1,2,3,4]
@@ -952,6 +998,55 @@ def adjust_base_weights_binary(loss0,loss1,base0,base1,run_dir):
     print("New class weights: ",class_weights)
     return class_weights
 
+def adjust_base_weights_test(loss0,base0,loss1,base1,run_dir,loss2=None,base2=None,loss3=None,base3=None,loss4=None,base4=None):
+    classes = [0,1]
+    losses = [] 
+    adjusted_base_weights = []
+    #adds the losses to a np array to allow easy math
+    losses.append(loss0)
+    losses.append(loss1)
+    if loss2 is not None:
+        losses.append(loss2)
+    if loss3 is not None:
+        losses.append(loss3)
+    if loss4 is not None:
+        losses.append(loss4)
+    losses = np.asarray(losses)
+    # losses = np.multiply(losses,2)
+    zipped_list = zip(losses,classes)
+    zipped_list = sorted(zipped_list)
+    highest_loss = zipped_list[-1][0]
+    # lowest_loss = zipped_list[0][0]
+    print(losses)
+    losses = np.divide(losses,highest_loss)
+    print("loss ratios: ",losses)
+    if loss2 is None:
+        adjusted_base_weights.append(base0 + losses[0]*base0)
+        adjusted_base_weights.append(base1 + losses[1]*base1)
+        class_weights_list = adjusted_base_weights
+        class_weights = {0: class_weights_list[0], 1: class_weights_list[1]}
+    elif loss4 is None:
+        adjusted_base_weights.append(base0 + (3*losses[0]*base0))
+        adjusted_base_weights.append(base1 + (3*losses[1]*base1))
+        adjusted_base_weights.append(base2 + (3*losses[2]*base2))
+        adjusted_base_weights.append(base3 + (3*losses[3]*base3))
+        class_weights_list = adjusted_base_weights
+        class_weights = {0: class_weights_list[0], 1: class_weights_list[1], 2: class_weights_list[2], 3: class_weights_list[3]}
+    else:
+        adjusted_base_weights.append(base0 + (4*losses[0]*base0))
+        adjusted_base_weights.append(base1 + (4*losses[1]*base1))
+        adjusted_base_weights.append(base2 + (4*losses[2]*base2))
+        adjusted_base_weights.append(base3 + (4*losses[3]*base3))
+        adjusted_base_weights.append(base4 + (4*losses[4]*base4))
+        class_weights_list = adjusted_base_weights
+        class_weights = {0: class_weights_list[0], 1: class_weights_list[1], 2: class_weights_list[2], 3: class_weights_list[3], 4: class_weights_list[4]}
+    
+
+    print("New class weights: ",class_weights)
+    # print(highest_loss)
+    # quit()
+    return class_weights
+
 def adjust_base_weights2(loss0,loss1,loss2,loss3,loss4,base0,base1,base2,base3,base4,run_dir):
     # add_class_loss_data(loss0,loss1,loss2,loss3,loss4,run_dir)
     classes = [0,1,2,3,4]
@@ -990,55 +1085,60 @@ def evaluate_all_images(model,images,labels,test_size):
     total_loss = np.asarray(total_loss)
     total_acc = np.asarray(total_acc)
     number_of_large_groups = math.floor(len(images)/test_size)
-    counter = 1
-    images_tested = len(images)
-    #creates the list of losses and accuracy
-    for i in range(number_of_large_groups):
-        image_batch = images[((counter - 1)*test_size):((counter*test_size))]
-        image_batch = normalize_images(image_batch)
-        label_batch = labels[((counter - 1)*test_size):((counter*test_size))]
-        image_batch = np.asarray(image_batch)
-        label_batch = np.asarray(label_batch)
-        metrics = model.evaluate(image_batch,label_batch,verbose=0)
-        total_loss = np.append(total_loss,metrics[0])
-        total_acc = np.append(total_acc,metrics[-1])
-        counter = counter + 1
-        memory_used = get_memory_usage_percentage()
-        if memory_used>40:
-            #trys to save some memory
-            gc.collect()
-        if memory_used>50:
-            print("memory used exceeded 50 percent")
-            print("tested "+str(len(total_loss)*test_size) + " images")
-            images_tested = len(total_loss)*test_size
-            break
-    #finds the average loss and accuracy
-    average_loss = np.mean(total_loss)
-    average_acc = np.mean(total_acc)
-    #tests the leftover images
-    leftover_images = images[(test_size*number_of_large_groups):(len(images))]
-    leftover_labels = labels[(test_size*number_of_large_groups):(len(images))]
-    if len(leftover_images) > 0:
-        image_batch = normalize_images(leftover_images)
-        image_batch = np.asarray(image_batch)
-        label_batch = np.asarray(leftover_labels)
-        final_metrics = model.evaluate(image_batch,label_batch,verbose=0)
-        final_metrics_loss = final_metrics[0]
-        final_metrics_acc = final_metrics[-1]
-        percent_leftover = len(leftover_images)/images_tested
-        percent_large_groups = 1 -percent_leftover
-        # print("average loss",average_loss)
-        # print("leftover loss",final_metrics_loss)
-        # time.sleep(2)
-        #calculates final metrics
-        all_loss = (average_loss * percent_large_groups) + (final_metrics_loss * percent_leftover)
-        all_acc = (average_acc * percent_large_groups) + (final_metrics_acc * percent_leftover)
+    if number_of_large_groups > 0:
+        counter = 1
+        images_tested = len(images)
+        #creates the list of losses and accuracy
+        for i in range(number_of_large_groups):
+            image_batch = images[((counter - 1)*test_size):((counter*test_size))]
+            image_batch = normalize_images(image_batch)
+            label_batch = labels[((counter - 1)*test_size):((counter*test_size))]
+            image_batch = np.asarray(image_batch)
+            label_batch = np.asarray(label_batch)
+            metrics = model.evaluate(image_batch,label_batch,verbose=0)
+            total_loss = np.append(total_loss,metrics[0])
+            total_acc = np.append(total_acc,metrics[-1])
+            counter = counter + 1
+            memory_used = get_memory_usage_percentage()
+            if memory_used>40:
+                #trys to save some memory
+                gc.collect()
+            if memory_used>65:
+                print("memory used exceeded 65 percent")
+                print("tested "+str(len(total_loss)*test_size) + " images")
+                images_tested = len(total_loss)*test_size
+                break
+        #finds the average loss and accuracy
+        average_loss = np.mean(total_loss)
+        average_acc = np.mean(total_acc)
+        #tests the leftover images
+        leftover_images = images[(test_size*number_of_large_groups):(len(images))]
+        leftover_labels = labels[(test_size*number_of_large_groups):(len(images))]
+        #if there are leftover images, test them
+        if len(leftover_images) > 0:
+            image_batch = normalize_images(leftover_images)
+            image_batch = np.asarray(image_batch)
+            label_batch = np.asarray(leftover_labels)
+            final_metrics = model.evaluate(image_batch,label_batch,verbose=0)
+            final_metrics_loss = final_metrics[0]
+            final_metrics_acc = final_metrics[-1]
+            #averages the loss proportional to size
+            percent_leftover = len(leftover_images)/images_tested
+            percent_large_groups = 1 -percent_leftover
+            all_loss = (average_loss * percent_large_groups) + (final_metrics_loss * percent_leftover)
+            all_acc = (average_acc * percent_large_groups) + (final_metrics_acc * percent_leftover)
+        else:
+            all_loss = average_loss
+            all_acc = average_acc
+        #clears memory
+        gc.collect()
     else:
-        all_loss = average_loss
-        all_acc = average_acc
-    #clears memory
-    gc.collect()
-
+        image_batch = normalize_images(images)
+        image_batch = np.asarray(image_batch)
+        label_batch = np.asarray(labels)
+        final_metrics = model.evaluate(image_batch,label_batch,verbose=0)
+        all_loss = final_metrics[0]
+        all_acc = final_metrics[-1]
     return all_loss, all_acc
 
 
