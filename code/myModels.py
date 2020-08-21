@@ -1,32 +1,25 @@
 import tensorflow as tf
-from tensorflow.keras import datasets, layers, models
+from tensorflow.keras import layers, models
 from tensorflow.keras.layers import Dropout,Input,concatenate
 import os
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.utils import plot_model
+# from tensorflow.keras.utils import plot_model
 import numpy as np
 
 import time
 
 from preprocessData import *
 from utils import *
-# from plots import *
-# import efficientnet.keras as efn 
-# from keras_efficientnets import EfficientNetB5
-#import efficientnet.keras as efn 
+
 from efficientnet.tfkeras import EfficientNetB6 as Net
 
 import tensorflow_addons as tfa
 import gc
 
-
-from tensorflow.keras.utils import plot_model
-
-
+import random
+import matplotlib.pyplot as plt
 
 
-
-# from tensorflow.keras.applications import inception_v3
 
 def create_DenseNet(image_width,image_height,learning_rate=0.0001):
     #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
@@ -144,6 +137,9 @@ def load_model(path_to_model,model_number=None,width=None,height=None,frozen=Non
         model_to_load = dual_inception_v3_ensemble(width,height,temp_binary_model,temp_non_zero_model)
         model_to_load.load_weights(path_to_model)
         print("Loaded model weights")
+    elif model_number == 8:
+        model_to_load = inception_v3_non_zero(width, height)
+        model_to_load.load_weights(path_to_model)
 
 
     #supporting model for model 7
@@ -183,7 +179,7 @@ def save_model(model_to_save,run_dir,whole_model=None):
     print("Saved Checkpoint!")
 
 
-def inception_v3_multiple_inputs(image_width,image_height):
+def inception_v3_multiple_inputs(image_width,image_height,learning_rate=0.00001):
     input_shape = (image_width,image_height,3)
     image_input1 = Input(shape = input_shape)
     image_input2 = Input(shape = input_shape)
@@ -219,8 +215,8 @@ def inception_v3_multiple_inputs(image_width,image_height):
 
     output = layers.Dense(5,activation='softmax')(output)
     final_model = models.Model(inputs=[input1.input, input2.input], outputs=output)
-    final_model.summary()
-    radam = tfa.optimizers.RectifiedAdam(lr=0.000001)
+    # final_model.summary()
+    radam = tfa.optimizers.RectifiedAdam(lr=learning_rate)
     ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
     final_model.compile(optimizer=ranger,
                 loss='sparse_categorical_crossentropy',
@@ -231,6 +227,8 @@ def inception_v3_multiple_inputs(image_width,image_height):
     #plot_model(final_model, to_file='model_plot2.png')
     # plot_model(final_model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
     final_model.summary()
+    print("The learning rate is " + str(learning_rate))
+
     return final_model
 
 def efficientnet(new_image_width, new_image_height,learning_rate=0.0001):
@@ -327,7 +325,7 @@ def get_model_predictions_one_input(loaded_model,images):
     total_predictions = []
     total_predictions = np.asarray(total_predictions)
 
-    test_size = 200
+    test_size = 400
     number_of_large_groups = math.floor(len(images)/test_size)
 
     counter = 1
@@ -346,6 +344,7 @@ def get_model_predictions_one_input(loaded_model,images):
 
         # print("total labels: ",np.shape(total_labels))
         counter = counter + 1
+        gc.collect()
 
     #makes the rest of the predictions
     image_batch = images[(test_size*number_of_large_groups):(len(images))]
@@ -748,7 +747,7 @@ def dual_inception_v3_functional_binary_based2(new_image_width, new_image_height
     # quit()
     return final_model
 
-def dual_inception_v3_ensemble(new_image_width, new_image_height,binary_model,non_zero_model,is_trainable=True,learning_rate=0.001):
+def dual_inception_v3_ensemble(new_image_width, new_image_height,binary_model,non_zero_model,is_trainable=True,learning_rate=0.0001):
     #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
     input_shape = (new_image_width,new_image_height,3)
     image_input = Input(shape = input_shape)
@@ -762,13 +761,13 @@ def dual_inception_v3_ensemble(new_image_width, new_image_height,binary_model,no
 
     output1 = concatenate([binary_model,non_zero_model])
     final_output = layers.PReLU()(output1)
-    final_output = layers.Dropout(0.5)(final_output)
+    # final_output = layers.Dropout(0.5)(final_output)
     final_output = layers.Dense(5)(final_output)
     final_output = layers.PReLU()(final_output)
-    final_output = layers.Dropout(0.5)(final_output)
+    # final_output = layers.Dropout(0.5)(final_output)
     final_output = layers.Dense(5)(final_output)
     final_output = layers.PReLU()(final_output)
-    final_output = layers.Dropout(0.5)(final_output)
+    # final_output = layers.Dropout(0.5)(final_output)
     final_output = layers.Dense(5,activation="softmax")(final_output)
 
     final_model = models.Model(inputs=[image_input], outputs=final_output)
@@ -1103,8 +1102,8 @@ def evaluate_all_images(model,images,labels,test_size):
             if memory_used>40:
                 #trys to save some memory
                 gc.collect()
-            if memory_used>65:
-                print("memory used exceeded 65 percent")
+            if memory_used>85:
+                print("memory used exceeded 85 percent")
                 print("tested "+str(len(total_loss)*test_size) + " images")
                 images_tested = len(total_loss)*test_size
                 break
@@ -1141,8 +1140,362 @@ def evaluate_all_images(model,images,labels,test_size):
         all_acc = final_metrics[-1]
     return all_loss, all_acc
 
+def evaluate_all_images_two_inputs(model,images,images2,labels,test_size):
+    # print("Testing all images")
+    total_loss = []
+    total_acc = []
+    total_loss = np.asarray(total_loss)
+    total_acc = np.asarray(total_acc)
+    number_of_large_groups = math.floor(len(images)/test_size)
+    if number_of_large_groups > 0:
+        counter = 1
+        images_tested = len(images)
+        #creates the list of losses and accuracy
+        for i in range(number_of_large_groups):
+            image_batch = images[((counter - 1)*test_size):((counter*test_size))]
+            image_batch2 = images2[((counter - 1)*test_size):((counter*test_size))]
+            image_batch = normalize_images(image_batch)
+            image_batch2 = normalize_images(image_batch2)
+
+            label_batch = labels[((counter - 1)*test_size):((counter*test_size))]
+            image_batch = np.asarray(image_batch)
+            image_batch2 = np.asarray(image_batch2)
+            label_batch = np.asarray(label_batch)
+            metrics = model.evaluate([image_batch,image_batch2], label_batch,verbose=0)
+            total_loss = np.append(total_loss,metrics[0])
+            total_acc = np.append(total_acc,metrics[-1])
+            counter = counter + 1
+            memory_used = get_memory_usage_percentage()
+            if memory_used>40:
+                #trys to save some memory
+                gc.collect()
+            if memory_used>85:
+                print("memory used exceeded 85 percent")
+                print("tested "+str(len(total_loss)*test_size) + " images")
+                images_tested = len(total_loss)*test_size
+                break
+        #finds the average loss and accuracy
+        average_loss = np.mean(total_loss)
+        average_acc = np.mean(total_acc)
+        #tests the leftover images
+        leftover_images = images[(test_size*number_of_large_groups):(len(images))]
+        leftover_images2 = images2[(test_size*number_of_large_groups):(len(images2))]
+
+        leftover_labels = labels[(test_size*number_of_large_groups):(len(images))]
+        #if there are leftover images, test them
+        if len(leftover_images) > 0:
+            image_batch = normalize_images(leftover_images)
+            image_batch2 =normalize_images(leftover_images2)
+            image_batch = np.asarray(image_batch)
+            image_batch2 = np.asarray(image_batch2)
+            label_batch = np.asarray(leftover_labels)
+            final_metrics = model.evaluate([image_batch,image_batch2], label_batch,verbose=0)
+            final_metrics_loss = final_metrics[0]
+            final_metrics_acc = final_metrics[-1]
+            #averages the loss proportional to size
+            percent_leftover = len(leftover_images)/images_tested
+            percent_large_groups = 1 -percent_leftover
+            all_loss = (average_loss * percent_large_groups) + (final_metrics_loss * percent_leftover)
+            all_acc = (average_acc * percent_large_groups) + (final_metrics_acc * percent_leftover)
+        else:
+            all_loss = average_loss
+            all_acc = average_acc
+        #clears memory
+        gc.collect()
+    else:
+        image_batch = normalize_images(images)
+        image_batch2 = normalize_images(images2)
+        image_batch = np.asarray(image_batch)
+        image_batch2 = np.asarray(image_batch2)
+        label_batch = np.asarray(labels)
+        final_metrics = model.evaluate([image_batch,image_batch2], label_batch,verbose=0)
+        all_loss = final_metrics[0]
+        all_acc = final_metrics[-1]
+    return all_loss, all_acc
+
+def evaluate_all_images_each_class(model,health_dict,test_size):
+    #initializes variables
+    num_two = 0
+    num_three = 0
+    num_four = 0
+    loss2_partial = 0
+    loss3_partial = 0
+    loss4_partial = 0
+    acc2_partial = 0
+    acc3_partial = 0
+    acc4_partial = 0
+    total_loss,total_acc,loss0,acc0,loss1,acc1,loss2,acc2,loss3,acc3,loss4,acc4 = 0,0,0,0,0,0,0,0,0,0,0,0
 
 
 
 
+    cat_num = len(health_dict)
+    zero_images = health_dict[0]
+    one_images = health_dict[1]
+    two_images = health_dict[2]
+    three_images = health_dict[3]
+    four_images = health_dict[4]
 
+    if len(four_images)>0:
+        cat_num = 5
+    elif len(three_images)>0:
+        cat_num = 4
+    elif len(two_images)>0:
+        cat_num = 3
+    else:
+        cat_num = 2
+
+    zero_images = health_dict[0]
+    num_zero = len(zero_images)
+    zero_labels = np.ones(len(zero_images))
+    zero_labels = np.multiply(zero_labels,0)
+    print("Testing all images in class 0...")
+    loss0,acc0 = evaluate_all_images(model,zero_images,zero_labels,test_size)
+
+    one_images = health_dict[1]
+    num_one = len(one_images)
+    one_labels = np.ones(len(one_images))
+    one_labels = np.multiply(one_labels,1)
+    print("Testing all images in class 1...")
+    loss1,acc1 = evaluate_all_images(model,one_images,one_labels,test_size)
+    if cat_num >2:
+        two_images = health_dict[2]
+        num_two = len(two_images)
+        two_labels = np.ones(len(two_images))
+        two_labels = np.multiply(two_labels,2)
+        print("Testing all images in class 2...")
+        loss2,acc2 = evaluate_all_images(model,two_images,two_labels,test_size)
+
+        three_images = health_dict[3]
+        num_three = len(three_images)
+        three_labels = np.ones(len(three_images))
+        three_labels = np.multiply(three_labels,3)
+        print("Testing all images in class 3...")
+        loss3,acc3 = evaluate_all_images(model,three_images,three_labels,test_size)
+    if cat_num == 5:
+        four_images = health_dict[4]
+        num_four = len(four_images)
+        four_labels = np.ones(len(four_images))
+        four_labels = np.multiply(four_labels,4)
+        print("Testing all images in class 4...")
+        loss4,acc4 = evaluate_all_images(model,four_images,four_labels,test_size)
+
+    num_total = num_zero + num_one + num_two + num_three + num_four
+
+    percent_zero = num_zero/num_total
+    loss0_partial = loss0*percent_zero
+    acc0_partial = acc0 * percent_zero
+
+    percent_one = num_one/num_total
+    loss1_partial = loss1*percent_one
+    acc1_partial = acc1 * percent_one
+
+    if cat_num>2:
+        pecent_two = num_two/num_total
+        loss2_partial = loss2 * pecent_two
+        acc2_partial = acc2 * pecent_two
+        
+        percent_three = num_three/num_total
+        loss3_partial = loss3 * percent_three
+        acc3_partial = acc3 * percent_three
+    if cat_num == 5:
+        percent_four = num_four/num_total
+        loss4_partial = loss4 * percent_four
+        acc4_partial = acc4 * percent_four
+
+    total_loss = loss0_partial + loss1_partial + loss2_partial + loss3_partial + loss4_partial
+    total_acc = acc0_partial + acc1_partial + acc2_partial + acc3_partial + acc4_partial
+    
+    return total_loss,total_acc,loss0,acc0,loss1,acc1,loss2,acc2,loss3,acc3,loss4,acc4
+
+
+def evaluate_all_images_each_class_two_inputs(model,health_dict,health_dict2,test_size):
+    #initializes variables
+    num_two = 0
+    num_three = 0
+    num_four = 0
+    loss2_partial = 0
+    loss3_partial = 0
+    loss4_partial = 0
+    acc2_partial = 0
+    acc3_partial = 0
+    acc4_partial = 0
+    total_loss,total_acc,loss0,acc0,loss1,acc1,loss2,acc2,loss3,acc3,loss4,acc4 = 0,0,0,0,0,0,0,0,0,0,0,0
+
+
+
+
+    cat_num = len(health_dict)
+    zero_images = health_dict[0]
+    one_images = health_dict[1]
+    two_images = health_dict[2]
+    three_images = health_dict[3]
+    four_images = health_dict[4]
+
+    if len(four_images)>0:
+        cat_num = 5
+    elif len(three_images)>0:
+        cat_num = 4
+    elif len(two_images)>0:
+        cat_num = 3
+    else:
+        cat_num = 2
+
+    zero_images = health_dict[0]
+    zero_images2 = health_dict2[0]
+    num_zero = len(zero_images)
+    zero_labels = np.ones(len(zero_images))
+    zero_labels = np.multiply(zero_labels,0)
+    print("Testing all images in class 0...")
+    loss0,acc0 = evaluate_all_images_two_inputs(model,zero_images,zero_images2,zero_labels,test_size)
+
+    one_images = health_dict[1]
+    one_images2 = health_dict2[1]
+    num_one = len(one_images)
+    one_labels = np.ones(len(one_images))
+    one_labels = np.multiply(one_labels,1)
+    print("Testing all images in class 1...")
+    loss1,acc1 = evaluate_all_images_two_inputs(model,one_images,one_images2,one_labels,test_size)
+    if cat_num >2:
+        two_images = health_dict[2]
+        two_images2 = health_dict2[2]
+        num_two = len(two_images)
+        two_labels = np.ones(len(two_images))
+        two_labels = np.multiply(two_labels,2)
+        print("Testing all images in class 2...")
+        loss2,acc2 = evaluate_all_images_two_inputs(model,two_images,two_images2,two_labels,test_size)
+
+        three_images = health_dict[3]
+        three_images2 = health_dict2[3]
+        num_three = len(three_images)
+        three_labels = np.ones(len(three_images))
+        three_labels = np.multiply(three_labels,3)
+        print("Testing all images in class 3...")
+        loss3,acc3 = evaluate_all_images_two_inputs(model,three_images,three_images2,three_labels,test_size)
+    if cat_num == 5:
+        four_images = health_dict[4]
+        four_images2 = health_dict2[4]
+        num_four = len(four_images)
+        four_labels = np.ones(len(four_images))
+        four_labels = np.multiply(four_labels,4)
+        print("Testing all images in class 4...")
+        loss4,acc4 = evaluate_all_images_two_inputs(model,four_images,four_images2,four_labels,test_size)
+
+    num_total = num_zero + num_one + num_two + num_three + num_four
+
+    percent_zero = num_zero/num_total
+    loss0_partial = loss0*percent_zero
+    acc0_partial = acc0 * percent_zero
+
+    percent_one = num_one/num_total
+    loss1_partial = loss1*percent_one
+    acc1_partial = acc1 * percent_one
+
+    if cat_num>2:
+        pecent_two = num_two/num_total
+        loss2_partial = loss2 * pecent_two
+        acc2_partial = acc2 * pecent_two
+        
+        percent_three = num_three/num_total
+        loss3_partial = loss3 * percent_three
+        acc3_partial = acc3 * percent_three
+    if cat_num == 5:
+        percent_four = num_four/num_total
+        loss4_partial = loss4 * percent_four
+        acc4_partial = acc4 * percent_four
+
+    total_loss = loss0_partial + loss1_partial + loss2_partial + loss3_partial + loss4_partial
+    total_acc = acc0_partial + acc1_partial + acc2_partial + acc3_partial + acc4_partial
+    
+    return total_loss,total_acc,loss0,acc0,loss1,acc1,loss2,acc2,loss3,acc3,loss4,acc4
+
+
+
+
+def dual_inception_v3_ensemble_backup(new_image_width, new_image_height,binary_model,non_zero_model,is_trainable=True,learning_rate=0.0001):
+    #loads the inception_v3 model, removes the last layer, and sets inputs to the size needed
+    input_shape = (new_image_width,new_image_height,3)
+    image_input = Input(shape = input_shape)
+    #sets the inception_v3 model to not update its weights
+    non_zero_model.trainable = False
+    binary_model.trainable = False
+    # non_zero_model.trainable = True
+    # binary_model.trainable = True
+    non_zero_model = non_zero_model(image_input)
+    binary_model = binary_model(image_input)
+
+    output1 = concatenate([binary_model,non_zero_model])
+    final_output = layers.PReLU()(output1)
+    final_output = layers.Dropout(0.5)(final_output)
+    final_output = layers.Dense(5)(final_output)
+    final_output = layers.PReLU()(final_output)
+    final_output = layers.Dropout(0.5)(final_output)
+    final_output = layers.Dense(5)(final_output)
+    final_output = layers.PReLU()(final_output)
+    final_output = layers.Dropout(0.5)(final_output)
+    final_output = layers.Dense(5,activation="softmax")(final_output)
+
+    final_model = models.Model(inputs=[image_input], outputs=final_output)
+
+
+
+    radam = tfa.optimizers.RectifiedAdam(lr=learning_rate)
+    ranger = tfa.optimizers.Lookahead(radam, sync_period=6, slow_step_size=0.5)
+
+    # model.compile(optimizer=Adam(lr=0.00001),
+    #             loss='sparse_categorical_crossentropy',
+    #             metrics=['accuracy'])
+    # return model
+    final_model.compile(optimizer=ranger,
+                loss='sparse_categorical_crossentropy',
+                metrics=['accuracy'])
+    final_model.summary()
+
+    print("Learning rate is: " + str(learning_rate))
+    time.sleep(2)
+    # quit()
+    return final_model
+
+
+
+def dual_input_aug_train(model,labels,images1,images2,class_weights,generator,batch):
+    gc.collect()
+    # generator1=generator
+    # generator2=generator
+    labels,images1,images2 = shuffle(labels,images1,images2)
+    images1 = images1[0]
+    images2 = images2[0]
+    labels = labels[0]
+    current_image1 = cv2.imread(images1)        
+    current_image1 = cv2.cvtColor(current_image1, cv2.COLOR_BGR2RGB)
+    current_image1 = current_image1.reshape((1, ) + current_image1.shape)
+    current_image2 = cv2.imread(images2)        
+    current_image2 = cv2.cvtColor(current_image2, cv2.COLOR_BGR2RGB)
+    current_image2 = current_image2.reshape((1, ) + current_image2.shape)
+    rand_seed = random.randint(0,99999999)
+    aug_image1 = generator.flow(current_image1,batch_size = batch,seed=rand_seed)
+    aug_image2 = generator.flow(current_image2,batch_size = batch,seed=rand_seed)
+    final_labels = np.ones(batch)
+    final_labels = np.multiply(final_labels,labels)
+    # final_input1 = []
+    # final_input1 = np.asarray(final_input1)
+    # final_input2 = []
+    # final_input2 = np.asarray(final_input2)
+    final_input1 = np.empty(shape=[0,256,256,3])
+    final_input2 = np.empty(shape=[0,256,256,3])
+
+    for i in range(batch):
+        test1 = aug_image1.next()
+        test2 = aug_image2.next()
+
+        final_input1 = np.append(final_input1,test1,axis=0)
+        final_input2 = np.append(final_input2,test2,axis=0)
+        # test1 = np.squeeze(test1,axis=0)
+        # test2 = np.squeeze(test2,axis=0)
+        # plt.imshow(test1)
+        # # plt.plot(test2)
+        # plt.show()
+        # plt.imshow(test2)
+        # plt.show()
+    model.train_on_batch([final_input1,final_input2],final_labels,class_weight=class_weights)
+    return model
