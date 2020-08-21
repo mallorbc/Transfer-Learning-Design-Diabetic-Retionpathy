@@ -12,8 +12,6 @@ import matplotlib.pyplot as plt
 
 import time
 
-import glob
-
 import math
 
 import numpy as np
@@ -549,7 +547,6 @@ def prepare_data_for_model(size_of_data,labels,images,image_width,image_height,h
         np_image_batch,labels_batch = prepare_data_for_model_even(size_of_data,labels,images,image_width,image_height,health_dict)
 
     return np_image_batch,labels_batch
-    print("test")
 
 def prepare_data_for_model_even(size_of_data,labels,images,image_width,image_height,health_dict):
     gc.collect()
@@ -604,6 +601,8 @@ def prepare_data_for_model_two(size_of_data,labels,images,second_images,image_wi
     labels_batch = total_labels[:size_of_data]
     np_labels_batch = np.asarray(labels_batch)
     image_batch = normalize_images(image_batch)
+    # print(image_batch_two)
+    # quit()
     image_batch_two = normalize_images(image_batch_two)
     np_image_batch = np.asarray(image_batch)
     np_image_batch_two = np.asarray(image_batch_two)
