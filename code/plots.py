@@ -19,6 +19,7 @@ import time
 from utils import *
 from preprocessData import *
 from myModels import *
+import quadratic_weighted_kappa
 
 def add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,epoch,run_dir):
     #creates the directory if it does not exist
@@ -1020,3 +1021,12 @@ def plot_class_acc_binary(data_directory,stop_epoch=None):
 
 
 
+def get_kappa_score(loaded_model,images,labels):
+    total_labels = []
+
+    total_predictions = get_model_predictions_one_input(loaded_model,images)
+    labels = labels[:len(total_predictions)]
+    total_labels = np.asarray(labels)
+
+    score = quadratic_weighted_kappa.quadratic_weighted_kappa(total_predictions,total_labels,0,4)
+    print("kappa score: ",score)
