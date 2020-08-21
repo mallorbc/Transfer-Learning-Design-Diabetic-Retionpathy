@@ -1,24 +1,10 @@
-#used to read in the csv file
-import pandas as pd
-#used to shuffle the data
-from sklearn.utils import shuffle
-#used for viewing images
-import matplotlib.pyplot as plt
-#for image loading and manipulation
-import cv2
 #for getting data paths
 import os
 #for adding command line arguments
 import argparse
-#easy resizing images
-from PIL import Image
 #model stuff
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras import datasets, layers, models
-from tensorflow.keras.layers import Dropout
-#math functions
-import math
 #for sleep 
 import time
 #for getting the datetime
@@ -27,7 +13,6 @@ from datetime import datetime
 import shutil 
 
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-import matplotlib.pyplot as plt
 
 from sklearn.utils.class_weight import compute_class_weight
 
@@ -58,10 +43,10 @@ if __name__ == "__main__":
     parser.add_argument("-d2","--dir2",default=None,help="directory containing second dataset of images",type=str)
     parser.add_argument("-d3","--dir3",default=None,help="directory containing the third dataset",type=str)
     parser.add_argument("-csv","--csv_location",default=None,help="location of the csv data file",type=str)
-    parser.add_argument("-b","--batch_size",default=64,help="batch size for training",type=int)
-    parser.add_argument("-e","--epochs",default=300,help="Number of epochs to train the network on",type=float)
-    parser.add_argument("-ti","--test_interval",default=1.0,help="How oftern to use test the model on the test data",type=float)
-    parser.add_argument("-si","--save_interval",default=1.0,help="After how many epochs to save the model to a checkpoint",type=float)
+    parser.add_argument("-b","--batch_size",default=48,help="batch size for training",type=int)
+    parser.add_argument("-e","--epochs",default=500,help="Number of epochs to train the network on",type=float)
+    parser.add_argument("-ti","--test_interval",default=0.5,help="How oftern to use test the model on the test data",type=float)
+    parser.add_argument("-si","--save_interval",default=0.5,help="After how many epochs to save the model to a checkpoint",type=float)
     parser.add_argument("-l","--load_model",default=None,help="Option to load a saved model",type=str)
     parser.add_argument("-td","--test_data_percentage",default=0.25,help="Percentage of data to use for test data",type=float)
     parser.add_argument("-vd","--val_data_percentage",default=0.2,help="Percentage of data for validation",type=float)
@@ -76,8 +61,8 @@ if __name__ == "__main__":
     parser.add_argument("-zca","--zca_batch_size",default=1,help="number of images per ZCA preprocessing batch",type=int)
     parser.add_argument("-blur","--blur",default=False,help="applies Gaussian blur prior to ZCA preprocessing",type=str2bool)
     parser.add_argument("-test_csv",default=None,help="This allows us to specifiy what photos to use for testing",type=str)
-    parser.add_argument("-aug","--augment_data",default=False,help="flag on whether to use image data augmentation",type=str2bool)
-    parser.add_argument("-test_size",default=250,help="what batch size to use for testing the performance of the models",type=int)
+    parser.add_argument("-aug","--augment_data",default=True,help="flag on whether to use image data augmentation",type=str2bool)
+    parser.add_argument("-test_size",default=400,help="what batch size to use for testing the performance of the models",type=int)
     parser.add_argument('-saver',"--saver_mode",default=None,help="Whether or not to save the whole model or just the weights",type=int)
     parser.add_argument('-class_size',default=708,help="how big each class should be; Can't be larger than 700",type=int)
     parser.add_argument("-plot_name",default=None,help="what to name the plots",type=str)
@@ -158,7 +143,6 @@ if __name__ == "__main__":
 
     second_image_dir = args.dir2
 
-    model_name = "None"
 
     if plot_directory is not None:
         plot_directory = os.path.abspath(plot_directory)
@@ -209,7 +193,7 @@ if __name__ == "__main__":
         #used for cutting the classes
         health_dict = make_diagnose_class_dict(health_level,image_name)
         #cuts class 0 in half
-        health_level,image_name = cut_data_class(health_dict,0,0.5)
+        # health_level,image_name = cut_data_class(health_dict,0,0.5)
 
         #shuffles the data to randomize starting train and test data
         health_level,image_name = shuffle_data(health_level,image_name)
@@ -285,10 +269,8 @@ if __name__ == "__main__":
             if model_to_use == 1:
                 if manual_lr is None:
                     model = create_CNN(new_image_width, new_image_height)
-                    model_name = "CNN"
                 else:
                     model = create_CNN(new_image_width, new_image_height,manual_lr)
-                    model_name = "CNN"
             elif model_to_use == 2:
                 if transfer_trainable:
                     if manual_lr is None:
@@ -302,7 +284,6 @@ if __name__ == "__main__":
                     else:
                         model = transfer_learning_model_inception_v3_functional(new_image_width, new_image_height,is_trainable=False,learning_rate=manual_lr)
 
-                model_name = "inception_transfer"
             elif model_to_use == 3:
                 model = inception_v3_multiple_inputs(new_image_width, new_image_height)
             elif model_to_use == 4:
@@ -357,7 +338,6 @@ if __name__ == "__main__":
 
             current_epoch = get_last_epoch(epoch_file)
             previous_test_epoch = current_epoch
-            # previous_save = math.floor(current_epoch)
             previous_save = current_epoch
 
             #realods the best values form the network
@@ -399,6 +379,7 @@ if __name__ == "__main__":
 
             #loads the saved model if needed
             # print(model_to_use)
+            # print(model_to_load)
             model = load_model(model_to_load,model_to_use,new_image_width,new_image_height)
         if model_to_use == 6:
             train_labels = convert_labels_to_binary(train_labels)
@@ -409,6 +390,13 @@ if __name__ == "__main__":
 
         health_dict_train = make_diagnose_class_dict(train_labels,train_images)
         health_dict_test = make_diagnose_class_dict(test_labels,test_images)
+
+        if model_to_use == 3:
+            test_images_two = change_dir_name(second_image_dir,test_images)
+            train_images_two = change_dir_name(second_image_dir,train_images)
+            health_dict_train2 = make_diagnose_class_dict(train_labels,train_images_two)
+            health_dict_test2 = make_diagnose_class_dict(test_labels,test_images_two)
+
 
 
 
@@ -471,7 +459,7 @@ if __name__ == "__main__":
             print("Using " + str(len(health_dict_train[4])) + " images from class 4")
             time.sleep(3)
 
-            cat0_images,cat1_images,cat2_images,cat3_images,cat4_images = get_info_on_data(train_labels)	
+            # cat0_images,cat1_images,cat2_images,cat3_images,cat4_images = get_info_on_data(train_labels)	
 
 
             class_weights_dict = compute_class_weight("balanced",np.unique(train_labels),train_labels)
@@ -523,7 +511,7 @@ if __name__ == "__main__":
                     df = generate_dataframe(train_images,train_labels,health_dict_train,training_method)
                 df_length = df.shape[0]
                 df_images = 0
-            np_image_batch_test,test_labels_batch = prepare_data_for_model_even(test_size,test_labels,test_images,new_image_width,new_image_height,health_dict_test)
+            # np_image_batch_test,test_labels_batch = prepare_data_for_model_even(test_size,test_labels,test_images,new_image_width,new_image_height,health_dict_test)
 
             while current_epoch<total_epochs:
                 if not data_aug:
@@ -568,8 +556,8 @@ if __name__ == "__main__":
                     print("Evaulating on test data...")
                     #gets the metrics for the test data
                     # metrics = model.evaluate(np_image_batch_test, test_labels_batch,verbose=0)
-                    np_image_batch_test = None
-                    test_labels_batch = None
+                    # np_image_batch_test = None
+                    # test_labels_batch = None
                     loss_test,accuracy_test = evaluate_all_images(model,test_images,test_labels,test_size)
                     # loss_test = metrics[0]
                     # accuracy_test = metrics[-1]
@@ -582,10 +570,11 @@ if __name__ == "__main__":
                     # np_image_batch,label_batch = prepare_data_for_model_even(test_size,train_labels,train_images,new_image_width,new_image_height,health_dict_train)
 
                     # metrics = model.evaluate(np_image_batch,label_batch,verbose=0)
-                    loss_train,accuracy_train = evaluate_all_images(model,train_images,train_labels,test_size)
+                    # loss_train,accuracy_train = evaluate_all_images(model,train_images,train_labels,test_size)
                     np_image_batch = None
                     label_batch = None
-                    test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,test_acc0,test_acc1,test_acc2,test_acc3,test_acc4 = get_loss_acc_of_each_class(model,train_images,new_image_width,new_image_height,test_size,health_dict_train)
+                    # test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,test_acc0,test_acc1,test_acc2,test_acc3,test_acc4 = get_loss_acc_of_each_class(model,train_images,new_image_width,new_image_height,test_size,health_dict_train)
+                    loss_train,accuracy_train,test_loss0,test_acc0,test_loss1,test_acc1,test_loss2,test_acc2,test_loss3,test_acc3,test_loss4,test_acc4 = evaluate_all_images_each_class(model,health_dict_train,test_size)
                     add_class_acc_data(test_acc0,test_acc1,test_acc2,test_acc3,test_acc4,run_dir)
                     add_class_loss_data(test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,run_dir)
                     print("Class losses: ",test_loss0,test_loss1,test_loss2,test_loss3,test_loss4)
@@ -617,7 +606,7 @@ if __name__ == "__main__":
                     add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,current_epoch,run_dir)
                     #gets new dataset for testing
                     # np_image_batch_test,test_labels_batch = prepare_data_for_model_rand(test_size,test_labels,test_images,new_image_width,new_image_height)
-                    np_image_batch_test,test_labels_batch = prepare_data_for_model_even(test_size,test_labels,test_images,new_image_width,new_image_height,health_dict_test)
+                    # np_image_batch_test,test_labels_batch = prepare_data_for_model_even(test_size,test_labels,test_images,new_image_width,new_image_height,health_dict_test)
 
                     #updates the test interval
                     previous_test_epoch = previous_test_epoch + test_interval
@@ -724,12 +713,14 @@ if __name__ == "__main__":
                     # np_image_batch,label_batch = prepare_data_for_model_even_binary(test_size,train_labels,train_images,new_image_width,new_image_height,health_dict_train)
 
                     # metrics = model.evaluate(np_image_batch,label_batch,verbose=0)
-                    loss_train,accuracy_train = evaluate_all_images(model,train_images,train_labels,test_size)
+                    # loss_train,accuracy_train = evaluate_all_images(model,train_images,train_labels,test_size)
                     # loss_train = metrics[0]
                     # accuracy_train = metrics[-1]
                     np_image_batch = None
                     label_batch = None
-                    test_loss0,test_loss1,test_acc0,test_acc1 = get_loss_acc_of_each_class_binary2(model,train_images,new_image_width,new_image_height,test_size,health_dict_train)
+                    # test_loss0,test_loss1,test_acc0,test_acc1 = get_loss_acc_of_each_class_binary2(model,train_images,new_image_width,new_image_height,test_size,health_dict_train)
+                    loss_train,accuracy_train,test_loss0,test_acc0,test_loss1,test_acc1,_,_,_,_,_,_ = evaluate_all_images_each_class(model,health_dict_train,test_size)
+
                     add_class_acc_data_binary(test_acc0,test_acc1,run_dir)
                     print("Class losses: ",test_loss0,test_loss1)
                     print("Class accuracy: ",test_acc0,test_acc1)
@@ -811,6 +802,13 @@ if __name__ == "__main__":
             base_weight3 = class_weights_list[3]/4
 
             print(class_weights)
+
+            if model_to_use == 999 or model_to_load is not None:
+                loss_train,accuracy_train,test_loss0,test_acc0,test_loss1,test_acc1,test_loss2,test_acc2,test_loss3,test_acc3,_,_ = evaluate_all_images_each_class(model,health_dict_train,test_size)
+                class_weights = adjust_base_weights_test(test_loss0,base_weight0,test_loss1,base_weight1,run_dir,test_loss2,base_weight2,test_loss3,base_weight3)
+                print(class_weights)
+                print("intial loss: ",test_loss0,test_loss1,test_loss2,test_loss3)
+                time.sleep(2)
             # np_image_batch_test,test_labels_batch = prepare_data_for_model_even_binary(test_size,test_labels,test_images,new_image_width,new_image_height,health_dict_test)
 
 
@@ -821,7 +819,7 @@ if __name__ == "__main__":
                     df = generate_dataframe(train_images,train_labels,health_dict_train,training_method)
                 df_length = df.shape[0]
                 df_images = 0
-            np_image_batch_test,test_labels_batch = prepare_data_for_model_even_binary(test_size,test_labels,test_images,new_image_width,new_image_height,health_dict_test)
+            # np_image_batch_test,test_labels_batch = prepare_data_for_model_even_binary(test_size,test_labels,test_images,new_image_width,new_image_height,health_dict_test)
 
             while current_epoch<total_epochs:
                 if not data_aug:
@@ -879,12 +877,14 @@ if __name__ == "__main__":
                     # np_image_batch,label_batch = prepare_data_for_model_even_binary(test_size,train_labels,train_images,new_image_width,new_image_height,health_dict_train)
 
                     # metrics = model.evaluate(np_image_batch,label_batch,verbose=0)
-                    loss_train,accuracy_train = evaluate_all_images(model,train_images,train_labels,test_size)
+                    # loss_train,accuracy_train = evaluate_all_images(model,train_images,train_labels,test_size)
                     # loss_train = metrics[0]
                     # accuracy_train = metrics[-1]
                     np_image_batch = None
                     label_batch = None
-                    test_loss0,test_loss1,test_loss2,test_loss3,test_acc0,test_acc1,test_acc2,test_acc3 = get_loss_acc_of_each_class_non_zero(model,train_images,new_image_width,new_image_height,test_size,health_dict_train)
+                    loss_train,accuracy_train,test_loss0,test_acc0,test_loss1,test_acc1,test_loss2,test_acc2,test_loss3,test_acc3,_,_ = evaluate_all_images_each_class(model,health_dict_train,test_size)
+
+                    # test_loss0,test_loss1,test_loss2,test_loss3,test_acc0,test_acc1,test_acc2,test_acc3 = get_loss_acc_of_each_class_non_zero(model,train_images,new_image_width,new_image_height,test_size,health_dict_train)
                     add_class_acc_data2(test_acc0,test_acc1,run_dir,test_acc2,test_acc3)
                     print("Class losses: ",test_loss0,test_loss1,test_loss2,test_loss3)
                     print("Class accuracy: ",test_acc0,test_acc1,test_acc2,test_acc3)
@@ -935,9 +935,9 @@ if __name__ == "__main__":
        
         #multiple inputs
         elif run_mode == 6 and model_to_use == 3:
-            test_images_two = change_dir_name(second_image_dir,test_images)
-            train_images_two = change_dir_name(second_image_dir,train_images)
-            np_image_batch_test,np_image_batch_test_two,test_labels_batch = prepare_data_for_model_two(test_size,test_labels,test_images,test_images_two,new_image_width,new_image_height)
+            # test_images_two = change_dir_name(second_image_dir,test_images)
+            # train_images_two = change_dir_name(second_image_dir,train_images)
+            # np_image_batch_test,np_image_batch_test_two,test_labels_batch = prepare_data_for_model_two(test_size,test_labels,test_images,test_images_two,new_image_width,new_image_height)
             #quit()
             total_images = len(train_images)
             images_trained_on = 0
@@ -945,26 +945,32 @@ if __name__ == "__main__":
                 #gets images and labels ready for model input
                 np_image_batch,np_image_batch_two,label_batch = prepare_data_for_model_two(batch_size,train_labels,train_images,train_images_two,new_image_width,new_image_height)
                 #trains on the input
-                model.train_on_batch([np_image_batch,np_image_batch_two], label_batch)
+                if not data_aug:
+                    if training_method == 1:
+                        model.train_on_batch([np_image_batch,np_image_batch_two], label_batch,class_weight=class_weights)
+                    else:
+                        model.train_on_batch([np_image_batch,np_image_batch_two], label_batch)
+                else:
+                    model = dual_input_aug_train(model,train_labels,train_images,train_images_two,class_weights,datagen_train,batch_size)
                 #adds the number of images to the total count
                 images_trained_on = images_trained_on + batch_size
                 #outputs stats after 5 batchs
                 if (current_epoch - previous_test_epoch)>= test_interval:
-                    print("Evaulating on test data...")
-                    #gets the metrics for the test data
-                    metrics = model.evaluate([np_image_batch_test,np_image_batch_test_two], test_labels_batch,verbose=0)
-                    loss_test = metrics[0]
-                    accuracy_test = metrics[-1]
-                    print("New test loss: ",loss_test," New test acc: ",accuracy_test)
-                    np_image_batch_test = None
-                    np_image_batch_test_two = None
-                    #gets the metrics for the training data
+                    
+                    #gets the metrics for the train data
                     print("Evaluating on training data...")
-                    np_image_batch,np_image_batch_two,label_batch = prepare_data_for_model_two(test_size,train_labels,train_images,train_images_two,new_image_width,new_image_height)
-                    metrics = model.evaluate([np_image_batch,np_image_batch_two],label_batch,verbose=0)
-                    loss_train = metrics[0]
-                    accuracy_train = metrics[-1]
+                    loss_train,accuracy_train,test_loss0,test_acc0,test_loss1,test_acc1,test_loss2,test_acc2,test_loss3,test_acc3,test_loss4,test_acc4 = evaluate_all_images_each_class_two_inputs(model,health_dict_train,health_dict_train2,test_size)
+                    print("Evaulating on test data...")
+                    loss_test,accuracy_test = evaluate_all_images_two_inputs(model,test_images,test_images_two,test_labels,test_size)
+                    add_class_acc_data(test_acc0,test_acc1,test_acc2,test_acc3,test_acc4,run_dir)
+                    add_class_loss_data(test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,run_dir)
+                    add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,current_epoch,run_dir)
+                    print("Class losses: ",test_loss0,test_loss1,test_loss2,test_loss3,test_loss4)
+                    print("Class accuracy: ",test_acc0,test_acc1,test_acc2,test_acc3,test_acc4)
+                    class_weights = adjust_base_weights2(test_loss0,test_loss1,test_loss2,test_loss3,test_loss4,base_weight0,base_weight1,base_weight2,base_weight3,base_weight4,run_dir)
                     print("New train loss: ",loss_train," New train acc: ",accuracy_train)
+                    print("New test loss: ",loss_test," New test acc: ",accuracy_test)
+                    
 
 
                     #used to print out best results in terminal
@@ -984,9 +990,8 @@ if __name__ == "__main__":
                     np_image_batch = None
                     np_image_batch_two = None
                     #adds data to numpy files
-                    add_plot_data(accuracy_test,accuracy_train,loss_test,loss_train,current_epoch,run_dir)
                     #gets new dataset for testing
-                    np_image_batch_test,np_image_batch_test_two,test_labels_batch = prepare_data_for_model_two(test_size,test_labels,test_images,test_images_two,new_image_width,new_image_height)
+                    # np_image_batch_test,np_image_batch_test_two,test_labels_batch = prepare_data_for_model_two(test_size,test_labels,test_images,test_images_two,new_image_width,new_image_height)
                     #updates the previous_test_epoch
                     previous_test_epoch = previous_test_epoch + test_interval
                 #increments the epoch
