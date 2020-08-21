@@ -9,6 +9,7 @@ import preprocessData
 import time
 import argparse
 import psutil
+import copy
 
 
 from myModels import *
@@ -244,6 +245,19 @@ def make_diagnose_class_dict(health_level,image_name):
     health_dict[4] = class4
 
     return health_dict
+
+# def convert_health_dict_to_new_dir(health_dict,new_dir):
+#     converted_images_name = []
+#     new_health_dict = {}
+#     for i in range(len(health_dict)):
+#         current_images = health_dict[i]
+#         for j in range(len(current_images)):
+#             image_base_name = os.path.basename(current_images[i])
+#             new_name = new_dir + "/" + image_base_name
+#             converted_images_name.append(new_name)
+#         new_health_dict[i] = copy.deepcopy(converted_images_name)
+#         converted_images_name.clear()
+#     return new_health_dict
 
 def get_memory_usage_percentage():
     process = psutil.Process(os.getpid())
