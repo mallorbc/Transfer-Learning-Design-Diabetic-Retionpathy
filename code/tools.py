@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras import datasets, layers, models
+from tensorflow.keras import layers, models
 from tensorflow.keras.layers import Dropout,Input,concatenate
 import sys
 # sys.path.insert(1, '../diabetic-detection')
@@ -15,7 +15,6 @@ from myModels import *
 from utils import *
 from plots import *
 from preprocessData import *
-import copy
 from random import randint
 from keract import get_activations, display_heatmaps
 from sklearn.utils import shuffle
@@ -90,7 +89,7 @@ if __name__ == "__main__":
         image_name = add_extension(image_name,".jpeg")
         health_dict = make_csv_dict(health_level,image_name)
         image_to_test = image_name
-    print(health_dict)
+    # print(health_dict)
     
 
 
@@ -448,12 +447,14 @@ if __name__ == "__main__":
 
             # test_images = get_full_image_name_no_ext(data_path,test_images)
             image_to_test = test_images
+            print(len(image_to_test))
+            # quit()
             if len(image_to_test)>600:
                 image_to_test,test_labels = shuffle(image_to_test,test_labels)
                 # image_to_test = image_to_test[:1000]
                 # test_labels = test_labels[:1000]
-                image_to_test = image_to_test[:2000]
-                test_labels = test_labels[:2000]
+                image_to_test = image_to_test[:4000]
+                test_labels = test_labels[:4000]
                 image_to_test,test_labels = shuffle(image_to_test,test_labels)
 
         model_to_load = os.path.realpath(args.model)
@@ -483,12 +484,15 @@ if __name__ == "__main__":
 
         # image_to_test = add_extension(image_to_test,".jpeg")
         output_file = output_folder + "/confusion_matrix.png"
+        # quit()
+
         create_confusion_matrix_one_input(model,image_to_test,test_labels,name,output_file)
-        make_roc_precision_recall_graphs(0,image_to_test,health_dict,model,output_folder)
-        make_roc_precision_recall_graphs(1,image_to_test,health_dict,model,output_folder)
-        make_roc_precision_recall_graphs(2,image_to_test,health_dict,model,output_folder)
-        make_roc_precision_recall_graphs(3,image_to_test,health_dict,model,output_folder)
-        make_roc_precision_recall_graphs(4,image_to_test,health_dict,model,output_folder)
+        # get_kappa_score(model,image_to_test,test_labels)
+        # make_roc_precision_recall_graphs(0,image_to_test,health_dict,model,output_folder)
+        # make_roc_precision_recall_graphs(1,image_to_test,health_dict,model,output_folder)
+        # make_roc_precision_recall_graphs(2,image_to_test,health_dict,model,output_folder)
+        # make_roc_precision_recall_graphs(3,image_to_test,health_dict,model,output_folder)
+        # make_roc_precision_recall_graphs(4,image_to_test,health_dict,model,output_folder)
 
 
     # print(mode_to_run)
